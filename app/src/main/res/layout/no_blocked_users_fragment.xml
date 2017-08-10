@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorAccent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true">
+
+        <ImageView
+            android:id="@+id/about_app_logo"
+            android:layout_width="224dp"
+            android:layout_height="224dp"
+            android:layout_centerHorizontal="true"
+            android:layout_margin="16dp"
+            android:src="@drawable/web_hi_res_512" />
+
+        <TextView
+            android:id="@+id/lack_of_blocked_users"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/about_app_logo"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="16dp"
+            android:gravity="center_horizontal"
+            android:text="Easpa úsáideoirí curtha ar cosc"
+            android:textColor="@color/black" />
+
+        <TextView
+            android:id="@+id/no_blocked_users_emoji"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/lack_of_blocked_users"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="16dp"
+            android:gravity="center_horizontal"
+            android:textColor="@color/white"
+            android:textSize="24sp" />
+
+    </RelativeLayout>
+
+</RelativeLayout>

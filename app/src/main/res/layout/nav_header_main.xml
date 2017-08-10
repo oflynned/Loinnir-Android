@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/side_nav_bar"
+    android:gravity="bottom"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:theme="@style/ThemeOverlay.AppCompat.Dark">
+
+    <ImageView
+        android:id="@+id/nav_header_pic"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:adjustViewBounds="true"
+        android:maxHeight="112dp"
+        android:maxWidth="112dp"
+        android:src="@drawable/logo_small" />
+
+    <TextView
+        android:id="@+id/nav_header_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/nav_header_pic"
+        android:paddingTop="8dp"
+        android:text="Ainm an Úsáideora"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+
+    <TextView
+        android:id="@+id/nav_header_locality"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/nav_header_name"
+        android:text="Baile Reatha" />
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/nav_header_locality">
+
+        <TextView
+            android:id="@+id/nav_header_county"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Contae Reatha" />
+
+        <ImageView
+            android:id="@+id/nav_header_county_flag"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="8dp"
+            android:layout_toEndOf="@id/nav_header_county"
+            app:srcCompat="@drawable/cill_dara" />
+    </RelativeLayout>
+
+</RelativeLayout>

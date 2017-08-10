@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/tools"
+    xmlns:fancy="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginTop="?attr/actionBarSize"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/match_notification_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="32dp"
+        android:fontFamily=""
+        android:gravity="center_horizontal"
+        android:text="Fuarthas Meaitseáil Nua!"
+        android:textSize="24sp" />
+
+    <ImageView
+        android:id="@+id/roulette_partner_profile_pic"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/match_notification_text"
+        android:layout_centerInParent="true"
+        android:layout_marginTop="16dp"
+        android:adjustViewBounds="true"
+        android:minHeight="192dp"
+        android:minWidth="192dp"
+        android:src="@mipmap/ic_launcher" />
+
+    <TextView
+        android:id="@+id/name_text_roulette"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/roulette_partner_profile_pic"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="16dp"
+        android:gravity="center_horizontal"
+        android:text="Ainm an úsáideora" />
+
+    <TextView
+        android:id="@+id/locality_text_roulette"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/name_text_roulette"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="2dp"
+        android:gravity="center_horizontal"
+        android:text="Ceantar an úsáideora" />
+
+
+    <RelativeLayout
+        android:id="@+id/layout_county_text_roulette"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/locality_text_roulette"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="2dp"
+        android:gravity="center_horizontal">
+
+        <TextView
+            android:id="@+id/county_text_roulette"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Contae an úsáideora" />
+
+        <ImageView
+            android:id="@+id/county_flag_roulette"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="8dp"
+            android:layout_toEndOf="@id/county_text_roulette"
+            app:srcCompat="@drawable/cill_dara" />
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/roulette_outcome_actions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/layout_county_text_roulette"
+        android:layout_centerHorizontal="true"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="16dp">
+
+        <mehdi.sakout.fancybuttons.FancyButton
+            android:id="@+id/back_to_roulette_btn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="4dp"
+            android:layout_weight="0.5"
+            android:text="Déan rúiléid"
+            fancy:fb_borderColor="@color/colorPrimary"
+            fancy:fb_borderWidth="1dp"
+            fancy:fb_defaultColor="@color/colorPrimary"
+            fancy:fb_focusColor="@color/colorPrimaryDark"
+            fancy:fb_ghost="true"
+            fancy:fb_radius="32dp"
+            fancy:fb_textColor="@color/colorPrimary" />
+
+        <mehdi.sakout.fancybuttons.FancyButton
+            android:id="@+id/start_conversation_btn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="4dp"
+            android:layout_weight="0.5"
+            android:text="Tosaigh comhrá"
+            fancy:fb_borderColor="@color/green500"
+            fancy:fb_borderWidth="1dp"
+            fancy:fb_defaultColor="@color/green500"
+            fancy:fb_focusColor="@color/green700"
+            fancy:fb_ghost="true"
+            fancy:fb_radius="32dp"
+            fancy:fb_textColor="@color/green500" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/match_loss_warning_if_no_chat"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/roulette_outcome_actions"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="16dp"
+        android:gravity="center_horizontal"
+        android:text="Is féidir an rúiléid a atriail, ach caillfidh tú an nasc leis an duine seo mura thosaíonn tú comhrá leis/léi." />
+</RelativeLayout>

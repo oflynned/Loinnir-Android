@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Loinnir</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Socruithe</string>
+
+    <string name="app_version">1.0.0 Iúil 2017</string>
+
+    <!-- dev keys -->
+    <string name="facebook_app_id">126609207898041</string>
+    <string name="fb_login_protocol_scheme">fb126609207898041</string>
+    <string name="maps_api_key">AIzaSyBdsQV1GAXfIhXVjLwlAg1PrWnvCTBqW84</string>
+    <string name="places_api_key">AIzaSyCv4m-aN905IYwAEdO81CTY4CjNJfGDof4</string>
+
+    <!-- pref keys -->
+
+</resources>

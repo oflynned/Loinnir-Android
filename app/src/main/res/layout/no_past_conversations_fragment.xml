@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorAccent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp">
+
+        <ImageView
+            android:id="@+id/about_app_logo"
+            android:layout_width="224dp"
+            android:layout_height="224dp"
+            android:layout_centerHorizontal="true"
+            android:layout_margin="16dp"
+            android:src="@drawable/web_hi_res_512" />
+
+        <TextView
+            android:id="@+id/lack_of_conversations"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/about_app_logo"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="16dp"
+            android:gravity="center_horizontal"
+            android:text="Comhrá ar bith!"
+            android:textSize="18sp"
+            android:textColor="@color/black" />
+
+        <TextView
+            android:id="@+id/lack_of_conversations_subtext"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/lack_of_conversations"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="16dp"
+            android:gravity="center_horizontal"
+            android:text="Cruthaigh nasc le duine nua leis an rúiléid."
+            android:textColor="@color/black" />
+
+        <TextView
+            android:id="@+id/no_conversations_users_emoji"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/lack_of_conversations_subtext"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="16dp"
+            android:gravity="center_horizontal"
+            android:textColor="@color/white"
+            android:textSize="24sp" />
+
+    </RelativeLayout>
+
+</RelativeLayout>

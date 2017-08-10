@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="Socruithe Cúntais">
+
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="pref_should_share_location"
+            android:summary="Beidh tú in ann ceantair gharbha na n-úsáideoirí eile a fheiceáil, ach roinnfear do cheantar garbh ar an léarscáil phoiblí"
+            android:title="Taispeáin do Cheantar" />
+
+        <Preference
+            android:key="pref_manage_blocked_users"
+            android:title="Bainistigh Úsáideoirí ar Cosc" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Faoin Aip">
+
+        <Preference
+            android:key="pref_share_app"
+            android:summary="Taispeáin do leantóirí nó chairde an chéad aip shóisialta don Ghaeilge"
+            android:title="Roinn Loinnir ar Léibheann Sóisialta" />
+
+        <Preference
+            android:key="pref_about_loinnir"
+            android:summary="Níos mó eolais i dtaobh na h-aipe"
+            android:title="Faoi Loinnir" />
+
+        <Preference
+            android:key="pref_visit_website"
+            android:summary="Téigh chuig Loinnir.ie chun tuilleadh a fheiceáil"
+            android:title="Tabhair Cuairt Dúinn" />
+
+        <Preference
+            android:key="pref_app_version"
+            android:summary="@string/app_version"
+            android:title="Leagan Aipe" />
+
+    </PreferenceCategory>
+
+
+    <PreferenceCategory android:title="Cúrsaí Dleathacha">
+
+        <Preference
+            android:key="pref_tos"
+            android:title="Téarmaí Seirbhíse" />
+
+        <Preference
+            android:key="pref_privacy_policy"
+            android:title="Polasaí Príobháideachais" />
+
+        <Preference
+            android:key="pref_licences"
+            android:title="Ceadúnais" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="An Ceantar Baoil">
+        <Preference
+            android:key="pref_log_out"
+            android:title="Logáil Amach" />
+
+        <Preference
+            android:key="pref_delete_account"
+            android:title="Scrios do Chúntas Loinnir" />
+    </PreferenceCategory>
+</PreferenceScreen>
