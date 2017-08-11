@@ -31,7 +31,7 @@ public class ProfileFrag extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.roulette_outcome_frag, container, false);
+        View view = inflater.inflate(R.layout.profile_frag, container, false);
         ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.app_name);
         ((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(null);
 

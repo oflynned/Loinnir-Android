@@ -105,20 +105,6 @@ public class PartnerConversationFrag extends Fragment {
         ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
         actionBar.setTitle(partner.getName());
         actionBar.setSubtitle(formatSubtitle());
-
-        /*
-        final int actionBarId = getResources().getIdentifier("action_bar_title", "id", "android");
-        view.findViewById(actionBarId).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Bitmap cachedImage = CachingUtil.getCachedImage(getActivity(), partner.getId());
-                ProfileFrag profileFrag = new ProfileFrag()
-                        .setPartner(partner)
-                        .setBitmap(cachedImage);
-                MainActivity.setFragmentBackstack(getFragmentManager(), profileFrag);
-            }
-        });*/
-
         return view;
     }
 
@@ -369,9 +355,16 @@ public class PartnerConversationFrag extends Fragment {
                         @Override
                         public void onResponse(Bitmap response) {
                             Bitmap croppedImage = BitmapUtils.getCroppedCircle(response);
-                            Bitmap scaledAvatar = BitmapUtils.scaleBitmap(croppedImage, BitmapUtils.BITMAP_SIZE_SMALL);
-                            imageView.setImageBitmap(scaledAvatar);
+                            final Bitmap scaledAvatar = BitmapUtils.scaleBitmap(croppedImage, BitmapUtils.BITMAP_SIZE_SMALL);
                             CachingUtil.cacheImage(getActivity(), fileName, scaledAvatar);
+                            imageView.setImageBitmap(scaledAvatar);
+                            imageView.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    ProfileFrag profileFrag = new ProfileFrag().setPartner(partner).setBitmap(scaledAvatar);
+                                    MainActivity.setFragmentBackstack(getFragmentManager(), profileFrag);
+                                }
+                            });
                         }
 
                         @Override
@@ -380,8 +373,15 @@ public class PartnerConversationFrag extends Fragment {
                         }
                     }, url, true).execute();
                 } else {
-                    Bitmap cachedImage = CachingUtil.getCachedImage(getActivity(), fileName);
+                    final Bitmap cachedImage = CachingUtil.getCachedImage(getActivity(), fileName);
                     imageView.setImageBitmap(cachedImage);
+                    imageView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            ProfileFrag profileFrag = new ProfileFrag().setPartner(partner).setBitmap(cachedImage);
+                            MainActivity.setFragmentBackstack(getFragmentManager(), profileFrag);
+                        }
+                    });
                 }
             }
         };
