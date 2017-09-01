@@ -74,6 +74,7 @@ public class ConversationsListFrag extends Fragment implements
                         new BaseJsonHttpResponseHandler<JSONArray>() {
                             @Override
                             public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
+                                System.out.println(response);
                                 loadMessages(response);
                                 NotificationUtils.dismissNotifications(getActivity(), conversations);
                             }
@@ -117,6 +118,8 @@ public class ConversationsListFrag extends Fragment implements
 
     @Override
     public void onResume() {
+        super.onResume();
+        System.out.println("onResume()");
         if (shouldShowMessages) {
             NotificationUtils.dismissNotifications(getActivity(), conversations);
             RestClient.post(getActivity(), Endpoints.GET_PAST_CONVERSATION_PREVIEWS,
@@ -141,14 +144,12 @@ public class ConversationsListFrag extends Fragment implements
 
         getActivity().registerReceiver(newPartnerMessageConversationReceover,
                 new IntentFilter(BroadcastFilters.new_partner_message.toString()));
-
-        super.onResume();
     }
 
     @Override
     public void onPause() {
-        getActivity().unregisterReceiver(newPartnerMessageConversationReceover);
         super.onPause();
+        getActivity().unregisterReceiver(newPartnerMessageConversationReceover);
     }
 
     public ConversationsListFrag setResponse(JSONArray response) {
@@ -157,6 +158,7 @@ public class ConversationsListFrag extends Fragment implements
     }
 
     private void loadMessages(JSONArray response) {
+        System.out.println("loadMessages() " + response);
         conversations.clear();
         for (int i = 0; i < response.length(); i++) {
             try {
@@ -203,7 +205,8 @@ public class ConversationsListFrag extends Fragment implements
         final User finalBlockee = blockee;
         new AlertDialog.Builder(getActivity())
                 .setTitle("Cosc a Chur ar " + LanguageUtils.lenite(blockee.getForename()) + "?")
-                .setMessage("Má chuireann tú cosc ar úsáideoir araile, ní féidir leat nó le " + blockee + " dul i dteagmháil lena chéile. " +
+                .setMessage("Má chuireann tú cosc ar úsáideoir araile, ní féidir leat nó " +
+                        LanguageUtils.getPrepositionalForm("le", blockee.getForename()) + " dul i dteagmháil lena chéile. " +
                         "Bain úsáid as seo amháin go bhfuil tú cinnte nach dteastaíonn uait faic a chloisteáil a thuilleadh ón úsáideoir seo. " +
                         "Cur cosc ar dhuine má imrítear bulaíocht ort, nó mura dteastaíonn uait tuilleadh teagmhála. " +
                         "Má athraíonn tú do mheabhair ar ball, téigh chuig na socruithe agus bainistigh cé atá curtha ar cosc.")

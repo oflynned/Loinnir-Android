@@ -107,9 +107,6 @@ public class LanguageUtils {
     public static String getPrepositionalForm(String preposition, String noun) {
         String firstLetter = String.valueOf(noun.charAt(0));
 
-        System.out.println(firstLetter);
-        System.out.println(preposition);
-
         switch (preposition.toLowerCase()) {
             case "le":
                 return preposition + (isVowel(firstLetter) ? " h-" : " ") + noun;

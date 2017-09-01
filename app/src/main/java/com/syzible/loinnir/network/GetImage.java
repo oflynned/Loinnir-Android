@@ -17,6 +17,7 @@ import java.io.Writer;
  * Created by ed on 16/12/2016
  */
 
+@Deprecated
 public class GetImage extends GetRequest<Bitmap> {
     public GetImage(NetworkCallback<Bitmap> networkCallback, String url, boolean isExternal) {
         super(networkCallback, url, isExternal);
@@ -41,11 +42,6 @@ public class GetImage extends GetRequest<Bitmap> {
             e.printStackTrace();
         }
 
-        return null;
-    }
-
-    @Override
-    public Bitmap transferData(Bitmap payload) {
         return null;
     }
 }

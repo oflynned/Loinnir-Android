@@ -37,7 +37,7 @@ public class Message implements IMessage {
         this.id = id;
         this.sender = sender;
         this.time = time;
-        this.contents = contents;
+        this.contents = EncodingUtils.encodeText(contents);
     }
 
     @Override

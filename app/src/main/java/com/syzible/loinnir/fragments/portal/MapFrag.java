@@ -52,35 +52,32 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
     private GoogleMap googleMap;
     private BroadcastReceiver locationUpdateReceiver;
 
-    private ClusterManager<MapCircle> clusterManager;
     private ArrayList<MapCircle> userCircles = new ArrayList<>();
 
     private int GREEN_500;
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        GREEN_500 = ContextCompat.getColor(getActivity(), R.color.green500);
-    }
-
-    @Override
     public void onResume() {
+        super.onResume();
+        System.out.println("onResume()");
+
+        GREEN_500 = ContextCompat.getColor(getActivity(), R.color.green500);
         registerBroadcastReceiver();
-        setMapPosition();
 
         ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.app_name);
         ((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(null);
-        super.onResume();
     }
 
     @Override
     public void onPause() {
-        getActivity().unregisterReceiver(locationUpdateReceiver);
         super.onPause();
+        getActivity().unregisterReceiver(locationUpdateReceiver);
     }
 
     private void setMapPosition() {
+        System.out.println("setMapPosition()");
         if (googleMap != null) {
+            System.out.println("googleMap != null");
             if (LocalStorage.getBooleanPref(LocalStorage.Pref.should_share_location, getActivity())) {
                 getWebServerLocation();
             } else {
@@ -103,9 +100,10 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        System.out.println("onMapReady()");
         this.googleMap = googleMap;
 
-        clusterManager = new ClusterManager<>(getActivity(), this.googleMap);
+        ClusterManager<MapCircle> clusterManager = new ClusterManager<>(getActivity(), this.googleMap);
         clusterManager.setRenderer(new MapCircleRenderer(getActivity(), this.googleMap, clusterManager));
         this.googleMap.setOnCameraIdleListener(clusterManager);
 
@@ -114,21 +112,28 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
 
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
                 LocationService.ATHLONE, LocationService.INITIAL_LOCATION_ZOOM));
+
         setMapPosition();
     }
 
     private void getWebServerLocation() {
+        System.out.println("getWebServerLocation()");
         googleMap.clear();
         userCircles.clear();
 
-        RestClient.post(getActivity(), Endpoints.GET_OTHER_USERS, JSONUtils.getIdPayload(getActivity().getBaseContext()),
+        RestClient.post(getActivity(), Endpoints.GET_ALL_USERS, JSONUtils.getIdPayload(getActivity().getBaseContext()),
                 new BaseJsonHttpResponseHandler<JSONArray>() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
                         for (int i = 0; i < response.length(); i++) {
                             try {
                                 User user = new User(response.getJSONObject(i));
-                                userCircles.add(new MapCircle(user, false));
+                                if (user.getId().equals(LocalStorage.getID(getActivity()))) {
+                                    userCircles.add(new MapCircle(user, true));
+                                    zoomToLocation(user.getLocation());
+                                } else {
+                                    userCircles.add(new MapCircle(user, false));
+                                }
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
@@ -146,33 +151,6 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
                     @Override
                     protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
                         return new JSONArray(rawJsonData);
-                    }
-                });
-
-        // get my last known location and move to it on the map
-        RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getIdPayload(getActivity()),
-                new BaseJsonHttpResponseHandler<JSONObject>() {
-                    @Override
-                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                        try {
-                            final User me = new User(response);
-                            userCircles.add(new MapCircle(me, true));
-                            googleMap.addCircle(getUserCircle(me.getLocation()));
-                            zoomToLocation(me.getLocation());
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-
-                    }
-
-                    @Override
-                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-
-                    }
-
-                    @Override
-                    protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                        return new JSONObject(rawJsonData);
                     }
                 });
     }

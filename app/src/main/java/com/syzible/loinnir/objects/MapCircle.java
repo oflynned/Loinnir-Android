@@ -25,10 +25,6 @@ public class MapCircle implements ClusterItem {
         return isMe;
     }
 
-    public void render() {
-
-    }
-
     @Override
     public LatLng getPosition() {
         return new LatLng(user.getLatitude(), user.getLongitude());

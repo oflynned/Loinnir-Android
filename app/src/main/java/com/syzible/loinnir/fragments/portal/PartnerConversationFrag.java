@@ -220,7 +220,8 @@ public class PartnerConversationFrag extends Fragment {
 
                                                         String messageContent = input.toString();
 
-                                                        Message message = new Message(LocalStorage.getID(getActivity()), me, System.currentTimeMillis(), messageContent);
+                                                        Message message = new Message(LocalStorage.getID(getActivity()),
+                                                                me, System.currentTimeMillis(), messageContent);
                                                         adapter.addToStart(message, true);
 
                                                         // send to server

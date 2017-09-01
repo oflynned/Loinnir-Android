@@ -17,6 +17,7 @@ import com.syzible.loinnir.activities.MainActivity;
 import com.syzible.loinnir.network.GetImage;
 import com.syzible.loinnir.network.NetworkCallback;
 import com.syzible.loinnir.objects.User;
+import com.syzible.loinnir.utils.AnimationUtils;
 
 /**
  * Created by ed on 07/05/2017.
@@ -35,8 +36,7 @@ public class RouletteLoadingFrag extends Fragment {
 
         ImageView rouletteButton = (ImageView) view.findViewById(R.id.roulette_spinner_button);
 
-        rouletteButton.clearAnimation();
-        rouletteButton.animate().rotation(360).start();
+        AnimationUtils.rotateView(rouletteButton, true);
 
         new GetImage(new NetworkCallback<Bitmap>() {
             @Override
@@ -44,8 +44,6 @@ public class RouletteLoadingFrag extends Fragment {
                 final RouletteOutcomeFrag matchFrag = new RouletteOutcomeFrag()
                         .setPartner(partner)
                         .setBitmap(response);
-
-                System.out.println("Success");
 
                 // show loading screen for at least one second
                 new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {

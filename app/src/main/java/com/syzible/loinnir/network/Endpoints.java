@@ -24,6 +24,7 @@ public class Endpoints {
     public static final String GET_NEARBY_COUNT = "/users/get-nearby-count";
 
     public static final String GET_USER = "/users/get";
+    public static final String GET_ALL_USERS = "/users/get-all";
     public static final String GET_OTHER_USERS = "/users/get-others";
     public static final String GET_RANDOM_USER = "/users/get-random";
 

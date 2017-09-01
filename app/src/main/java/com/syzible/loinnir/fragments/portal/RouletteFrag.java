@@ -7,6 +7,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -16,6 +19,7 @@ import com.syzible.loinnir.activities.MainActivity;
 import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.objects.User;
+import com.syzible.loinnir.utils.AnimationUtils;
 import com.syzible.loinnir.utils.DisplayUtils;
 import com.syzible.loinnir.utils.EmojiUtils;
 import com.syzible.loinnir.utils.JSONUtils;
@@ -82,8 +86,7 @@ public class RouletteFrag extends Fragment {
         rouletteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                rouletteButton.clearAnimation();
-                rouletteButton.animate().rotation(360).start();
+                AnimationUtils.rotateView(rouletteButton, false);
 
                 RestClient.post(getActivity(), Endpoints.GET_RANDOM_USER,
                         JSONUtils.getIdPayload(getActivity()),
@@ -123,6 +126,5 @@ public class RouletteFrag extends Fragment {
 
         return view;
     }
-
 
 }
