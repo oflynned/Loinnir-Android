@@ -119,6 +119,8 @@ public class ConversationsListFrag extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
+        Collections.reverse(conversations);
+
         System.out.println("onResume()");
         if (shouldShowMessages) {
             NotificationUtils.dismissNotifications(getActivity(), conversations);
@@ -158,7 +160,6 @@ public class ConversationsListFrag extends Fragment implements
     }
 
     private void loadMessages(JSONArray response) {
-        System.out.println("loadMessages() " + response);
         conversations.clear();
         for (int i = 0; i < response.length(); i++) {
             try {
