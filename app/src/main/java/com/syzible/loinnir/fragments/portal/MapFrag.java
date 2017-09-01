@@ -59,10 +59,10 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
     @Override
     public void onResume() {
         super.onResume();
-        System.out.println("onResume()");
 
         GREEN_500 = ContextCompat.getColor(getActivity(), R.color.green500);
         registerBroadcastReceiver();
+        setMapPosition();
 
         ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.app_name);
         ((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(null);
@@ -75,7 +75,6 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
     }
 
     private void setMapPosition() {
-        System.out.println("setMapPosition()");
         if (googleMap != null) {
             System.out.println("googleMap != null");
             if (LocalStorage.getBooleanPref(LocalStorage.Pref.should_share_location, getActivity())) {
@@ -100,7 +99,6 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        System.out.println("onMapReady()");
         this.googleMap = googleMap;
 
         ClusterManager<MapCircle> clusterManager = new ClusterManager<>(getActivity(), this.googleMap);
@@ -117,7 +115,6 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
     }
 
     private void getWebServerLocation() {
-        System.out.println("getWebServerLocation()");
         googleMap.clear();
         userCircles.clear();
 

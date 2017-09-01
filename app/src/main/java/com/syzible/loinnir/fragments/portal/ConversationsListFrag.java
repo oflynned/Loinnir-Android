@@ -121,7 +121,6 @@ public class ConversationsListFrag extends Fragment implements
         super.onResume();
         Collections.reverse(conversations);
 
-        System.out.println("onResume()");
         if (shouldShowMessages) {
             NotificationUtils.dismissNotifications(getActivity(), conversations);
             RestClient.post(getActivity(), Endpoints.GET_PAST_CONVERSATION_PREVIEWS,

@@ -79,6 +79,7 @@ public class MainActivity extends AppCompatActivity
 
     // check lifecycle for notifications
     private static boolean isAppVisible;
+
     public static boolean isActivityVisible() {
         return isAppVisible;
     }
@@ -203,12 +204,29 @@ public class MainActivity extends AppCompatActivity
                         @Override
                         public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
                             try {
-                                User partner = new User(response);
-                                PartnerConversationFrag frag = new PartnerConversationFrag()
+                                final User partner = new User(response);
+                                final PartnerConversationFrag frag = new PartnerConversationFrag()
                                         .setPartner(partner);
-                                MainActivity.clearBackstack(getFragmentManager());
-                                MainActivity.setFragment(getFragmentManager(), frag);
-                                NotificationUtils.dismissNotification(getApplicationContext(), partner);
+
+                                RestClient.post(getApplicationContext(), Endpoints.GET_PAST_CONVERSATION_PREVIEWS, JSONUtils.getIdPayload(getApplicationContext()), new BaseJsonHttpResponseHandler<JSONArray>() {
+                                    @Override
+                                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
+                                        MainActivity.clearBackstack(getFragmentManager());
+                                        MainActivity.setFragmentBackstack(getFragmentManager(), new ConversationsListFrag().setResponse(response));
+                                        MainActivity.setFragmentBackstack(getFragmentManager(), frag);
+                                        NotificationUtils.dismissNotification(getApplicationContext(), partner);
+                                    }
+
+                                    @Override
+                                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
+
+                                    }
+
+                                    @Override
+                                    protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                        return new JSONArray(rawJsonData);
+                                    }
+                                });
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
