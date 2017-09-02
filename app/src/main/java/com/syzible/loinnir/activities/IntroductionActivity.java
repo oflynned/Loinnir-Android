@@ -55,7 +55,7 @@ public class IntroductionActivity extends MaterialIntroActivity {
                 .buttonsColor(R.color.blue500)
                 .image(R.drawable.logo_small)
                 .title("Fáilte go dtí Loinnir")
-                .description("An chéad aip shóisialta don Ghaeilge.\nFionn. Nasc. Braith.")
+                .description("Ag fionnadh pobail don Ghaeilge.\nFionn. Nasc. Braith.")
                 .build();
     }
 
@@ -75,7 +75,7 @@ public class IntroductionActivity extends MaterialIntroActivity {
                 .buttonsColor(R.color.blue500)
                 .image(R.drawable.ic_conversation_white)
                 .title("I mBun Allagair")
-                .description("Labhair le h-úsáideoirí atá gar duit sa cheantar céanna, nó trí rúiléid chun bualadh le daoine fánacha.")
+                .description("Labhair i ngrúpa le h-úsáideoirí sa cheantar céanna, nó trí rúiléid chun bualadh le daoine nua fánacha.")
                 .build();
     }
 

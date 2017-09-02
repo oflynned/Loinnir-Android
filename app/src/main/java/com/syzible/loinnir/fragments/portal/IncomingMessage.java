@@ -3,7 +3,7 @@ package com.syzible.loinnir.fragments.portal;
 import android.view.View;
 import android.widget.TextView;
 
-import com.stfalcon.chatkit.messages.MessagesListAdapter;
+import com.stfalcon.chatkit.messages.MessageHolders;
 import com.syzible.loinnir.R;
 import com.syzible.loinnir.objects.Message;
 
@@ -11,7 +11,7 @@ import com.syzible.loinnir.objects.Message;
  * Created by ed on 11/06/2017.
  */
 
-public class IncomingMessage extends MessagesListAdapter.IncomingMessageViewHolder<Message> {
+public class IncomingMessage extends MessageHolders.IncomingTextMessageViewHolder<Message> {
     private TextView senderName;
 
     public IncomingMessage(View itemView) {

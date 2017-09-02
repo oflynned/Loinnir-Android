@@ -65,6 +65,7 @@ import static com.syzible.loinnir.utils.Constants.getCountyFileName;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    private boolean shouldDisplayGreeting;
     private View headerView;
 
     private BroadcastReceiver finishMainActivityReceiver = new BroadcastReceiver() {
@@ -149,9 +150,13 @@ public class MainActivity extends AppCompatActivity
         navigationView.getMenu().getItem(0).setChecked(true);
         headerView = navigationView.getHeaderView(0);
 
-        greetUser();
+        shouldDisplayGreeting = true;
+
         setUpDrawer();
         checkNotificationInvocation();
+
+        if (shouldDisplayGreeting)
+            greetUser();
     }
 
     private void hideKeyboard() {
@@ -161,18 +166,18 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onResume() {
+        super.onResume();
         MainActivity.setAppResumed();
         registerBroadcastReceivers();
         startService(new Intent(getApplicationContext(), LocationService.class));
-        super.onResume();
     }
 
     @Override
     protected void onPause() {
+        super.onPause();
         MainActivity.setAppPausedOrDead();
         stopService(new Intent(this, LocationService.class));
         unregisterReceiver(finishMainActivityReceiver);
-        super.onPause();
     }
 
     private void registerBroadcastReceivers() {
@@ -191,6 +196,8 @@ public class MainActivity extends AppCompatActivity
         if (invocationType != null) {
             switch (invocationType) {
                 case "notification":
+                    shouldDisplayGreeting = false;
+
                     String partnerId = getIntent().getStringExtra("user");
                     JSONObject chatPayload = new JSONObject();
                     try {

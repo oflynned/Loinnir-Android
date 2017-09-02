@@ -66,8 +66,6 @@ public class LocalityConversationFrag extends Fragment {
                                     String localityName = response.getString("locality");
                                     int nearbyUsers = response.getInt("count");
                                     String localUsers = nearbyUsers + " eile anseo";
-
-                                    // set title and subtitle
                                     ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(localityName);
                                     ((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(localUsers);
                                 } catch (JSONException e) {
@@ -123,10 +121,10 @@ public class LocalityConversationFrag extends Fragment {
 
     @Override
     public void onResume() {
+        super.onResume();
         loadMessages();
         getActivity().registerReceiver(newLocalityInformationReceiver,
                 new IntentFilter(BroadcastFilters.new_locality_info_update.toString()));
-        super.onResume();
     }
 
     @Override
@@ -135,11 +133,13 @@ public class LocalityConversationFrag extends Fragment {
         super.onPause();
     }
 
-    private void setupAdapter(View view) {
-        MessageHolders holdersConfig = new MessageHolders();
-        holdersConfig.setIncomingTextConfig(IncomingMessage.class, R.layout.chat_message_layout);
+    private MessageHolders getIncomingHolder() {
+        return new MessageHolders()
+                .setIncomingTextConfig(IncomingMessage.class, R.layout.chat_message_layout);
+    }
 
-        adapter = new MessagesListAdapter<>(LocalStorage.getID(getActivity()), holdersConfig, loadImage());
+    private void setupAdapter(View view) {
+        adapter = new MessagesListAdapter<>(LocalStorage.getID(getActivity()), getIncomingHolder(), loadImage());
         adapter.setOnMessageViewLongClickListener(new MessagesListAdapter.OnMessageViewLongClickListener<Message>() {
             @Override
             public void onMessageViewLongClick(View view, final Message message) {

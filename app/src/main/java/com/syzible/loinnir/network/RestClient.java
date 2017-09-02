@@ -21,9 +21,6 @@ public class RestClient {
     private static AsyncHttpClient asyncHttpClient = new AsyncHttpClient();
     private static SyncHttpClient syncHttpClient = new SyncHttpClient();
 
-    private RestClient() {
-    }
-
     public static void get(String url, AsyncHttpResponseHandler responseHandler) {
         getClient().get(Endpoints.getApiURL(url), null, responseHandler);
     }

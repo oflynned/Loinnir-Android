@@ -28,6 +28,12 @@ public class AuthenticationActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        // TODO check size of fragment stack size to kill app or not
+    }
+
     public static void setFragment(FragmentManager fragmentManager, Fragment fragment) {
         fragmentManager.beginTransaction()
                 .replace(R.id.authentication_frame, fragment)
