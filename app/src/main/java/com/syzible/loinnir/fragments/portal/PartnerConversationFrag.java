@@ -62,33 +62,36 @@ public class PartnerConversationFrag extends Fragment {
             if (intent.getAction().equals(BroadcastFilters.new_partner_message.toString())) {
                 String partnerId = intent.getStringExtra("partner_id");
 
-                RestClient.post(getActivity(), Endpoints.GET_PARTNER_MESSAGES,
-                        JSONUtils.getPartnerInteractionPayload(partnerId, getActivity()),
-                        new BaseJsonHttpResponseHandler<JSONArray>() {
-                            @Override
-                            public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
-                                try {
-                                    JSONObject latestPayload = response.getJSONObject(response.length() - 1);
-                                    User sender = new User(latestPayload.getJSONObject("user"));
-                                    Message message = new Message(sender, latestPayload.getJSONObject("message"));
-                                    adapter.addToStart(message, true);
-                                    markSeen();
-                                    NotificationUtils.dismissNotification(getActivity(), partner);
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
+                // new messages should only be added if you're currently in the correct conversation
+                if (partnerId.equals(partner.getId())) {
+                    JSONObject payload = JSONUtils.getPartnerInteractionPayload(partnerId, getActivity());
+                    RestClient.post(getActivity(), Endpoints.GET_PARTNER_MESSAGES, payload,
+                            new BaseJsonHttpResponseHandler<JSONArray>() {
+                                @Override
+                                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
+                                    try {
+                                        JSONObject latestPayload = response.getJSONObject(response.length() - 1);
+                                        User sender = new User(latestPayload.getJSONObject("user"));
+                                        Message message = new Message(sender, latestPayload.getJSONObject("message"));
+                                        adapter.addToStart(message, true);
+                                        markSeen();
+                                        NotificationUtils.dismissNotification(getActivity(), partner);
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
                                 }
-                            }
 
-                            @Override
-                            public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
-                                System.out.println(rawJsonData);
-                            }
+                                @Override
+                                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
+                                    System.out.println(rawJsonData);
+                                }
 
-                            @Override
-                            protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                return new JSONArray(rawJsonData);
-                            }
-                        });
+                                @Override
+                                protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                    return new JSONArray(rawJsonData);
+                                }
+                            });
+                }
             }
         }
     };
@@ -180,7 +183,6 @@ public class PartnerConversationFrag extends Fragment {
 
                         @Override
                         protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                            System.out.println(rawJsonData);
                             return new JSONArray(rawJsonData);
                         }
                     });
