@@ -11,24 +11,14 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.syzible.loinnir.R;
 import com.syzible.loinnir.activities.MainActivity;
-import com.syzible.loinnir.network.Endpoints;
-import com.syzible.loinnir.network.GetImage;
-import com.syzible.loinnir.network.NetworkCallback;
-import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.objects.User;
 import com.syzible.loinnir.utils.BitmapUtils;
-import com.syzible.loinnir.utils.LocalStorage;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import cz.msebera.android.httpclient.Header;
 import mehdi.sakout.fancybuttons.FancyButton;
 
-import static com.syzible.loinnir.utils.Constants.getCountyFileName;
+import static com.syzible.loinnir.persistence.Constants.getCountyFileName;
 
 /**
  * Created by ed on 07/05/2017.

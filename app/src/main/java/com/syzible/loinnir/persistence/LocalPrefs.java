@@ -1,4 +1,4 @@
-package com.syzible.loinnir.utils;
+package com.syzible.loinnir.persistence;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -8,7 +8,7 @@ import android.preference.PreferenceManager;
  * Created by ed on 08/05/2017.
  */
 
-public class LocalStorage {
+public class LocalPrefs {
     public enum Pref {
         id, fb_access_token, profile_pic, forename, surname, first_run, should_share_location,
         location_update_frequency, lat, lng

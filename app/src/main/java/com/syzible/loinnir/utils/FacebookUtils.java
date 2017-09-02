@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.facebook.login.LoginManager;
+import com.syzible.loinnir.persistence.LocalPrefs;
 import com.syzible.loinnir.services.TokenService;
 
 /**
@@ -13,11 +14,11 @@ import com.syzible.loinnir.services.TokenService;
 public class FacebookUtils {
 
     public static void saveToken(String token, Context context) {
-        LocalStorage.setStringPref(LocalStorage.Pref.fb_access_token, token, context);
+        LocalPrefs.setStringPref(LocalPrefs.Pref.fb_access_token, token, context);
     }
 
     private static String getToken(Context context) {
-        return LocalStorage.getStringPref(LocalStorage.Pref.fb_access_token, context);
+        return LocalPrefs.getStringPref(LocalPrefs.Pref.fb_access_token, context);
     }
 
     public static boolean hasExistingToken(Context context) {
@@ -25,12 +26,12 @@ public class FacebookUtils {
     }
 
     private static void clearToken(Context context) {
-        LocalStorage.purgePref(LocalStorage.Pref.fb_access_token, context);
+        LocalPrefs.purgePref(LocalPrefs.Pref.fb_access_token, context);
     }
 
     public static void getStoredPrefs(Context context) {
-        for (LocalStorage.Pref pref : LocalStorage.Pref.values())
-            System.out.println(pref.name() + ": " + LocalStorage.getStringPref(pref, context));
+        for (LocalPrefs.Pref pref : LocalPrefs.Pref.values())
+            System.out.println(pref.name() + ": " + LocalPrefs.getStringPref(pref, context));
     }
 
     public static void deleteToken(Context context) {

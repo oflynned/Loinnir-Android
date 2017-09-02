@@ -9,8 +9,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
@@ -39,7 +37,7 @@ import com.syzible.loinnir.utils.BroadcastFilters;
 import com.syzible.loinnir.utils.DisplayUtils;
 import com.syzible.loinnir.utils.JSONUtils;
 import com.syzible.loinnir.utils.LanguageUtils;
-import com.syzible.loinnir.utils.LocalStorage;
+import com.syzible.loinnir.persistence.LocalPrefs;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -47,7 +45,6 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.zip.Inflater;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -197,7 +194,7 @@ public class ConversationsListFrag extends Fragment implements
     public void onDialogLongClick(final Conversation conversation) {
         User blockee = null;
         for (IUser user : conversation.getUsers()) {
-            if (!user.getId().equals(LocalStorage.getID(getActivity()))) {
+            if (!user.getId().equals(LocalPrefs.getID(getActivity()))) {
                 blockee = (User) user;
             }
         }

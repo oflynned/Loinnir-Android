@@ -4,15 +4,12 @@ import android.Manifest;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.view.View;
 
 import com.syzible.loinnir.R;
-import com.syzible.loinnir.utils.DisplayUtils;
 import com.syzible.loinnir.utils.FacebookUtils;
-import com.syzible.loinnir.utils.LocalStorage;
+import com.syzible.loinnir.persistence.LocalPrefs;
 
 import agency.tango.materialintroscreen.MaterialIntroActivity;
-import agency.tango.materialintroscreen.MessageButtonBehaviour;
 import agency.tango.materialintroscreen.SlideFragment;
 import agency.tango.materialintroscreen.SlideFragmentBuilder;
 
@@ -30,7 +27,7 @@ public class IntroductionActivity extends MaterialIntroActivity {
             this.finish();
             startActivity(new Intent(this, MainActivity.class));
         } else {
-            if (!LocalStorage.isFirstRun(this)) {
+            if (!LocalPrefs.isFirstRun(this)) {
                 this.finish();
                 startActivity(new Intent(this, AuthenticationActivity.class));
             } else {

@@ -50,7 +50,7 @@ public class RouletteLoadingFrag extends Fragment {
                     @Override
                     public void run() {
                         MainActivity.removeFragment(getFragmentManager());
-                        MainActivity.setFragment(getFragmentManager(), matchFrag);
+                        MainActivity.setFragmentBackstack(getFragmentManager(), matchFrag);
                     }
                 }, 1000);
             }

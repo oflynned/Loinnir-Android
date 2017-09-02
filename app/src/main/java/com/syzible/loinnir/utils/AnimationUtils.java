@@ -18,7 +18,7 @@ public class AnimationUtils {
         RotateAnimation rotateAnimation = new RotateAnimation(0, 360,
                 Animation.RELATIVE_TO_SELF, 0.5f,
                 Animation.RELATIVE_TO_SELF, 0.5f);
-        rotateAnimation.setDuration(250);
+        rotateAnimation.setDuration(350);
         rotateAnimation.setRepeatCount(count);
         rotateAnimation.setInterpolator(new LinearInterpolator());
 

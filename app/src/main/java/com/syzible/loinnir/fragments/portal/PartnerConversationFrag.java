@@ -14,11 +14,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.stfalcon.chatkit.commons.ImageLoader;
-import com.stfalcon.chatkit.messages.MessageHolders;
 import com.stfalcon.chatkit.messages.MessageInput;
 import com.stfalcon.chatkit.messages.MessagesList;
 import com.stfalcon.chatkit.messages.MessagesListAdapter;
@@ -38,14 +36,13 @@ import com.syzible.loinnir.utils.DisplayUtils;
 import com.syzible.loinnir.utils.EncodingUtils;
 import com.syzible.loinnir.utils.JSONUtils;
 import com.syzible.loinnir.utils.LanguageUtils;
-import com.syzible.loinnir.utils.LocalStorage;
+import com.syzible.loinnir.persistence.LocalPrefs;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Date;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -114,25 +111,25 @@ public class PartnerConversationFrag extends Fragment {
 
     @Override
     public void onResume() {
+        super.onResume();
         loadMessages();
         getActivity().registerReceiver(newPartnerMessageReceiver,
                 new IntentFilter(BroadcastFilters.new_partner_message.toString()));
-        super.onResume();
     }
 
     @Override
     public void onPause() {
-        getActivity().unregisterReceiver(newPartnerMessageReceiver);
         super.onPause();
+        getActivity().unregisterReceiver(newPartnerMessageReceiver);
     }
 
     private void setupAdapter(View view) {
-        adapter = new MessagesListAdapter<>(LocalStorage.getID(getActivity()), loadImage());
+        adapter = new MessagesListAdapter<>(LocalPrefs.getID(getActivity()), loadImage());
         adapter.setOnMessageViewLongClickListener(new MessagesListAdapter.OnMessageViewLongClickListener<Message>() {
             @Override
             public void onMessageViewLongClick(View view, final Message message) {
                 // should not be able to block yourself
-                if (!message.getUser().getId().equals(LocalStorage.getID(getActivity())))
+                if (!message.getUser().getId().equals(LocalPrefs.getID(getActivity())))
                     DisplayUtils.generateBlockDialog(getActivity(), (User) message.getUser(), new DisplayUtils.OnCallback() {
                         @Override
                         public void onCallback() {
@@ -148,7 +145,7 @@ public class PartnerConversationFrag extends Fragment {
                 if (messages.size() > 0) {
                     JSONObject payload = new JSONObject();
                     try {
-                        payload.put("my_id", LocalStorage.getID(getActivity()));
+                        payload.put("my_id", LocalPrefs.getID(getActivity()));
                         payload.put("partner_id", partner.getId());
                         payload.put("oldest_message_id", messages.get(messages.size() - 1).getId());
                         payload.put("last_known_count", totalItemsCount - 1);
@@ -220,13 +217,13 @@ public class PartnerConversationFrag extends Fragment {
 
                                                         String messageContent = input.toString();
 
-                                                        Message message = new Message(LocalStorage.getID(getActivity()),
+                                                        Message message = new Message(LocalPrefs.getID(getActivity()),
                                                                 me, System.currentTimeMillis(), messageContent);
                                                         adapter.addToStart(message, true);
 
                                                         // send to server
                                                         JSONObject messagePayload = new JSONObject();
-                                                        messagePayload.put("from_id", LocalStorage.getID(getActivity()));
+                                                        messagePayload.put("from_id", LocalPrefs.getID(getActivity()));
                                                         messagePayload.put("to_id", partner.getId());
                                                         messagePayload.put("message", EncodingUtils.encodeText(message.getText()));
 

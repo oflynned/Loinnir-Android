@@ -20,7 +20,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.maps.android.clustering.ClusterManager;
@@ -31,14 +30,13 @@ import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.objects.MapCircle;
 import com.syzible.loinnir.objects.User;
 import com.syzible.loinnir.services.LocationService;
-import com.syzible.loinnir.utils.Constants;
+import com.syzible.loinnir.persistence.Constants;
 import com.syzible.loinnir.utils.JSONUtils;
-import com.syzible.loinnir.utils.LocalStorage;
+import com.syzible.loinnir.persistence.LocalPrefs;
 import com.syzible.loinnir.utils.MapCircleRenderer;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 
@@ -77,7 +75,7 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
     private void setMapPosition() {
         if (googleMap != null) {
             System.out.println("googleMap != null");
-            if (LocalStorage.getBooleanPref(LocalStorage.Pref.should_share_location, getActivity())) {
+            if (LocalPrefs.getBooleanPref(LocalPrefs.Pref.should_share_location, getActivity())) {
                 getWebServerLocation();
             } else {
                 googleMap.clear();
@@ -125,7 +123,7 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
                         for (int i = 0; i < response.length(); i++) {
                             try {
                                 User user = new User(response.getJSONObject(i));
-                                if (user.getId().equals(LocalStorage.getID(getActivity()))) {
+                                if (user.getId().equals(LocalPrefs.getID(getActivity()))) {
                                     userCircles.add(new MapCircle(user, true));
                                     zoomToLocation(user.getLocation());
                                 } else {

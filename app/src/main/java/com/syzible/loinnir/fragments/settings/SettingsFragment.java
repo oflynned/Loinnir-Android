@@ -23,7 +23,7 @@ import com.syzible.loinnir.utils.EmojiUtils;
 import com.syzible.loinnir.utils.FacebookUtils;
 import com.syzible.loinnir.utils.JSONUtils;
 import com.syzible.loinnir.utils.LanguageUtils;
-import com.syzible.loinnir.utils.LocalStorage;
+import com.syzible.loinnir.persistence.LocalPrefs;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -99,13 +99,13 @@ public class SettingsFragment extends PreferenceFragment {
     }
 
     private void setListenerShareLocation() {
-        boolean isSharingLocation = LocalStorage.getBooleanPref(LocalStorage.Pref.should_share_location, context);
+        boolean isSharingLocation = LocalPrefs.getBooleanPref(LocalPrefs.Pref.should_share_location, context);
         shouldShareLocation.setChecked(isSharingLocation);
         shouldShareLocation.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
-                shouldShareLocation.setChecked(!LocalStorage.getBooleanPref(LocalStorage.Pref.should_share_location, getActivity()));
-                LocalStorage.setBooleanPref(LocalStorage.Pref.should_share_location, (boolean) newValue, context);
+                shouldShareLocation.setChecked(!LocalPrefs.getBooleanPref(LocalPrefs.Pref.should_share_location, getActivity()));
+                LocalPrefs.setBooleanPref(LocalPrefs.Pref.should_share_location, (boolean) newValue, context);
 
                 RestClient.post(context, Endpoints.EDIT_USER, JSONUtils.getLocationChangePayload(context, (boolean) newValue), new BaseJsonHttpResponseHandler<JSONObject>() {
                     @Override
@@ -255,7 +255,7 @@ public class SettingsFragment extends PreferenceFragment {
     }
 
     private void setListenerLogOut() {
-        final String accountName = LocalStorage.getFullName(context);
+        final String accountName = LocalPrefs.getFullName(context);
         logOut.setSummary("Cúntas reatha: " + accountName);
 
         logOut.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {

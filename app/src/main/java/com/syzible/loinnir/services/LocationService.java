@@ -12,8 +12,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.RestClient;
-import com.syzible.loinnir.utils.Constants;
-import com.syzible.loinnir.utils.LocalStorage;
+import com.syzible.loinnir.persistence.Constants;
+import com.syzible.loinnir.persistence.LocalPrefs;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -48,17 +48,17 @@ public class LocationService extends Service {
 
         @Override
         public void onLocationChanged(Location location) {
-            if (LocalStorage.getBooleanPref(LocalStorage.Pref.should_share_location, getApplicationContext()))
+            if (LocalPrefs.getBooleanPref(LocalPrefs.Pref.should_share_location, getApplicationContext()))
                 lastLocation.set(location);
             syncWithServer(location);
         }
 
         private void syncWithServer(Location location) {
-            if (!LocalStorage.getID(getApplicationContext()).equals("")) {
+            if (!LocalPrefs.getID(getApplicationContext()).equals("")) {
                 JSONObject payload = new JSONObject();
 
                 try {
-                    payload.put("fb_id", LocalStorage.getID(getApplicationContext()));
+                    payload.put("fb_id", LocalPrefs.getID(getApplicationContext()));
                     payload.put("lng", location.getLongitude());
                     payload.put("lat", location.getLatitude());
                 } catch (JSONException e) {
@@ -69,7 +69,7 @@ public class LocationService extends Service {
                 RestClient.post(getApplicationContext(), Endpoints.UPDATE_USER_LOCATION, payload, new BaseJsonHttpResponseHandler<JSONObject>() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                        if (LocalStorage.getBooleanPref(LocalStorage.Pref.should_share_location, getApplicationContext()))
+                        if (LocalPrefs.getBooleanPref(LocalPrefs.Pref.should_share_location, getApplicationContext()))
                             getApplicationContext().sendBroadcast(new Intent("com.syzible.loinnir.updated_location"));
                     }
 

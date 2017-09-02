@@ -9,12 +9,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
-import android.icu.text.Normalizer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -30,13 +27,13 @@ import android.widget.TextView;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
-import com.stfalcon.chatkit.messages.MessagesListAdapter;
 import com.syzible.loinnir.R;
 import com.syzible.loinnir.fragments.portal.ConversationsListFrag;
 import com.syzible.loinnir.fragments.portal.LocalityConversationFrag;
 import com.syzible.loinnir.fragments.portal.MapFrag;
 import com.syzible.loinnir.fragments.portal.PartnerConversationFrag;
 import com.syzible.loinnir.fragments.portal.RouletteFrag;
+import com.syzible.loinnir.fragments.portal.RouletteOutcomeFrag;
 import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.GetImage;
 import com.syzible.loinnir.network.NetworkCallback;
@@ -44,7 +41,6 @@ import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.objects.User;
 import com.syzible.loinnir.services.CachingUtil;
 import com.syzible.loinnir.services.LocationService;
-import com.syzible.loinnir.services.MessagingService;
 import com.syzible.loinnir.services.NotificationUtils;
 import com.syzible.loinnir.utils.BitmapUtils;
 import com.syzible.loinnir.utils.BroadcastFilters;
@@ -52,7 +48,7 @@ import com.syzible.loinnir.utils.DisplayUtils;
 import com.syzible.loinnir.utils.EmojiUtils;
 import com.syzible.loinnir.utils.JSONUtils;
 import com.syzible.loinnir.utils.LanguageUtils;
-import com.syzible.loinnir.utils.LocalStorage;
+import com.syzible.loinnir.persistence.LocalPrefs;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -60,10 +56,12 @@ import org.json.JSONObject;
 
 import cz.msebera.android.httpclient.Header;
 
-import static com.syzible.loinnir.utils.Constants.getCountyFileName;
+import static com.syzible.loinnir.persistence.Constants.getCountyFileName;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    private NavigationView navigationView;
 
     private boolean shouldDisplayGreeting;
     private View headerView;
@@ -105,7 +103,7 @@ public class MainActivity extends AppCompatActivity
             if (!fcmToken.equals("")) {
                 JSONObject o = new JSONObject();
                 try {
-                    o.put("fb_id", LocalStorage.getID(this));
+                    o.put("fb_id", LocalPrefs.getID(this));
                     o.put("fcm_token", fcmToken);
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -145,7 +143,7 @@ public class MainActivity extends AppCompatActivity
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         navigationView.getMenu().getItem(0).setChecked(true);
         headerView = navigationView.getHeaderView(0);
@@ -186,7 +184,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void greetUser() {
-        String name = LocalStorage.getStringPref(LocalStorage.Pref.forename, this);
+        String name = LocalPrefs.getStringPref(LocalPrefs.Pref.forename, this);
         DisplayUtils.generateSnackbar(this, "Fáilte romhat, a " + LanguageUtils.getVocative(name) + "! " +
                 EmojiUtils.getEmoji(EmojiUtils.HAPPY));
     }
@@ -197,6 +195,7 @@ public class MainActivity extends AppCompatActivity
             switch (invocationType) {
                 case "notification":
                     shouldDisplayGreeting = false;
+                    navigationView.getMenu().getItem(2).setChecked(true);
 
                     String partnerId = getIntent().getStringExtra("user");
                     JSONObject chatPayload = new JSONObject();
@@ -290,15 +289,15 @@ public class MainActivity extends AppCompatActivity
 
     private void setUpDrawer() {
         TextView userName = (TextView) headerView.findViewById(R.id.nav_header_name);
-        userName.setText(LocalStorage.getFullName(this));
+        userName.setText(LocalPrefs.getFullName(this));
 
         setLocality();
 
         final ImageView profilePic = (ImageView) headerView.findViewById(R.id.nav_header_pic);
-        final String myId = LocalStorage.getID(getApplicationContext());
+        final String myId = LocalPrefs.getID(getApplicationContext());
 
         if (!CachingUtil.doesImageExist(getApplicationContext(), myId)) {
-            String picUrl = LocalStorage.getStringPref(LocalStorage.Pref.profile_pic, this);
+            String picUrl = LocalPrefs.getStringPref(LocalPrefs.Pref.profile_pic, this);
 
             new GetImage(new NetworkCallback<Bitmap>() {
                 @Override
@@ -327,27 +326,34 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            // if there's only one fragment on the stack we should prevent the default
-            // popping to ask for the user's permission to close the app
-            if (getFragmentManager().getBackStackEntryCount() == 0) {
-                new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("An Aip a Dhúnadh?")
-                        .setMessage("Má bhrúitear an chnaipe \"Dún\", dúnfar an aip. An bhfuil tú cinnte go bhfuil sé seo ag teastáil uait a dhéanamh?")
-                        .setPositiveButton("Dún", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                MainActivity.this.finish();
-                            }
-                        })
-                        .setNegativeButton("Ná dún", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-
-                            }
-                        })
-                        .show();
+            // returning from the roulette fragment should show original roulette screen
+            Fragment currentFragment = getFragmentManager().findFragmentById(R.id.portal_frame);
+            if (currentFragment.getClass().getName().equals(RouletteOutcomeFrag.class.getName())) {
+                MainActivity.clearBackstack(getFragmentManager());
+                MainActivity.setFragment(getFragmentManager(), new RouletteFrag());
             } else {
-                super.onBackPressed();
+                // if there's only one fragment on the stack we should prevent the default
+                // popping to ask for the user's permission to close the app
+                if (getFragmentManager().getBackStackEntryCount() == 0) {
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("An Aip a Dhúnadh?")
+                            .setMessage("Má bhrúitear an chnaipe \"Dún\", dúnfar an aip. An bhfuil tú cinnte go bhfuil sé seo ag teastáil uait?")
+                            .setPositiveButton("Dún", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    MainActivity.this.finish();
+                                }
+                            })
+                            .setNegativeButton("Ná dún", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+
+                                }
+                            })
+                            .show();
+                } else {
+                    super.onBackPressed();
+                }
             }
         }
     }
@@ -437,23 +443,27 @@ public class MainActivity extends AppCompatActivity
     }
 
     public static void setFragment(FragmentManager fragmentManager, Fragment fragment) {
-        fragmentManager.beginTransaction()
-                .replace(R.id.portal_frame, fragment)
-                .commit();
+        if (fragmentManager != null)
+            fragmentManager.beginTransaction()
+                    .replace(R.id.portal_frame, fragment)
+                    .commit();
     }
 
     public static void setFragmentBackstack(FragmentManager fragmentManager, Fragment fragment) {
-        fragmentManager.beginTransaction()
-                .replace(R.id.portal_frame, fragment)
-                .addToBackStack(fragment.getClass().getName())
-                .commit();
+        if (fragmentManager != null)
+            fragmentManager.beginTransaction()
+                    .replace(R.id.portal_frame, fragment)
+                    .addToBackStack(fragment.getClass().getName())
+                    .commit();
     }
 
     public static void removeFragment(FragmentManager fragmentManager) {
-        fragmentManager.popBackStack();
+        if (fragmentManager != null)
+            fragmentManager.popBackStack();
     }
 
     public static void clearBackstack(FragmentManager fragmentManager) {
-        fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        if (fragmentManager != null)
+            fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
     }
 }

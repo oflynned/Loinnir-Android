@@ -26,7 +26,7 @@ import com.syzible.loinnir.utils.DisplayUtils;
 import com.syzible.loinnir.utils.EmojiUtils;
 import com.syzible.loinnir.utils.EncodingUtils;
 import com.syzible.loinnir.utils.FacebookUtils;
-import com.syzible.loinnir.utils.LocalStorage;
+import com.syzible.loinnir.persistence.LocalPrefs;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -47,7 +47,7 @@ public class LoginFrag extends Fragment {
         super.onCreate(savedInstanceState);
 
         // default to on, has to be set at some point, may as well be here instead of overriding on each start
-        LocalStorage.setBooleanPref(LocalStorage.Pref.should_share_location, true, getActivity());
+        LocalPrefs.setBooleanPref(LocalPrefs.Pref.should_share_location, true, getActivity());
         callbackManager = CallbackManager.Factory.create();
     }
 
@@ -99,10 +99,10 @@ public class LoginFrag extends Fragment {
                                     postData.put("lat", LocationService.ATHLONE.latitude);
                                     postData.put("lng", LocationService.ATHLONE.longitude);
 
-                                    LocalStorage.setStringPref(LocalStorage.Pref.id, id, getActivity());
-                                    LocalStorage.setStringPref(LocalStorage.Pref.forename, forename, getActivity());
-                                    LocalStorage.setStringPref(LocalStorage.Pref.surname, surname, getActivity());
-                                    LocalStorage.setStringPref(LocalStorage.Pref.profile_pic, pic, getActivity());
+                                    LocalPrefs.setStringPref(LocalPrefs.Pref.id, id, getActivity());
+                                    LocalPrefs.setStringPref(LocalPrefs.Pref.forename, forename, getActivity());
+                                    LocalPrefs.setStringPref(LocalPrefs.Pref.surname, surname, getActivity());
+                                    LocalPrefs.setStringPref(LocalPrefs.Pref.profile_pic, pic, getActivity());
 
                                     Intent startFCMTokenService = new Intent(getActivity(), TokenService.class);
                                     getActivity().startService(startFCMTokenService);

@@ -1,9 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+
+    <TextView
+        android:id="@+id/information_text_roulette"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/roulette_spinner_button"
+        android:layout_marginBottom="64dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="64dp"
+        android:gravity="center_horizontal"
+        android:text="Á meatseáil le h-úsáideoir nua."
+        android:textSize="24sp" />
 
     <ImageView
         android:id="@+id/roulette_spinner_button"
@@ -12,17 +26,18 @@
         android:layout_centerInParent="true"
         android:minHeight="128dp"
         android:minWidth="128dp"
-        android:src="@drawable/ic_roulette_yellow" />
+        app:srcCompat="@drawable/ic_roulette_yellow" />
 
     <TextView
-        android:id="@+id/information_text_roulette"
+        android:id="@+id/information_text_roulette_subtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/roulette_spinner_button"
-        android:layout_marginTop="64dp"
+        android:layout_below="@+id/roulette_spinner_button"
         android:layout_marginBottom="64dp"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
+        android:layout_marginTop="64dp"
         android:gravity="center_horizontal"
-        android:text="Á meatseáil le h-úsáideoir nua ... Fan go bhfeice tú." />
+        android:text="Fan go bhfeice tú."
+        android:textSize="18sp" />
 </RelativeLayout>

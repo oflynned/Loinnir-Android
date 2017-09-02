@@ -1,4 +1,4 @@
-package com.syzible.loinnir.utils;
+package com.syzible.loinnir.persistence;
 
 import java.nio.charset.Charset;
 
@@ -12,7 +12,8 @@ public class Constants {
     public static String getCountyFileName(String county) {
         return county.toLowerCase().replace(" ", "_")
                 .replace("á", "a").replace("é", "e")
-                .replace("í", "i").replace("ó", "o").replace("ú", "u");
+                .replace("í", "i").replace("ó", "o")
+                .replace("ú", "u");
     }
 
     public static final int ONE_SECOND = 1000;

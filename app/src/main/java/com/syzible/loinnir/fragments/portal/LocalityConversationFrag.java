@@ -34,14 +34,13 @@ import com.syzible.loinnir.utils.DisplayUtils;
 import com.syzible.loinnir.utils.EncodingUtils;
 import com.syzible.loinnir.utils.JSONUtils;
 import com.syzible.loinnir.utils.LanguageUtils;
-import com.syzible.loinnir.utils.LocalStorage;
+import com.syzible.loinnir.persistence.LocalPrefs;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Date;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -139,12 +138,12 @@ public class LocalityConversationFrag extends Fragment {
     }
 
     private void setupAdapter(View view) {
-        adapter = new MessagesListAdapter<>(LocalStorage.getID(getActivity()), getIncomingHolder(), loadImage());
+        adapter = new MessagesListAdapter<>(LocalPrefs.getID(getActivity()), getIncomingHolder(), loadImage());
         adapter.setOnMessageViewLongClickListener(new MessagesListAdapter.OnMessageViewLongClickListener<Message>() {
             @Override
             public void onMessageViewLongClick(View view, final Message message) {
                 // should not be able to block yourself
-                if (!message.getUser().getId().equals(LocalStorage.getID(getActivity())))
+                if (!message.getUser().getId().equals(LocalPrefs.getID(getActivity())))
                     DisplayUtils.generateBlockDialog(getActivity(), (User) message.getUser(), new DisplayUtils.OnCallback() {
                         @Override
                         public void onCallback() {
@@ -160,7 +159,7 @@ public class LocalityConversationFrag extends Fragment {
                 if (messages.size() > 0) {
                     JSONObject payload = new JSONObject();
                     try {
-                        payload.put("fb_id", LocalStorage.getID(getActivity()));
+                        payload.put("fb_id", LocalPrefs.getID(getActivity()));
                         payload.put("oldest_message_id", messages.get(messages.size() - 1).getId());
                         payload.put("last_known_count", totalItemsCount - 1);
                     } catch (JSONException e) {
@@ -219,7 +218,7 @@ public class LocalityConversationFrag extends Fragment {
 
                                     // send to server
                                     JSONObject messagePayload = new JSONObject();
-                                    messagePayload.put("fb_id", LocalStorage.getID(getActivity()));
+                                    messagePayload.put("fb_id", LocalPrefs.getID(getActivity()));
                                     messagePayload.put("message", EncodingUtils.encodeText(messageContent));
 
                                     RestClient.post(getActivity(), Endpoints.SEND_LOCALITY_MESSAGE, messagePayload, new BaseJsonHttpResponseHandler<JSONObject>() {

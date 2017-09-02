@@ -12,13 +12,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.syzible.loinnir.R;
-import com.syzible.loinnir.activities.MainActivity;
 import com.syzible.loinnir.objects.User;
 import com.syzible.loinnir.utils.BitmapUtils;
 
-import mehdi.sakout.fancybuttons.FancyButton;
-
-import static com.syzible.loinnir.utils.Constants.getCountyFileName;
+import static com.syzible.loinnir.persistence.Constants.getCountyFileName;
 
 /**
  * Created by ed on 07/05/2017.

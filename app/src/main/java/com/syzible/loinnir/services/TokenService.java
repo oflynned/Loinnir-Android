@@ -5,7 +5,7 @@ import com.google.firebase.iid.FirebaseInstanceIdService;
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.RestClient;
-import com.syzible.loinnir.utils.LocalStorage;
+import com.syzible.loinnir.persistence.LocalPrefs;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,10 +24,10 @@ public class TokenService extends FirebaseInstanceIdService {
     }
 
     private void sendRegistrationToOwnServer(String token) {
-        if (LocalStorage.isLoggedIn(getApplicationContext())) {
+        if (LocalPrefs.isLoggedIn(getApplicationContext())) {
             JSONObject payload = new JSONObject();
             try {
-                payload.put("fb_id", LocalStorage.getID(getApplicationContext()));
+                payload.put("fb_id", LocalPrefs.getID(getApplicationContext()));
                 payload.put("fcm_token", token);
             } catch (JSONException e) {
                 e.printStackTrace();

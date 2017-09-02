@@ -44,11 +44,12 @@ public class DisplayUtils {
     public static AlertDialog generateBlockDialog(final Activity activity, final User blockee, final OnCallback callback) {
         return new AlertDialog.Builder(activity)
                 .setTitle("Cosc a Chur " + LanguageUtils.getPrepositionalForm("ar", LanguageUtils.lenite(blockee.getForename())) + "?")
-                .setMessage("Má chuireann tú cosc ar úsáideoir araile, ní féidir leat nó " + LanguageUtils.getPrepositionalForm("le", blockee.getForename()) + " dul i dteagmháil lena chéile. " +
+                .setMessage("Má chuireann tú cosc ar úsáideoir araile, ní féidir leat nó " +
+                        LanguageUtils.getPrepositionalForm("le", blockee.getForename()) + " dul i dteagmháil lena chéile. " +
                         "Bain úsáid as seo amháin go bhfuil tú cinnte nach dteastaíonn uait faic a chloisteáil a thuilleadh ón úsáideoir seo. " +
                         "Cur cosc ar dhuine má imrítear bulaíocht ort, nó mura dteastaíonn uait tuilleadh teagmhála. " +
                         "Má athraíonn tú do mheabhair ar ball, téigh chuig na socruithe agus bainistigh cé atá curtha ar cosc.")
-                .setPositiveButton("Cur cosc i bhfeidhm", new DialogInterface.OnClickListener() {
+                .setPositiveButton("Cuir cosc i bhfeidhm", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, final int which) {
                         RestClient.post(activity, Endpoints.BLOCK_USER,
@@ -71,7 +72,7 @@ public class DisplayUtils {
                                 });
                     }
                 })
-                .setNegativeButton("Ná cur", null)
+                .setNegativeButton("Ná cuir", null)
                 .show();
     }
 
