@@ -19,6 +19,20 @@ public enum BroadcastFilters {
         }
     },
 
+    changed_locality {
+        @Override
+        public String toString() {
+            return "com.syzible.loinnir.changed_locality";
+        }
+    },
+
+    updated_location {
+        @Override
+        public String toString() {
+            return "com.syzible.loinnir.updated_location";
+        }
+    },
+
     new_partner_message {
         @Override
         public String toString() {

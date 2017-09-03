@@ -16,6 +16,10 @@ public class Endpoints {
     private static final String STEM_URL = LOCAL_ENDPOINT;
     private static final String API_URL = STEM_URL + "/api/v" + API_VERSION;
 
+    public static boolean isDebugMode() {
+        return STEM_URL.equals(LOCAL_ENDPOINT);
+    }
+
     public static final String CREATE_USER = "/users/create";
     public static final String EDIT_USER = "/users/edit";
     public static final String DELETE_USER = "/users/delete";
@@ -53,6 +57,7 @@ public class Endpoints {
     public static String getApiURL(String endpoint) {
         return API_URL + endpoint;
     }
+
     public static String getFrontendURL(String endpoint) {
         return STEM_URL + endpoint;
     }

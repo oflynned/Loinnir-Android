@@ -14,6 +14,7 @@ import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.persistence.Constants;
 import com.syzible.loinnir.persistence.LocalPrefs;
+import com.syzible.loinnir.utils.BroadcastFilters;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,8 +32,9 @@ public class LocationService extends Service {
     public static final float MY_LOCATION_ZOOM = 14.0f;
     public static final int USER_LOCATION_RADIUS = 500;
 
-    // obtain fix interval every 5 minutes while the app is in the foreground
-    private static final int LOCATION_INTERVAL = Constants.DEV_MODE ? Constants.ONE_SECOND : Constants.FIVE_MINUTES;
+    private static final int LOCATION_FOREGROUND_INTERVAL = Endpoints.isDebugMode() ? Constants.ONE_SECOND : Constants.FIVE_MINUTES;
+    private static final int LOCATION_BACKGROUND_INTERVAL = Constants.ONE_HOUR;
+
     // update every time 500m of a distance change is observed
     private static final float LOCATION_DISTANCE = 500f;
 
@@ -69,8 +71,18 @@ public class LocationService extends Service {
                 RestClient.post(getApplicationContext(), Endpoints.UPDATE_USER_LOCATION, payload, new BaseJsonHttpResponseHandler<JSONObject>() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                        if (LocalPrefs.getBooleanPref(LocalPrefs.Pref.should_share_location, getApplicationContext()))
-                            getApplicationContext().sendBroadcast(new Intent("com.syzible.loinnir.updated_location"));
+                        try {
+                            String currentLocality = response.getJSONObject("user").getString("locality");
+                            if (!LocalPrefs.getStringPref(LocalPrefs.Pref.last_known_location, getApplicationContext()).equals(currentLocality))
+                                getApplicationContext().sendBroadcast(new Intent(BroadcastFilters.changed_locality.toString()));
+
+                            LocalPrefs.setStringPref(LocalPrefs.Pref.last_known_location, currentLocality, getApplicationContext());
+
+                            if (LocalPrefs.getBooleanPref(LocalPrefs.Pref.should_share_location, getApplicationContext()))
+                                getApplicationContext().sendBroadcast(new Intent(BroadcastFilters.updated_location.toString()));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
 
                     @Override
@@ -114,8 +126,8 @@ public class LocationService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        startPollingLocation();
         super.onStartCommand(intent, flags, startId);
+        startPollingLocation();
         return START_STICKY;
     }
 
@@ -123,7 +135,7 @@ public class LocationService extends Service {
         initializeLocationManager();
         try {
             locationManager.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
+                    LocationManager.NETWORK_PROVIDER, LOCATION_FOREGROUND_INTERVAL, LOCATION_DISTANCE,
                     locationListeners[1]);
         } catch (java.lang.SecurityException | IllegalArgumentException e) {
             e.printStackTrace();
@@ -131,7 +143,7 @@ public class LocationService extends Service {
 
         try {
             locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
+                    LocationManager.GPS_PROVIDER, LOCATION_FOREGROUND_INTERVAL, LOCATION_DISTANCE,
                     locationListeners[0]);
         } catch (java.lang.SecurityException | IllegalArgumentException e) {
             e.printStackTrace();
@@ -152,8 +164,8 @@ public class LocationService extends Service {
 
     @Override
     public void onDestroy() {
-        stopPollingLocation();
         super.onDestroy();
+        stopPollingLocation();
     }
 
     private void initializeLocationManager() {

@@ -53,11 +53,21 @@ public class LocalityConversationFrag extends Fragment {
     private View view;
     private ArrayList<Message> messages = new ArrayList<>();
     private MessagesListAdapter<Message> adapter;
-    private BroadcastReceiver newLocalityInformationReceiver = new BroadcastReceiver() {
+
+    private BroadcastReceiver onChangeInLocalityReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            // TODO check locality from payload
+            if (intent.getAction().equals(BroadcastFilters.changed_locality.toString())) {
+                // the newest update in locality doesn't correspond to the last one on record
+                // a user should be changed into a new chat room and the messages be reloaded
+                loadMessages();
+            }
+        }
+    };
 
+    private BroadcastReceiver onNewLocalityInfoReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(BroadcastFilters.new_locality_info_update.toString())) {
                 RestClient.post(getActivity(), Endpoints.GET_NEARBY_COUNT, JSONUtils.getIdPayload(getActivity()),
                         new BaseJsonHttpResponseHandler<JSONObject>() {
@@ -124,14 +134,18 @@ public class LocalityConversationFrag extends Fragment {
     public void onResume() {
         super.onResume();
         loadMessages();
-        getActivity().registerReceiver(newLocalityInformationReceiver,
+        getActivity().registerReceiver(onNewLocalityInfoReceiver,
                 new IntentFilter(BroadcastFilters.new_locality_info_update.toString()));
+
+        getActivity().registerReceiver(onChangeInLocalityReceiver,
+                new IntentFilter(BroadcastFilters.changed_locality.toString()));
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        getActivity().unregisterReceiver(newLocalityInformationReceiver);
+        getActivity().unregisterReceiver(onNewLocalityInfoReceiver);
+        getActivity().unregisterReceiver(onChangeInLocalityReceiver);
     }
 
     private MessageHolders getIncomingHolder() {

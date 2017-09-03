@@ -10,7 +10,7 @@ import android.preference.PreferenceManager;
 public class LocalPrefs {
     public enum Pref {
         id, fb_access_token, profile_pic, forename, surname, first_run_completed, should_share_location,
-        location_update_frequency, lat, lng
+        location_update_frequency, lat, lng, last_known_location
     }
 
     public static String getID(Context context) {
@@ -29,10 +29,6 @@ public class LocalPrefs {
         return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(key.name(), false);
     }
 
-    public static float getFloatPref(Pref key, Context context) {
-        return PreferenceManager.getDefaultSharedPreferences(context).getFloat(key.name(), 0);
-    }
-
     public static void setStringPref(Pref key, String value, Context context) {
         PreferenceManager.getDefaultSharedPreferences(context)
                 .edit().putString(key.name(), value).apply();
@@ -41,11 +37,6 @@ public class LocalPrefs {
     public static void setBooleanPref(Pref key, boolean value, Context context) {
         PreferenceManager.getDefaultSharedPreferences(context)
                 .edit().putBoolean(key.name(), value).apply();
-    }
-
-    public static void setFloatPref(Pref key, float value, Context context) {
-        PreferenceManager.getDefaultSharedPreferences(context)
-                .edit().putFloat(key.name(), value).apply();
     }
 
     public static void purgePref(Pref key, Context context) {
