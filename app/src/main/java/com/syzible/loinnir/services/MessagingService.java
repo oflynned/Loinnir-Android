@@ -10,6 +10,7 @@ import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.objects.Message;
 import com.syzible.loinnir.objects.User;
 import com.syzible.loinnir.utils.BroadcastFilters;
+import com.syzible.loinnir.utils.EncodingUtils;
 import com.syzible.loinnir.utils.JSONUtils;
 
 import org.json.JSONException;
@@ -73,6 +74,12 @@ public class MessagingService extends FirebaseMessagingService {
         JSONObject idObj = new JSONObject();
         idObj.put("$oid", _id);
         notificationData.put("_id", idObj);
+
+        String messageData = EncodingUtils.encodeText(notificationData.getString("message"));
+        notificationData.remove("message");
+        notificationData.put("message", messageData);
+
+        System.out.println(notificationData);
 
         Message message = new Message(sender, notificationData);
 
