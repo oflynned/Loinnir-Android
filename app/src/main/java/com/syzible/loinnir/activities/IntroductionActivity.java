@@ -1,6 +1,9 @@
 package com.syzible.loinnir.activities;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -43,8 +46,24 @@ public class IntroductionActivity extends MaterialIntroActivity {
     @Override
     public void onFinish() {
         super.onFinish();
-        LocalPrefs.setBooleanPref(LocalPrefs.Pref.first_run_completed, true, this);
-        startActivity(new Intent(this, AuthenticationActivity.class));
+        new AlertDialog.Builder(this)
+                .setTitle("TOS")
+                .setMessage("TOS")
+                .setPositiveButton("Aontaím", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Context context = IntroductionActivity.this;
+                        LocalPrefs.setBooleanPref(LocalPrefs.Pref.first_run_completed, true, context);
+                        startActivity(new Intent(context, AuthenticationActivity.class));
+                    }
+                })
+                .setNegativeButton("Ní Aontaím", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        IntroductionActivity.this.finish();
+                    }
+                })
+                .show();
     }
 
     private SlideFragment introductionSlide() {

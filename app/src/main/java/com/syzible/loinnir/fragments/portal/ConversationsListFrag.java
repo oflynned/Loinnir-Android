@@ -62,33 +62,45 @@ public class ConversationsListFrag extends Fragment implements
     private JSONArray response;
 
     private boolean shouldShowMessages = false;
-    private BroadcastReceiver newPartnerMessageConversationReceover = new BroadcastReceiver() {
+    private BroadcastReceiver newPartnerMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(BroadcastFilters.new_partner_message.toString())) {
-                RestClient.post(getActivity(), Endpoints.GET_PAST_CONVERSATION_PREVIEWS,
-                        JSONUtils.getIdPayload(getActivity()),
-                        new BaseJsonHttpResponseHandler<JSONArray>() {
-                            @Override
-                            public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
-                                System.out.println(response);
-                                loadMessages(response);
-                                NotificationUtils.dismissNotifications(getActivity(), conversations);
-                            }
-
-                            @Override
-                            public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
-                                System.out.println(rawJsonData);
-                            }
-
-                            @Override
-                            protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                return new JSONArray(rawJsonData);
-                            }
-                        });
-            }
+            if (intent.getAction().equals(BroadcastFilters.new_partner_message.toString()))
+               loadConversationPreviews();
         }
     };
+
+    private BroadcastReceiver onBlockEnactedReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(BroadcastFilters.block_enacted.toString()))
+                loadConversationPreviews();
+        }
+    };
+
+    private void loadConversationPreviews() {
+        RestClient.post(getActivity(), Endpoints.GET_PAST_CONVERSATION_PREVIEWS,
+                JSONUtils.getIdPayload(getActivity()),
+                new BaseJsonHttpResponseHandler<JSONArray>() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
+                        shouldShowMessages = response.length() > 0;
+                        loadMessages(response);
+                        setListLayout();
+                        NotificationUtils.dismissNotifications(getActivity(), conversations);
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
+                        System.out.println(rawJsonData);
+                    }
+
+                    @Override
+                    protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                        return new JSONArray(rawJsonData);
+                    }
+                });
+    }
 
     @Nullable
     @Override
@@ -116,38 +128,21 @@ public class ConversationsListFrag extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
+
         Collections.reverse(conversations);
+        loadConversationPreviews();
 
-        if (shouldShowMessages) {
-            NotificationUtils.dismissNotifications(getActivity(), conversations);
-            RestClient.post(getActivity(), Endpoints.GET_PAST_CONVERSATION_PREVIEWS,
-                    JSONUtils.getIdPayload(getActivity()),
-                    new BaseJsonHttpResponseHandler<JSONArray>() {
-                        @Override
-                        public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
-                            loadMessages(response);
-                        }
-
-                        @Override
-                        public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
-
-                        }
-
-                        @Override
-                        protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                            return new JSONArray(rawJsonData);
-                        }
-                    });
-        }
-
-        getActivity().registerReceiver(newPartnerMessageConversationReceover,
+        getActivity().registerReceiver(newPartnerMessageReceiver,
                 new IntentFilter(BroadcastFilters.new_partner_message.toString()));
+        getActivity().registerReceiver(onBlockEnactedReceiver,
+                new IntentFilter(BroadcastFilters.block_enacted.toString()));
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        getActivity().unregisterReceiver(newPartnerMessageConversationReceover);
+        getActivity().unregisterReceiver(newPartnerMessageReceiver);
+        getActivity().unregisterReceiver(onBlockEnactedReceiver);
     }
 
     public ConversationsListFrag setResponse(JSONArray response) {
@@ -179,25 +174,33 @@ public class ConversationsListFrag extends Fragment implements
 
     @Override
     public void onDialogClick(Conversation conversation) {
-        for (int i = 0; i < conversations.size(); i++) {
-            if (conversations.get(i).getId().equals(conversation.getId())) {
+        for (int i = 0; i < conversations.size(); i++)
+            if (conversations.get(i).getId().equals(conversation.getId()))
                 conversations.get(i).setUnreadCount(0);
-            }
-        }
 
         User partner = (User) conversation.getUsers().get(0);
         PartnerConversationFrag frag = new PartnerConversationFrag().setPartner(partner);
         MainActivity.setFragmentBackstack(getFragmentManager(), frag);
     }
 
+    private void setListLayout() {
+        if (conversations.size() > 0) {
+            dialogsListAdapter.setItems(conversations);
+            dialogsListAdapter.setOnDialogClickListener(ConversationsListFrag.this);
+            dialogsListAdapter.setOnDialogLongClickListener(ConversationsListFrag.this);
+            dialogsList.setAdapter(dialogsListAdapter);
+        } else {
+            MainActivity.removeFragment(getFragmentManager());
+            MainActivity.setFragment(getFragmentManager(), new NoConversationFrag());
+        }
+    }
+
     @Override
     public void onDialogLongClick(final Conversation conversation) {
         User blockee = null;
-        for (IUser user : conversation.getUsers()) {
-            if (!user.getId().equals(LocalPrefs.getID(getActivity()))) {
+        for (IUser user : conversation.getUsers())
+            if (!user.getId().equals(LocalPrefs.getID(getActivity())))
                 blockee = (User) user;
-            }
-        }
 
         final User finalBlockee = blockee;
         new AlertDialog.Builder(getActivity())
@@ -216,19 +219,8 @@ public class ConversationsListFrag extends Fragment implements
                                     @Override
                                     public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
                                         DisplayUtils.generateSnackbar(getActivity(), "Cuireadh cosc ar " + LanguageUtils.lenite(finalBlockee.getForename()) + ".");
-
-                                        // inverted ordering
-                                        conversations.remove(conversations.size() - which - 1);
-
-                                        if (conversations.size() > 0) {
-                                            dialogsListAdapter.setItems(conversations);
-                                            dialogsListAdapter.setOnDialogClickListener(ConversationsListFrag.this);
-                                            dialogsListAdapter.setOnDialogLongClickListener(ConversationsListFrag.this);
-                                            dialogsList.setAdapter(dialogsListAdapter);
-                                        } else {
-                                            MainActivity.removeFragment(getFragmentManager());
-                                            MainActivity.setFragment(getFragmentManager(), new NoConversationFrag());
-                                        }
+                                        conversations.remove(which + 1);
+                                        setListLayout();
                                     }
 
                                     @Override

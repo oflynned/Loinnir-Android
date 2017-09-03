@@ -164,7 +164,8 @@ public class BlockedUsersFragment extends Fragment {
                     RestClient.post(context, Endpoints.UNBLOCK_USER, JSONUtils.getPartnerInteractionPayload(blockedUser, context), new BaseJsonHttpResponseHandler<JSONObject>() {
                         @Override
                         public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                            DisplayUtils.generateSnackbar(getActivity(), "Baineadh an cosc de " + LanguageUtils.lenite(blockedUser.getName()));
+                            DisplayUtils.generateSnackbar(getActivity(),
+                                    "Baineadh an cosc " + LanguageUtils.getPrepositionalForm("de", blockedUser.getName()));
 
                             // now remove the selected blocked user and invalidate the list
                             blockedUsers.remove(position);

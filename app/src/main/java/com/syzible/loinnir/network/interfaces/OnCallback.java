@@ -5,5 +5,5 @@ package com.syzible.loinnir.network.interfaces;
  */
 
 public interface OnCallback {
-    void onCallback();
+    void onCallback(boolean outcome);
 }

@@ -127,15 +127,16 @@ public class LocationService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-        startPollingLocation();
+        //stopPollingLocation();
+        startPollingLocation(LOCATION_FOREGROUND_INTERVAL);
         return START_STICKY;
     }
 
-    private void startPollingLocation() {
+    private void startPollingLocation(int frequency) {
         initializeLocationManager();
         try {
             locationManager.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER, LOCATION_FOREGROUND_INTERVAL, LOCATION_DISTANCE,
+                    LocationManager.NETWORK_PROVIDER, frequency, LOCATION_DISTANCE,
                     locationListeners[1]);
         } catch (java.lang.SecurityException | IllegalArgumentException e) {
             e.printStackTrace();
@@ -143,7 +144,7 @@ public class LocationService extends Service {
 
         try {
             locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, LOCATION_FOREGROUND_INTERVAL, LOCATION_DISTANCE,
+                    LocationManager.GPS_PROVIDER, frequency, LOCATION_DISTANCE,
                     locationListeners[0]);
         } catch (java.lang.SecurityException | IllegalArgumentException e) {
             e.printStackTrace();
@@ -166,6 +167,7 @@ public class LocationService extends Service {
     public void onDestroy() {
         super.onDestroy();
         stopPollingLocation();
+        //startPollingLocation(LOCATION_BACKGROUND_INTERVAL);
     }
 
     private void initializeLocationManager() {

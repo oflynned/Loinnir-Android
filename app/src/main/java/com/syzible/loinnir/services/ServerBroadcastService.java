@@ -4,28 +4,22 @@ import android.content.Intent;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
-import com.loopj.android.http.BaseJsonHttpResponseHandler;
-import com.syzible.loinnir.network.Endpoints;
-import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.objects.Message;
 import com.syzible.loinnir.objects.User;
 import com.syzible.loinnir.utils.BroadcastFilters;
 import com.syzible.loinnir.utils.EncodingUtils;
-import com.syzible.loinnir.utils.JSONUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import cz.msebera.android.httpclient.Header;
 
 /**
  * Created by ed on 26/05/2017.
  */
 
-public class MessagingService extends FirebaseMessagingService {
+public class ServerBroadcastService extends FirebaseMessagingService {
 
     private enum NotificationTypes {
-        new_partner_message, new_locality_update
+        new_partner_message, new_locality_update, block_enacted
     }
 
     @Override
@@ -42,10 +36,23 @@ public class MessagingService extends FirebaseMessagingService {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+            } else if (message_type.equals(NotificationTypes.block_enacted.name())) {
+                onBlockEnacted(remoteMessage.getData().get("block_enacter_id"));
             }
         }
 
         super.onMessageReceived(remoteMessage);
+    }
+
+    /**
+     * A broadcast should notify the app if the user has been blocked, and update/disable/remove
+     * parts of the app that may or may not be showing to prevent contact and overriding blocks
+     * @param userBlockingMeId id of the user who has enacted the block
+     */
+    private void onBlockEnacted(String userBlockingMeId) {
+        Intent handleUiOnBlockBroadcast = new Intent(BroadcastFilters.block_enacted.toString());
+        handleUiOnBlockBroadcast.putExtra("block_enacter_id", userBlockingMeId);
+        getApplicationContext().sendBroadcast(handleUiOnBlockBroadcast);
     }
 
     private void onLocalityInfoUpdate() {

@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.stfalcon.chatkit.commons.ImageLoader;
@@ -26,6 +27,7 @@ import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.GetImage;
 import com.syzible.loinnir.network.NetworkCallback;
 import com.syzible.loinnir.network.RestClient;
+import com.syzible.loinnir.network.interfaces.OnCallback;
 import com.syzible.loinnir.objects.Message;
 import com.syzible.loinnir.objects.User;
 import com.syzible.loinnir.services.CachingUtil;
@@ -33,6 +35,7 @@ import com.syzible.loinnir.services.NotificationUtils;
 import com.syzible.loinnir.utils.BitmapUtils;
 import com.syzible.loinnir.utils.BroadcastFilters;
 import com.syzible.loinnir.utils.DisplayUtils;
+import com.syzible.loinnir.utils.EmojiUtils;
 import com.syzible.loinnir.utils.EncodingUtils;
 import com.syzible.loinnir.utils.JSONUtils;
 import com.syzible.loinnir.utils.LanguageUtils;
@@ -96,6 +99,38 @@ public class PartnerConversationFrag extends Fragment {
         }
     };
 
+    private BroadcastReceiver onBlockEnactedReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(BroadcastFilters.block_enacted.toString())) {
+                String blockEnacterId = intent.getStringExtra("block_enacter_id");
+                if (partner.getId().equals(blockEnacterId)) {
+                    // you've been blocked -- set the conversations fragment after reloading it
+                    // blocked user should now not be able to be visible in the previous chats
+                    DisplayUtils.generateToast(getActivity(), "Chuir " + partner.getForename() + " cosc ort! " + EmojiUtils.getEmoji(EmojiUtils.ANXIOUS));
+
+                    RestClient.post(getActivity(), Endpoints.GET_PAST_CONVERSATION_PREVIEWS, JSONUtils.getIdPayload(getActivity()), new BaseJsonHttpResponseHandler<JSONArray>() {
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
+                            MainActivity.clearBackstack(getFragmentManager());
+                            MainActivity.setFragment(getFragmentManager(), new ConversationsListFrag().setResponse(response));
+                        }
+
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
+
+                        }
+
+                        @Override
+                        protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                            return new JSONArray(rawJsonData);
+                        }
+                    });
+                }
+            }
+        }
+    };
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
@@ -115,84 +150,23 @@ public class PartnerConversationFrag extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        loadMessages();
+
         getActivity().registerReceiver(newPartnerMessageReceiver,
                 new IntentFilter(BroadcastFilters.new_partner_message.toString()));
+        getActivity().registerReceiver(onBlockEnactedReceiver,
+                new IntentFilter(BroadcastFilters.block_enacted.toString()));
+
+        loadMessages();
     }
 
     @Override
     public void onPause() {
         super.onPause();
         getActivity().unregisterReceiver(newPartnerMessageReceiver);
+        getActivity().unregisterReceiver(onBlockEnactedReceiver);
     }
 
-    private void setupAdapter(View view) {
-        adapter = new MessagesListAdapter<>(LocalPrefs.getID(getActivity()), loadImage());
-        adapter.setOnMessageViewLongClickListener(new MessagesListAdapter.OnMessageViewLongClickListener<Message>() {
-            @Override
-            public void onMessageViewLongClick(View view, final Message message) {
-                // should not be able to block yourself
-                if (!message.getUser().getId().equals(LocalPrefs.getID(getActivity())))
-                    DisplayUtils.generateBlockDialog(getActivity(), (User) message.getUser(), new DisplayUtils.OnCallback() {
-                        @Override
-                        public void onCallback() {
-                            DisplayUtils.generateSnackbar(getActivity(), "Cuireadh cosc go rathúil ar " + LanguageUtils.lenite(((User) message.getUser()).getForename()));
-                            loadMessages();
-                        }
-                    });
-            }
-        });
-        adapter.setLoadMoreListener(new MessagesListAdapter.OnLoadMoreListener() {
-            @Override
-            public void onLoadMore(int page, int totalItemsCount) {
-                if (messages.size() > 0) {
-                    JSONObject payload = new JSONObject();
-                    try {
-                        payload.put("my_id", LocalPrefs.getID(getActivity()));
-                        payload.put("partner_id", partner.getId());
-                        payload.put("oldest_message_id", messages.get(messages.size() - 1).getId());
-                        payload.put("last_known_count", totalItemsCount - 1);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-
-                    RestClient.post(getActivity(), Endpoints.GET_PARTNER_MESSAGES_PAGINATION, payload, new BaseJsonHttpResponseHandler<JSONArray>() {
-                        @Override
-                        public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
-                            if (response.length() > 0) {
-                                ArrayList<Message> paginatedMessages = new ArrayList<>();
-                                for (int i = response.length() - 1; i >= 0; i--) {
-                                    try {
-                                        JSONObject o = response.getJSONObject(i);
-                                        User sender = new User(o.getJSONObject("user"));
-                                        Message message = new Message(sender, o.getJSONObject("message"));
-                                        paginatedMessages.add(message);
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-
-                                adapter.addToEnd(paginatedMessages, false);
-                            }
-                        }
-
-                        @Override
-                        public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
-
-                        }
-
-                        @Override
-                        protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                            return new JSONArray(rawJsonData);
-                        }
-                    });
-                }
-            }
-        });
-
-        MessagesList messagesList = (MessagesList) view.findViewById(R.id.messages_list);
-        messagesList.setAdapter(adapter);
-
+    private void setMessageInputListener(final MessagesListAdapter<Message> adapter) {
         MessageInput messageInput = (MessageInput) view.findViewById(R.id.message_input);
         messageInput.setInputListener(new MessageInput.InputListener() {
             @Override
@@ -217,17 +191,15 @@ public class PartnerConversationFrag extends Fragment {
                                                         if (response.getInt("count") == 0)
                                                             matchPartner(partner);
 
-                                                        String messageContent = input.toString();
-
                                                         Message message = new Message(LocalPrefs.getID(getActivity()),
-                                                                me, System.currentTimeMillis(), messageContent);
+                                                                me, System.currentTimeMillis(), input.toString());
                                                         adapter.addToStart(message, true);
 
                                                         // send to server
                                                         JSONObject messagePayload = new JSONObject();
                                                         messagePayload.put("from_id", LocalPrefs.getID(getActivity()));
                                                         messagePayload.put("to_id", partner.getId());
-                                                        messagePayload.put("message", EncodingUtils.encodeText(message.getText()));
+                                                        messagePayload.put("message", EncodingUtils.encodeText(message.getText().trim()));
 
                                                         RestClient.post(getActivity(), Endpoints.SEND_PARTNER_MESSAGE, messagePayload, new BaseJsonHttpResponseHandler<JSONObject>() {
                                                             @Override
@@ -281,6 +253,84 @@ public class PartnerConversationFrag extends Fragment {
         });
     }
 
+    private void setLoadMoreListener(final MessagesListAdapter<Message> adapter) {
+        adapter.setLoadMoreListener(new MessagesListAdapter.OnLoadMoreListener() {
+            @Override
+            public void onLoadMore(int page, int totalItemsCount) {
+                if (messages.size() > 0) {
+                    JSONObject payload = new JSONObject();
+                    try {
+                        payload.put("my_id", LocalPrefs.getID(getActivity()));
+                        payload.put("partner_id", partner.getId());
+                        payload.put("oldest_message_id", messages.get(messages.size() - 1).getId());
+                        payload.put("last_known_count", totalItemsCount - 1);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                    RestClient.post(getActivity(), Endpoints.GET_PARTNER_MESSAGES_PAGINATION, payload, new BaseJsonHttpResponseHandler<JSONArray>() {
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
+                            if (response.length() > 0) {
+                                ArrayList<Message> paginatedMessages = new ArrayList<>();
+                                for (int i = response.length() - 1; i >= 0; i--) {
+                                    try {
+                                        JSONObject o = response.getJSONObject(i);
+                                        User sender = new User(o.getJSONObject("user"));
+                                        Message message = new Message(sender, o.getJSONObject("message"));
+                                        paginatedMessages.add(message);
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
+                                adapter.addToEnd(paginatedMessages, false);
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
+
+                        }
+
+                        @Override
+                        protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                            return new JSONArray(rawJsonData);
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    private void setLongClickListener(MessagesListAdapter<Message> adapter) {
+        adapter.setOnMessageViewLongClickListener(new MessagesListAdapter.OnMessageViewLongClickListener<Message>() {
+            @Override
+            public void onMessageViewLongClick(View view, final Message message) {
+                // should not be able to block yourself
+                if (!message.getUser().getId().equals(LocalPrefs.getID(getActivity())))
+                    DisplayUtils.generateBlockDialog(getActivity(), (User) message.getUser(), new DisplayUtils.OnCallback() {
+                        @Override
+                        public void onCallback() {
+                            DisplayUtils.generateSnackbar(getActivity(), "Cuireadh cosc go rathúil ar " + LanguageUtils.lenite(((User) message.getUser()).getForename()));
+                            loadMessages();
+                        }
+                    });
+            }
+        });
+    }
+
+    private void setupAdapter(View view) {
+        adapter = new MessagesListAdapter<>(LocalPrefs.getID(getActivity()), loadImage());
+
+        setLongClickListener(adapter);
+        setLoadMoreListener(adapter);
+        setMessageInputListener(adapter);
+
+        MessagesList messagesList = (MessagesList) view.findViewById(R.id.messages_list);
+        messagesList.setAdapter(adapter);
+    }
+
     private void loadMessages() {
         setupAdapter(view);
         RestClient.post(getActivity(), Endpoints.GET_PARTNER_MESSAGES,
@@ -300,6 +350,7 @@ public class PartnerConversationFrag extends Fragment {
                                 e.printStackTrace();
                             }
                         }
+
                         adapter.addToEnd(messages, true);
                     }
 

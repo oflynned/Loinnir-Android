@@ -31,6 +31,7 @@ import com.syzible.loinnir.objects.MapCircle;
 import com.syzible.loinnir.objects.User;
 import com.syzible.loinnir.services.LocationService;
 import com.syzible.loinnir.persistence.Constants;
+import com.syzible.loinnir.utils.BroadcastFilters;
 import com.syzible.loinnir.utils.JSONUtils;
 import com.syzible.loinnir.persistence.LocalPrefs;
 import com.syzible.loinnir.utils.MapCircleRenderer;
@@ -48,7 +49,13 @@ import cz.msebera.android.httpclient.Header;
 
 public class MapFrag extends Fragment implements OnMapReadyCallback {
     private GoogleMap googleMap;
-    private BroadcastReceiver locationUpdateReceiver;
+    private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(BroadcastFilters.updated_location.toString()))
+                getWebServerLocation();
+        }
+    };
 
     private ArrayList<MapCircle> userCircles = new ArrayList<>();
 
@@ -57,9 +64,10 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
     @Override
     public void onResume() {
         super.onResume();
+        getActivity().registerReceiver(locationUpdateReceiver,
+                new IntentFilter(BroadcastFilters.updated_location.toString()));
 
         GREEN_500 = ContextCompat.getColor(getActivity(), R.color.green500);
-        registerBroadcastReceiver();
         setMapPosition();
 
         ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.app_name);
@@ -74,7 +82,6 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
 
     private void setMapPosition() {
         if (googleMap != null) {
-            System.out.println("googleMap != null");
             if (LocalPrefs.getBooleanPref(LocalPrefs.Pref.should_share_location, getActivity())) {
                 getWebServerLocation();
             } else {
@@ -113,18 +120,17 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
     }
 
     private void getWebServerLocation() {
-        googleMap.clear();
-        userCircles.clear();
-
         RestClient.post(getActivity(), Endpoints.GET_ALL_USERS, JSONUtils.getIdPayload(getActivity().getBaseContext()),
                 new BaseJsonHttpResponseHandler<JSONArray>() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
+                        userCircles.clear();
                         for (int i = 0; i < response.length(); i++) {
                             try {
                                 User user = new User(response.getJSONObject(i));
                                 if (user.getId().equals(LocalPrefs.getID(getActivity()))) {
                                     userCircles.add(new MapCircle(user, true));
+                                    googleMap.moveCamera(CameraUpdateFactory.newLatLng(user.getLocation()));
                                     zoomToLocation(user.getLocation());
                                 } else {
                                     userCircles.add(new MapCircle(user, false));
@@ -134,6 +140,7 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
                             }
                         }
 
+                        googleMap.clear();
                         for(MapCircle circle : userCircles)
                             googleMap.addCircle(getUserCircle(circle.getPosition()));
                     }
@@ -175,18 +182,5 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         int a = 128;
 
         return Color.argb(a, r, g, b);
-    }
-
-    private void registerBroadcastReceiver() {
-        locationUpdateReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (intent.getAction().equals("com.syzible.loinnir.updated_location")) {
-                    getWebServerLocation();
-                }
-            }
-        };
-
-        getActivity().registerReceiver(locationUpdateReceiver, new IntentFilter("com.syzible.loinnir.updated_location"));
     }
 }
