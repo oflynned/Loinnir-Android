@@ -7,8 +7,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
+import android.view.ContextThemeWrapper;
 
 import com.syzible.loinnir.R;
+import com.syzible.loinnir.utils.DisplayUtils;
+import com.syzible.loinnir.utils.EmojiUtils;
 import com.syzible.loinnir.utils.FacebookUtils;
 import com.syzible.loinnir.persistence.LocalPrefs;
 
@@ -34,6 +38,23 @@ public class IntroductionActivity extends MaterialIntroActivity {
                 this.finish();
                 startActivity(new Intent(this, AuthenticationActivity.class));
             } else {
+                new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.DarkerAppTheme))
+                        .setTitle("BETA BUILD TOS")
+                        .setMessage("De bheith ag glacadh leis na téarmaí seirbhíse, glacann tú leis an seans go scroisfí do chúntas agus do shonraí go do-iompaithe ó na freastalaithe fad is atá an aip á forbairt.")
+                        .setPositiveButton("Aontaím", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                DisplayUtils.generateSnackbar(IntroductionActivity.this, "Go raibh maith agat! " + EmojiUtils.getEmoji(EmojiUtils.HEART_EYES));
+                            }
+                        })
+                        .setNegativeButton("Ní Aontaím", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                IntroductionActivity.this.finish();
+                            }
+                        })
+                        .show();
+
                 addSlide(introductionSlide());
                 addSlide(locationSlide());
                 addSlide(chatSlide());
@@ -46,24 +67,10 @@ public class IntroductionActivity extends MaterialIntroActivity {
     @Override
     public void onFinish() {
         super.onFinish();
-        new AlertDialog.Builder(this)
-                .setTitle("TOS")
-                .setMessage("TOS")
-                .setPositiveButton("Aontaím", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Context context = IntroductionActivity.this;
-                        LocalPrefs.setBooleanPref(LocalPrefs.Pref.first_run_completed, true, context);
-                        startActivity(new Intent(context, AuthenticationActivity.class));
-                    }
-                })
-                .setNegativeButton("Ní Aontaím", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        IntroductionActivity.this.finish();
-                    }
-                })
-                .show();
+
+        Context context = IntroductionActivity.this;
+        LocalPrefs.setBooleanPref(LocalPrefs.Pref.first_run_completed, true, context);
+        startActivity(new Intent(context, AuthenticationActivity.class));
     }
 
     private SlideFragment introductionSlide() {

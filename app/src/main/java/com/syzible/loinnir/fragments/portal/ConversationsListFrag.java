@@ -61,12 +61,13 @@ public class ConversationsListFrag extends Fragment implements
     private DialogsList dialogsList;
     private JSONArray response;
 
-    private boolean shouldShowMessages = false;
     private BroadcastReceiver newPartnerMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(BroadcastFilters.new_partner_message.toString()))
-               loadConversationPreviews();
+            if (intent.getAction().equals(BroadcastFilters.new_partner_message.toString())) {
+                System.out.println("New partner message in conversation frag!");
+                loadConversationPreviews();
+            }
         }
     };
 
@@ -84,7 +85,6 @@ public class ConversationsListFrag extends Fragment implements
                 new BaseJsonHttpResponseHandler<JSONArray>() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
-                        shouldShowMessages = response.length() > 0;
                         loadMessages(response);
                         setListLayout();
                         NotificationUtils.dismissNotifications(getActivity(), conversations);
@@ -108,10 +108,8 @@ public class ConversationsListFrag extends Fragment implements
         ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.app_name);
         ((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(null);
 
-        shouldShowMessages = response.length() > 0;
-
         View view;
-        if (shouldShowMessages) {
+        if (response.length() > 0) {
             view = inflater.inflate(R.layout.conversations_list_frag, container, false);
 
             dialogsList = (DialogsList) view.findViewById(R.id.conversations_list);
@@ -165,11 +163,6 @@ public class ConversationsListFrag extends Fragment implements
                 e.printStackTrace();
             }
         }
-
-        dialogsListAdapter.setItems(conversations);
-        dialogsListAdapter.setOnDialogClickListener(ConversationsListFrag.this);
-        dialogsListAdapter.setOnDialogLongClickListener(ConversationsListFrag.this);
-        dialogsList.setAdapter(dialogsListAdapter);
     }
 
     @Override
@@ -219,8 +212,7 @@ public class ConversationsListFrag extends Fragment implements
                                     @Override
                                     public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
                                         DisplayUtils.generateSnackbar(getActivity(), "Cuireadh cosc ar " + LanguageUtils.lenite(finalBlockee.getForename()) + ".");
-                                        conversations.remove(which + 1);
-                                        setListLayout();
+                                        loadConversationPreviews();
                                     }
 
                                     @Override

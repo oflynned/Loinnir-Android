@@ -57,7 +57,8 @@ public class RouletteOutcomeFrag extends Fragment {
             public void onClick(View v) {
                 PartnerConversationFrag frag = new PartnerConversationFrag().setPartner(partner);
                 MainActivity.clearBackstack(getFragmentManager());
-                MainActivity.setFragment(getFragmentManager(), frag);
+                MainActivity.setFragmentBackstack(getFragmentManager(), new RouletteFrag());
+                MainActivity.setFragmentBackstack(getFragmentManager(), frag);
             }
         });
 
@@ -72,8 +73,7 @@ public class RouletteOutcomeFrag extends Fragment {
         ImageView countyFlag = (ImageView) view.findViewById(R.id.county_flag_roulette);
         countyFlag.setImageResource(flagDrawable);
 
-        String outcome = "Is féidir an rúiléid a atriail, ach caillfidh tú an nasc leis an duine seo mura thosaíonn tú comhrá ";
-        outcome += partner.isFemale() ? "léi" : "leis";
+        String outcome = "Is féidir an rúiléid a atriail, ach caillfidh tú an nasc leis an duine seo mura thosaíonn tú comhrá " + (partner.isFemale() ? "léi" : "leis");
         matchWarningTextView.setText(outcome);
 
         return view;
