@@ -5,11 +5,18 @@ import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
 
+import com.syzible.loinnir.R;
+
 /**
  * Created by ed on 01/09/2017.
  */
 
 public class AnimationUtils {
+    public static void popView(View view) {
+        Animation expandIn = android.view.animation.AnimationUtils.loadAnimation(view.getContext(), R.anim.pop);
+        view.startAnimation(expandIn);
+    }
+
     public static void rotateView(View view, boolean isInfinite) {
         rotateView(view, isInfinite ? RotateAnimation.INFINITE : 0);
     }

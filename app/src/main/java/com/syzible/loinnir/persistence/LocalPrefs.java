@@ -50,6 +50,6 @@ public class LocalPrefs {
 
     public static boolean isFirstRunCompleted(Context context) {
         return PreferenceManager.getDefaultSharedPreferences(context)
-                .getBoolean(Pref.first_run_completed.name(), true);
+                .getBoolean(Pref.first_run_completed.name(), false);
     }
 }

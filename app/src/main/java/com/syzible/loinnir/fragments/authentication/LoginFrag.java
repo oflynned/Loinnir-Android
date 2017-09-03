@@ -3,11 +3,15 @@ package com.syzible.loinnir.fragments.authentication;
 import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
+import com.daimajia.androidanimations.library.Techniques;
+import com.daimajia.androidanimations.library.YoYo;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
@@ -20,16 +24,18 @@ import com.syzible.loinnir.R;
 import com.syzible.loinnir.activities.MainActivity;
 import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.RestClient;
+import com.syzible.loinnir.persistence.LocalPrefs;
 import com.syzible.loinnir.services.LocationService;
 import com.syzible.loinnir.services.TokenService;
 import com.syzible.loinnir.utils.DisplayUtils;
 import com.syzible.loinnir.utils.EmojiUtils;
 import com.syzible.loinnir.utils.EncodingUtils;
 import com.syzible.loinnir.utils.FacebookUtils;
-import com.syzible.loinnir.persistence.LocalPrefs;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.Random;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -41,6 +47,41 @@ public class LoginFrag extends Fragment {
 
     private CallbackManager callbackManager;
     private LoginButton facebookLoginButton;
+    private View view;
+    final int[] flags = {
+            R.drawable.an_cabhan,
+            R.drawable.an_clar,
+            R.drawable.an_dun,
+            R.drawable.an_iarmhi,
+            R.drawable.an_longfort,
+            R.drawable.an_mhi,
+            R.drawable.aontroim,
+            R.drawable.ard_mhacha,
+            R.drawable.ath_cliath,
+            R.drawable.ceatharlach,
+            R.drawable.ciarrai,
+            R.drawable.cill_ceannaigh,
+            R.drawable.cill_dara,
+            R.drawable.cill_mhantain,
+            R.drawable.corcaigh,
+            R.drawable.doire,
+            R.drawable.dun_na_ngall,
+            R.drawable.fear_manach,
+            R.drawable.gaillimh,
+            R.drawable.laois,
+            R.drawable.liatroim,
+            R.drawable.loch_garman,
+            R.drawable.lu,
+            R.drawable.luimneach,
+            R.drawable.maigh_eo,
+            R.drawable.muineachan,
+            R.drawable.port_lairge,
+            R.drawable.ros_comain,
+            R.drawable.sligeach,
+            R.drawable.tiobraid_arann,
+            R.drawable.tir_eoghain,
+            R.drawable.uibh_fhaili
+    };
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -59,13 +100,40 @@ public class LoginFrag extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.login_frag, container, false);
+        view = inflater.inflate(R.layout.login_frag, container, false);
+
         facebookLoginButton = (LoginButton) view.findViewById(R.id.login_fb_login_button);
         facebookLoginButton.setFragment(this);
         facebookLoginButton.setReadPermissions("public_profile");
+
         registerFacebookCallback();
+        animateFlag();
 
         return view;
+    }
+
+    private void animateFlag() {
+        final ImageView flagView = (ImageView) view.findViewById(R.id.iv_login_flag_generation);
+
+        final Handler handler = new Handler();
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                setRandomFlag(flagView);
+                YoYo.with(Techniques.FadeIn).duration(700).playOn(flagView);
+                YoYo.with(Techniques.RubberBand).delay(700).duration(700).playOn(flagView);
+                handler.postDelayed(this, 2000);
+            }
+        };
+
+        setRandomFlag(flagView);
+        YoYo.with(Techniques.FadeIn).duration(700).playOn(flagView);
+        handler.postDelayed(runnable, 2000);
+    }
+
+    private void setRandomFlag(ImageView view) {
+        int randomIndex = new Random().nextInt(flags.length);
+        view.setImageResource(flags[randomIndex]);
     }
 
     private void registerFacebookCallback() {

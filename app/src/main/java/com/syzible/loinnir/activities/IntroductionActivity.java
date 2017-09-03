@@ -34,7 +34,7 @@ public class IntroductionActivity extends MaterialIntroActivity {
             this.finish();
             startActivity(new Intent(this, MainActivity.class));
         } else {
-            if (!LocalPrefs.isFirstRunCompleted(this)) {
+            if (LocalPrefs.isFirstRunCompleted(this)) {
                 this.finish();
                 startActivity(new Intent(this, AuthenticationActivity.class));
             } else {
@@ -67,7 +67,6 @@ public class IntroductionActivity extends MaterialIntroActivity {
     @Override
     public void onFinish() {
         super.onFinish();
-
         Context context = IntroductionActivity.this;
         LocalPrefs.setBooleanPref(LocalPrefs.Pref.first_run_completed, true, context);
         startActivity(new Intent(context, AuthenticationActivity.class));

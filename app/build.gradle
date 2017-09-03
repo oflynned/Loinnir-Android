@@ -52,6 +52,11 @@ dependencies {
     compile 'com.android.support:support-v4:25.3.1'
     compile 'com.android.support:support-vector-drawable:25.3.1'
     compile 'agency.tango.android:material-intro-screen:0.0.5'
+
+    compile 'com.android.support:support-compat:25.3.1'
+    compile 'com.daimajia.easing:library:2.0@aar'
+    compile 'com.daimajia.androidanimations:library:2.3@aar'
+
     testCompile 'junit:junit:4.12'
 }
 
