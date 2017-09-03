@@ -217,7 +217,8 @@ public class ConversationsListFrag extends Fragment implements
                                     public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
                                         DisplayUtils.generateSnackbar(getActivity(), "Cuireadh cosc ar " + LanguageUtils.lenite(finalBlockee.getForename()) + ".");
 
-                                        conversations.remove(which + 1);
+                                        // inverted ordering
+                                        conversations.remove(conversations.size() - which - 1);
 
                                         if (conversations.size() > 0) {
                                             dialogsListAdapter.setItems(conversations);
@@ -242,7 +243,7 @@ public class ConversationsListFrag extends Fragment implements
                                 });
                     }
                 })
-                .setNegativeButton("Ná cur", null)
+                .setNegativeButton("Ná cuir", null)
                 .show();
     }
 

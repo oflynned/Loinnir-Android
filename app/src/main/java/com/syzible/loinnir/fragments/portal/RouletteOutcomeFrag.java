@@ -56,7 +56,6 @@ public class RouletteOutcomeFrag extends Fragment {
             @Override
             public void onClick(View v) {
                 PartnerConversationFrag frag = new PartnerConversationFrag().setPartner(partner);
-
                 MainActivity.clearBackstack(getFragmentManager());
                 MainActivity.setFragment(getFragmentManager(), frag);
             }

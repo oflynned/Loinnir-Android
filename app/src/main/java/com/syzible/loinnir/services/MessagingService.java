@@ -49,6 +49,7 @@ public class MessagingService extends FirebaseMessagingService {
 
     private void onLocalityInfoUpdate() {
         System.out.println("Dispatching onLocalityInfoUpdate()");
+
         // new locality update in chat, emit a broadcast to force an update if the locality fragment is active
         String newLocalityIntent = BroadcastFilters.new_locality_info_update.toString();
         Intent intent = new Intent(newLocalityIntent);
@@ -56,6 +57,9 @@ public class MessagingService extends FirebaseMessagingService {
     }
 
     private void onPartnerMessage(RemoteMessage remoteMessage) throws JSONException {
+        // TODO receiving a % sign causes a crash
+        // TODO check encoding and creation of message object
+
         System.out.println("Dispatching onPartnerMessage()");
         String notificationBody = remoteMessage.getData().get("message");
         User sender = new User(new JSONObject(remoteMessage.getData().get("from_details")));
