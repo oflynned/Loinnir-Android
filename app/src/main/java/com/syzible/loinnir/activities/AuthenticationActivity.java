@@ -31,17 +31,14 @@ public class AuthenticationActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        // TODO check size of fragment stack size to kill app or not
+        AuthenticationActivity.this.finish();
     }
 
     public static void setFragment(FragmentManager fragmentManager, Fragment fragment) {
-        fragmentManager.beginTransaction()
-                .replace(R.id.authentication_frame, fragment)
-                .addToBackStack(fragment.getClass().getName())
-                .commit();
-    }
-
-    public static void removeFragment(FragmentManager fragmentManager) {
-        fragmentManager.popBackStack();
+        if (fragmentManager != null)
+            fragmentManager.beginTransaction()
+                    .replace(R.id.authentication_frame, fragment)
+                    .addToBackStack(fragment.getClass().getName())
+                    .commit();
     }
 }

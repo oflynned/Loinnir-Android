@@ -1,7 +1,6 @@
 package com.syzible.loinnir.persistence;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
 /**
@@ -10,7 +9,7 @@ import android.preference.PreferenceManager;
 
 public class LocalPrefs {
     public enum Pref {
-        id, fb_access_token, profile_pic, forename, surname, first_run, should_share_location,
+        id, fb_access_token, profile_pic, forename, surname, first_run_completed, should_share_location,
         location_update_frequency, lat, lng
     }
 
@@ -58,8 +57,8 @@ public class LocalPrefs {
         return !getID(context).equals("");
     }
 
-    public static boolean isFirstRun(Context context) {
+    public static boolean isFirstRunCompleted(Context context) {
         return PreferenceManager.getDefaultSharedPreferences(context)
-                .getBoolean(Pref.first_run.name(), true);
+                .getBoolean(Pref.first_run_completed.name(), true);
     }
 }

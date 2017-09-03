@@ -58,9 +58,6 @@ public class MessagingService extends FirebaseMessagingService {
     }
 
     private void onPartnerMessage(RemoteMessage remoteMessage) throws JSONException {
-        // TODO receiving a % sign causes a crash
-        // TODO check encoding and creation of message object
-
         System.out.println("Dispatching onPartnerMessage()");
         String notificationBody = remoteMessage.getData().get("message");
         User sender = new User(new JSONObject(remoteMessage.getData().get("from_details")));
@@ -78,8 +75,6 @@ public class MessagingService extends FirebaseMessagingService {
         String messageData = EncodingUtils.encodeText(notificationData.getString("message"));
         notificationData.remove("message");
         notificationData.put("message", messageData);
-
-        System.out.println(notificationData);
 
         Message message = new Message(sender, notificationData);
 
