@@ -38,7 +38,7 @@ public class IntroductionActivity extends MaterialIntroActivity {
                 this.finish();
                 startActivity(new Intent(this, AuthenticationActivity.class));
             } else {
-                new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.DarkerAppTheme))
+                new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.DarkerDialogAppTheme))
                         .setTitle("BETA BUILD TOS")
                         .setMessage("De bheith ag glacadh leis na téarmaí seirbhíse, glacann tú leis an seans go scroisfí do chúntas agus do shonraí go do-iompaithe ó na freastalaithe fad is atá an aip á forbairt.")
                         .setPositiveButton("Aontaím", new DialogInterface.OnClickListener() {

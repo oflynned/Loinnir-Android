@@ -66,6 +66,7 @@ public class LoginFrag extends Fragment {
             R.drawable.corcaigh,
             R.drawable.doire,
             R.drawable.dun_na_ngall,
+            R.drawable.eire,
             R.drawable.fear_manach,
             R.drawable.gaillimh,
             R.drawable.laois,

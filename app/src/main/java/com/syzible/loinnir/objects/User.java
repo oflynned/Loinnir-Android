@@ -29,10 +29,18 @@ public class User implements IUser {
         this.location = new LatLng(latitude, longitude);
         this.forename = EncodingUtils.decodeText(data.getString("forename"));
         this.surname = EncodingUtils.decodeText(data.getString("surname"));
-        this.avatar = data.getString("profile_pic");
-        this.locality = data.getString("locality");
-        this.county = data.getString("county");
         this.isFemale = data.getString("gender").equals("female");
+        this.avatar = data.getString("profile_pic");
+
+        if (data.getString("locality").equals("abroad"))
+            this.locality = "Thar Sáile";
+        else
+            this.locality = data.getString("locality");
+
+        if (data.getString("county").equals("abroad"))
+            this.county = "Éire";
+        else
+            this.county = data.getString("county");
     }
 
     @Override
