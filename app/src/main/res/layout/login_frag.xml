@@ -24,9 +24,9 @@
         android:layout_marginStart="32dp"
         android:layout_marginTop="16dp"
         android:gravity="center_horizontal"
-        android:textSize="18sp"
         android:text="Logáil isteach le do chúntas Facebook chun Loinnir a fhionnadh."
-        android:textColor="@color/white" />
+        android:textColor="@color/white"
+        android:textSize="18sp" />
 
     <com.facebook.login.widget.LoginButton
         android:id="@+id/login_fb_login_button"
@@ -40,10 +40,10 @@
         android:gravity="center_horizontal" />
 
     <ImageView
-        android:layout_below="@+id/login_fb_login_button"
         android:id="@+id/iv_login_flag_generation"
         android:layout_width="64dp"
         android:layout_height="64dp"
+        android:layout_below="@+id/login_fb_login_button"
         android:layout_centerHorizontal="true"
         app:srcCompat="@drawable/corcaigh" />
 </RelativeLayout>

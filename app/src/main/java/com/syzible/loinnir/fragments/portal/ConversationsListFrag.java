@@ -65,7 +65,6 @@ public class ConversationsListFrag extends Fragment implements
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(BroadcastFilters.new_partner_message.toString())) {
-                System.out.println("New partner message in conversation frag!");
                 loadConversationPreviews();
             }
         }
@@ -201,9 +200,9 @@ public class ConversationsListFrag extends Fragment implements
                 .setMessage("Má chuireann tú cosc ar úsáideoir araile, ní féidir leat nó " +
                         LanguageUtils.getPrepositionalForm("le", blockee.getForename()) + " dul i dteagmháil lena chéile. " +
                         "Bain úsáid as seo amháin go bhfuil tú cinnte nach dteastaíonn uait faic a chloisteáil a thuilleadh ón úsáideoir seo. " +
-                        "Cur cosc ar dhuine má imrítear bulaíocht ort, nó mura dteastaíonn uait tuilleadh teagmhála. " +
+                        "Cuir cosc ar dhuine má imrítear bulaíocht ort, nó mura dteastaíonn uait tuilleadh teagmhála. " +
                         "Má athraíonn tú do mheabhair ar ball, téigh chuig na socruithe agus bainistigh cé atá curtha ar cosc.")
-                .setPositiveButton("Cur cosc i bhfeidhm", new DialogInterface.OnClickListener() {
+                .setPositiveButton("Cuir cosc i bhfeidhm", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, final int which) {
                         RestClient.post(getActivity(), Endpoints.BLOCK_USER,

@@ -179,12 +179,34 @@ public class MainActivity extends AppCompatActivity
         inputMethodManager.hideSoftInputFromWindow(MainActivity.this.getCurrentFocus().getWindowToken(), 0);
     }
 
+    // TODO send updates of last active etc to the server
+    private void notifyMetaDataUpdate() {
+        RestClient.post(this, Endpoints.UPDATE_USER_META_DATA, JSONUtils.getIdPayload(this),
+                new BaseJsonHttpResponseHandler<JSONObject>() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+
+                    }
+
+                    @Override
+                    protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                        return new JSONObject(rawJsonData);
+                    }
+                });
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
         MainActivity.setAppResumed();
         registerBroadcastReceivers();
         startService(new Intent(getApplicationContext(), LocationService.class));
+        notifyMetaDataUpdate();
     }
 
     @Override
@@ -193,6 +215,7 @@ public class MainActivity extends AppCompatActivity
         MainActivity.setAppPausedOrDead();
         stopService(new Intent(this, LocationService.class));
         unregisterReceiver(finishMainActivityReceiver);
+        notifyMetaDataUpdate();
     }
 
     private void registerBroadcastReceivers() {

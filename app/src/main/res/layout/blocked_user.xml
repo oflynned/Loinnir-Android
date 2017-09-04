@@ -32,7 +32,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
-        android:text="Bain an Cosc de"
+        android:text="Bain Cosc de"
         fancy:fb_borderColor="@color/colorPrimary"
         fancy:fb_borderWidth="1dp"
         fancy:fb_defaultColor="@color/colorPrimary"

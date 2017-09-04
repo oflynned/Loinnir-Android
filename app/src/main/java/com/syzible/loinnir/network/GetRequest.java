@@ -10,7 +10,6 @@ import java.net.URL;
  * Created by ed on 16/12/2016
  */
 
-@Deprecated
 abstract class GetRequest<T> extends AsyncTask<Object, Void, T> {
     // TODO switch this in favour for async library for HTTP image downloading
 

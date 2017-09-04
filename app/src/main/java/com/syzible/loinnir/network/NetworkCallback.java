@@ -3,7 +3,6 @@ package com.syzible.loinnir.network;
 /**
  * Created by ed on 16/12/2016
  */
-@Deprecated
 public interface NetworkCallback<T> {
     void onResponse(T response);
     void onFailure();

@@ -73,7 +73,9 @@ public class RouletteOutcomeFrag extends Fragment {
         ImageView countyFlag = (ImageView) view.findViewById(R.id.county_flag_roulette);
         countyFlag.setImageResource(flagDrawable);
 
-        String outcome = "Is féidir an rúiléid a atriail, ach caillfidh tú an nasc leis an duine seo mura thosaíonn tú comhrá " + (partner.isFemale() ? "léi" : "leis");
+        String outcome = "Is féidir an rúiléid a atriail, " +
+                "ach caillfidh tú an nasc leis an duine seo mura thosaíonn tú comhrá " +
+                (partner.isFemale() ? "léi" : "leis");
         matchWarningTextView.setText(outcome);
 
         return view;
