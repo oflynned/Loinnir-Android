@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.stfalcon.chatkit.commons.ImageLoader;
@@ -27,7 +28,10 @@ import com.syzible.loinnir.network.NetworkCallback;
 import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.objects.Message;
 import com.syzible.loinnir.objects.User;
+import com.syzible.loinnir.persistence.LocalCacheDatabase;
+import com.syzible.loinnir.persistence.LocalCacheDatabaseHelper;
 import com.syzible.loinnir.services.CachingUtil;
+import com.syzible.loinnir.services.NetworkAvailableService;
 import com.syzible.loinnir.utils.BitmapUtils;
 import com.syzible.loinnir.utils.BroadcastFilters;
 import com.syzible.loinnir.utils.DisplayUtils;
@@ -123,6 +127,16 @@ public class LocalityConversationFrag extends Fragment {
         }
     };
 
+
+    private BroadcastReceiver internetAvailableReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals("android.net.conn.CONNECTIVITY_CHANGE"))
+                if (NetworkAvailableService.isInternetAvailable(getActivity()))
+                    NetworkAvailableService.syncCachedData(getActivity());
+        }
+    };
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
@@ -139,6 +153,9 @@ public class LocalityConversationFrag extends Fragment {
 
         getActivity().registerReceiver(onChangeInLocalityReceiver,
                 new IntentFilter(BroadcastFilters.changed_locality.toString()));
+
+        getActivity().registerReceiver(internetAvailableReceiver,
+                new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
     }
 
     @Override
@@ -146,6 +163,7 @@ public class LocalityConversationFrag extends Fragment {
         super.onPause();
         getActivity().unregisterReceiver(onNewLocalityInfoReceiver);
         getActivity().unregisterReceiver(onChangeInLocalityReceiver);
+        getActivity().unregisterReceiver(internetAvailableReceiver);
     }
 
     private MessageHolders getIncomingHolder() {
@@ -158,80 +176,92 @@ public class LocalityConversationFrag extends Fragment {
         messageInput.setInputListener(new MessageInput.InputListener() {
             @Override
             public boolean onSubmit(final CharSequence input) {
-                RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getIdPayload(getActivity()),
-                        new BaseJsonHttpResponseHandler<JSONObject>() {
-                            @Override
-                            public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                                try {
-                                    final User me = new User(response);
-                                    final String messageContent = input.toString().trim();
+                final String messageContent = input.toString().trim();
 
-                                    // send to server
-                                    JSONObject messagePayload = new JSONObject();
-                                    messagePayload.put("fb_id", LocalPrefs.getID(getActivity()));
-                                    messagePayload.put("message", EncodingUtils.encodeText(messageContent));
+                if (NetworkAvailableService.isInternetAvailable(getActivity())) {
+                    RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getIdPayload(getActivity()),
+                            new BaseJsonHttpResponseHandler<JSONObject>() {
+                                @Override
+                                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                                    try {
+                                        final User me = new User(response);
 
-                                    RestClient.post(getActivity(), Endpoints.SEND_LOCALITY_MESSAGE, messagePayload, new BaseJsonHttpResponseHandler<JSONObject>() {
-                                        @Override
-                                        public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                                            System.out.println("Message submitted to locality (" + me.getLocality() + ")");
+                                        // send to server
+                                        JSONObject messagePayload = new JSONObject();
+                                        messagePayload.put("fb_id", LocalPrefs.getID(getActivity()));
+                                        messagePayload.put("message", EncodingUtils.encodeText(messageContent));
 
-                                            RestClient.post(getActivity(), Endpoints.GET_LOCALITY_MESSAGES, JSONUtils.getIdPayload(getActivity()), new BaseJsonHttpResponseHandler<JSONArray>() {
-                                                @Override
-                                                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
-                                                    try {
-                                                        JSONObject latestMessage = response.getJSONObject(response.length() - 1);
-                                                        User sender = new User(latestMessage.getJSONObject("user"));
-                                                        String userId = latestMessage.getJSONObject("_id").getString("$oid");
-                                                        String userMessage = EncodingUtils.decodeText(latestMessage.getString("message"));
-                                                        Message message = new Message(userId, sender, System.currentTimeMillis(), userMessage);
-                                                        adapter.addToStart(message, true);
-                                                    } catch (JSONException e) {
-                                                        e.printStackTrace();
+                                        RestClient.post(getActivity(), Endpoints.SEND_LOCALITY_MESSAGE, messagePayload, new BaseJsonHttpResponseHandler<JSONObject>() {
+                                            @Override
+                                            public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                                                System.out.println("Message submitted to locality (" + me.getLocality() + ")");
+
+                                                RestClient.post(getActivity(), Endpoints.GET_LOCALITY_MESSAGES, JSONUtils.getIdPayload(getActivity()), new BaseJsonHttpResponseHandler<JSONArray>() {
+                                                    @Override
+                                                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
+                                                        try {
+                                                            JSONObject latestMessage = response.getJSONObject(response.length() - 1);
+                                                            User sender = new User(latestMessage.getJSONObject("user"));
+                                                            String userId = latestMessage.getJSONObject("_id").getString("$oid");
+                                                            String userMessage = EncodingUtils.decodeText(latestMessage.getString("message"));
+                                                            Message message = new Message(userId, sender, System.currentTimeMillis(), userMessage);
+                                                            adapter.addToStart(message, true);
+                                                        } catch (JSONException e) {
+                                                            e.printStackTrace();
+                                                        }
                                                     }
-                                                }
 
-                                                @Override
-                                                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
+                                                    @Override
+                                                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
 
-                                                }
+                                                    }
 
-                                                @Override
-                                                protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                                    return new JSONArray(rawJsonData);
-                                                }
-                                            });
-                                        }
+                                                    @Override
+                                                    protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                                        return new JSONArray(rawJsonData);
+                                                    }
+                                                });
+                                            }
 
-                                        @Override
-                                        public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+                                            @Override
+                                            public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
 
-                                        }
+                                            }
 
-                                        @Override
-                                        protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                            return new JSONObject(rawJsonData);
-                                        }
-                                    });
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
+                                            @Override
+                                            protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                                return new JSONObject(rawJsonData);
+                                            }
+                                        });
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
                                 }
-                            }
 
-                            @Override
-                            public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+                                @Override
+                                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+                                    cacheItem(messageContent);
+                                }
 
-                            }
+                                @Override
+                                protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                    return new JSONObject(rawJsonData);
+                                }
+                            });
 
-                            @Override
-                            protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                return new JSONObject(rawJsonData);
-                            }
-                        });
-
+                } else {
+                   cacheItem(messageContent);
+                }
                 return true;
             }
         });
+    }
+
+    private void cacheItem(String messageContent) {
+        LocalCacheDatabase.CachedItem cachedItem = new LocalCacheDatabase.CachedItem(messageContent, getActivity());
+        LocalCacheDatabaseHelper.cacheItem(cachedItem);
+        LocalCacheDatabaseHelper.printCachedItemsContents(getActivity());
+        DisplayUtils.generateToast(getActivity(), "Easpa rochtain idirlín, seolfar do theachtaireacht ar ball");
     }
 
     private void setLoadMoreListener(final MessagesListAdapter<Message> adapter) {

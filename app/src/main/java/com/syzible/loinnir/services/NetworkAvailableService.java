@@ -11,6 +11,7 @@ import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.persistence.LocalCacheDatabaseHelper;
+import com.syzible.loinnir.utils.BroadcastFilters;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -21,37 +22,42 @@ import cz.msebera.android.httpclient.Header;
  * Created by ed on 04/09/2017.
  */
 
-public class NetworkAvailableService extends BroadcastReceiver {
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
-            NetworkInfo networkInfo = intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);
-            if (networkInfo != null && networkInfo.getDetailedState() == NetworkInfo.DetailedState.CONNECTED) {
-                // query and sync cached messages with the server
-                syncWithServer(context);
-            }
-        }
+public class NetworkAvailableService {
+    public static boolean isInternetAvailable(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) context
+                .getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager
+                .getActiveNetworkInfo();
+
+        return (networkInfo != null && networkInfo.isConnected());
     }
 
-    private void syncWithServer(final Context context) {
+    public static void syncCachedData(final Context context) {
         final Handler handler = new Handler();
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                LocalCacheDatabaseHelper.printCachedItemsContents(context);
+                System.out.println(LocalCacheDatabaseHelper.getCachedMessagesSize(context));
 
                 if (LocalCacheDatabaseHelper.getCachedMessagesSize(context) > 0) {
                     JSONObject o = LocalCacheDatabaseHelper.getCachedItem(context);
+                    System.out.println(o);
                     try {
                         boolean isLocality = o.getBoolean("is_locality");
                         final String id = o.getString("local_id");
-
                         JSONObject data = o.getJSONObject("data");
+
+                        System.out.println(isLocality + " " + id);
+                        System.out.println(data);
+
                         String endpoint = isLocality ? Endpoints.SEND_LOCALITY_MESSAGE : Endpoints.SEND_PARTNER_MESSAGE;
                         RestClient.post(context, endpoint, data, new BaseJsonHttpResponseHandler<JSONObject>() {
                             @Override
                             public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
                                 LocalCacheDatabaseHelper.removeCachedItem(context, id);
+
+                                // force the locality page to update if cached items get sent
+                                context.sendBroadcast(new Intent(BroadcastFilters.changed_locality.toString()));
                             }
 
                             @Override
@@ -68,9 +74,10 @@ public class NetworkAvailableService extends BroadcastReceiver {
                         e.printStackTrace();
                     }
                     handler.postDelayed(this, 1000);
-                } else {
-                    handler.removeCallbacks(this);
                 }
+
+                if (!isInternetAvailable(context))
+                    handler.removeCallbacks(this);
             }
         };
 

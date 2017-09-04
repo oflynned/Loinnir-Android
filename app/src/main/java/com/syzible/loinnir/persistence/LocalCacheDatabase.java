@@ -3,11 +3,7 @@ package com.syzible.loinnir.persistence;
 import android.content.Context;
 import android.provider.BaseColumns;
 
-import com.syzible.loinnir.objects.Message;
 import com.syzible.loinnir.utils.EncodingUtils;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  * Created by ed on 02/09/2017.
@@ -29,21 +25,30 @@ public class LocalCacheDatabase {
     }
 
     public static class CachedItem {
-        private Message message;
-        private String sender, recipient;
+        private String message, sender, recipient;
         private boolean isLocalityMessage;
         private Context context;
 
-        public CachedItem(Message message, String sender, String recipient, boolean isLocalityMessage, Context context) {
+        // to a locality
+        public CachedItem(String message, Context context) {
             this.message = message;
-            this.sender = sender;
+            this.sender = LocalPrefs.getID(context);
+            this.recipient = LocalPrefs.getStringPref(LocalPrefs.Pref.last_known_location, context);
+            this.isLocalityMessage = true;
+            this.context = context;
+        }
+
+        // to a user
+        public CachedItem(String message, String recipient, Context context) {
+            this.message = message;
+            this.sender = LocalPrefs.getID(context);
             this.recipient = recipient;
-            this.isLocalityMessage = isLocalityMessage;
+            this.isLocalityMessage = false;
             this.context = context;
         }
 
         public String getMessage() {
-            return EncodingUtils.encodeText(message.getText());
+            return EncodingUtils.encodeText(message);
         }
 
         public boolean isLocalityMessage() {
@@ -58,27 +63,8 @@ public class LocalCacheDatabase {
             return recipient;
         }
 
-        public JSONObject getCachedUserConversationPayload() {
-            JSONObject o = new JSONObject();
-            try {
-                o.put("message", getMessage());
-                o.put("to_id", recipient);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            return o;
-        }
-
-        public JSONObject getCachedLocalityPayload() {
-            JSONObject o = new JSONObject();
-            try {
-                o.put("message", getMessage());
-                o.put("locality", LocalPrefs.getStringPref(LocalPrefs.Pref.last_known_location, context));
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            return o;
+        public Context getContext() {
+            return context;
         }
     }
 }

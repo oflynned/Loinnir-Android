@@ -108,9 +108,11 @@ public class NotificationUtils {
     }
 
     public static void dismissNotification(Context context, User user) {
-        NotificationManager manager = (NotificationManager)
-                context.getSystemService(Context.NOTIFICATION_SERVICE);
-        manager.cancel(getNotificationId(user));
+        if (context != null) {
+            NotificationManager manager = (NotificationManager)
+                    context.getSystemService(Context.NOTIFICATION_SERVICE);
+            manager.cancel(getNotificationId(user));
+        }
     }
 
     private static int getNotificationId(User user) {

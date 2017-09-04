@@ -45,8 +45,8 @@ public class LocalCacheDatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public static void cacheItem(Context context, LocalCacheDatabase.CachedItem cachedItem) {
-        LocalCacheDatabaseHelper db = new LocalCacheDatabaseHelper(context);
+    public static void cacheItem(LocalCacheDatabase.CachedItem cachedItem) {
+        LocalCacheDatabaseHelper db = new LocalCacheDatabaseHelper(cachedItem.getContext());
         SQLiteDatabase writeDb = db.getWritableDatabase();
         String tableName = LocalCacheDatabase.Columns.TABLE_NAME;
 
@@ -54,10 +54,13 @@ public class LocalCacheDatabaseHelper extends SQLiteOpenHelper {
         contentValues.put(LocalCacheDatabase.Columns.TIME_SUBMITTED, System.currentTimeMillis());
         contentValues.put(LocalCacheDatabase.Columns.SENDER, cachedItem.getSender());
         contentValues.put(LocalCacheDatabase.Columns.RECIPIENT, cachedItem.getRecipient());
-        contentValues.put(LocalCacheDatabase.Columns.IS_LOCALITY, cachedItem.isLocalityMessage());
         contentValues.put(LocalCacheDatabase.Columns.MESSAGE_CONTENT, cachedItem.getMessage());
+        contentValues.put(LocalCacheDatabase.Columns.IS_LOCALITY, cachedItem.isLocalityMessage());
 
         writeDb.insert(tableName, null, contentValues);
+        writeDb.close();
+        db.close();
+        writeDb.close();
     }
 
     public static int getCachedMessagesSize(Context context) {
@@ -136,7 +139,7 @@ public class LocalCacheDatabaseHelper extends SQLiteOpenHelper {
         if (shouldQueryCachedItems(context)) {
             String deleteQuery = "DELETE FROM " + tableName +
                     " WHERE " + LocalCacheDatabase.Columns._ID + "=" + id + ";";
-            writeDb.rawQuery(deleteQuery, null);
+            writeDb.execSQL(deleteQuery);
         }
 
         readDb.close();
