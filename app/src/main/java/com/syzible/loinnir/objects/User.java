@@ -22,6 +22,10 @@ public class User implements IUser {
     private String locality, county;
     private boolean isFemale;
 
+    public User(String fb_id) {
+        this.fb_id = fb_id;
+    }
+
     public User(JSONObject data) throws JSONException {
         this.fb_id = data.getString("fb_id");
         this.longitude = (float) data.getDouble("lng");
