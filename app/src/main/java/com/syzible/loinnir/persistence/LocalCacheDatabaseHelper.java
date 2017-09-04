@@ -7,6 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.Settings;
 
+import com.syzible.loinnir.utils.EncodingUtils;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -19,7 +21,7 @@ public class LocalCacheDatabaseHelper extends SQLiteOpenHelper {
 
     private static final String CREATE_CACHE_TABLE_QUERY =
             "CREATE TABLE " + LocalCacheDatabase.Columns.TABLE_NAME + "(" +
-                    LocalCacheDatabase.Columns._ID + " INTEGER PRIMARY KEY," +
+                    LocalCacheDatabase.Columns.ID + " INTEGER PRIMARY KEY," +
                     LocalCacheDatabase.Columns.TIME_SUBMITTED + " INTEGER," +
                     LocalCacheDatabase.Columns.SENDER + " TEXT," +
                     LocalCacheDatabase.Columns.RECIPIENT + " TEXT," +
@@ -88,19 +90,19 @@ public class LocalCacheDatabaseHelper extends SQLiteOpenHelper {
         if (shouldQueryCachedItems(context)) {
             JSONObject o = new JSONObject();
             String query = "SELECT * FROM " + tableName +
-                    " ORDER BY " + LocalCacheDatabase.Columns._ID +
+                    " ORDER BY " + LocalCacheDatabase.Columns.ID +
                     " LIMIT 1;";
             Cursor cursor = readDb.rawQuery(query, null);
 
             if (cursor.getCount() > 0) {
                 cursor.moveToFirst();
 
-                String localId = cursor.getColumnName(0);
+                String localId = cursor.getString(0);
                 long timeSubmitted = cursor.getLong(1);
                 String sender = cursor.getString(2);
-                String recipient = cursor.getString(3);
-                boolean isLocality = cursor.getString(4).equals("locality");
-                String messageContent = cursor.getString(5);
+                String recipient = EncodingUtils.encodeText(cursor.getString(3));
+                String messageContent = EncodingUtils.encodeText(cursor.getString(4));
+                boolean isLocality = cursor.getString(5).equals("1");
                 JSONObject data = new JSONObject();
 
                 try {
@@ -132,17 +134,15 @@ public class LocalCacheDatabaseHelper extends SQLiteOpenHelper {
 
     public static void removeCachedItem(Context context, String id) {
         LocalCacheDatabaseHelper db = new LocalCacheDatabaseHelper(context);
-        SQLiteDatabase readDb = db.getReadableDatabase();
         SQLiteDatabase writeDb = db.getWritableDatabase();
         String tableName = LocalCacheDatabase.Columns.TABLE_NAME;
 
         if (shouldQueryCachedItems(context)) {
             String deleteQuery = "DELETE FROM " + tableName +
-                    " WHERE " + LocalCacheDatabase.Columns._ID + "=" + id + ";";
+                    " WHERE " + LocalCacheDatabase.Columns.ID + "=" + id + ";";
             writeDb.execSQL(deleteQuery);
         }
 
-        readDb.close();
         writeDb.close();
         db.close();
     }

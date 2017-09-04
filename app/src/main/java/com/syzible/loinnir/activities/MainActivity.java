@@ -60,6 +60,7 @@ import org.json.JSONObject;
 import java.util.Locale;
 
 import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.MessageConstraintException;
 
 import static com.syzible.loinnir.persistence.Constants.getCountyFileName;
 
@@ -275,17 +276,12 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
                 try {
-                    TextView localityName = (TextView) headerView.findViewById(R.id.nav_header_locality);
-                    TextView countyName = (TextView) headerView.findViewById(R.id.nav_header_county);
-                    localityName.setText(response.getString("locality"));
-
+                    String locality = response.getString("locality");
                     String county = response.getString("county");
-                    String countyFlagFile = getCountyFileName(county);
-                    countyName.setText(county);
+                    LocalPrefs.setStringPref(LocalPrefs.Pref.last_known_location, locality, MainActivity.this);
+                    LocalPrefs.setStringPref(LocalPrefs.Pref.last_known_county, county, MainActivity.this);
 
-                    int flagDrawable = getResources().getIdentifier(countyFlagFile, "drawable", getPackageName());
-                    ImageView countyFlag = (ImageView) findViewById(R.id.nav_header_county_flag);
-                    countyFlag.setImageResource(flagDrawable);
+                    setDrawerFlagData(locality, county);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -293,7 +289,11 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-
+                Activity context = MainActivity.this;
+                String lastLocation = LocalPrefs.getStringPref(LocalPrefs.Pref.last_known_location, context);
+                String lastCounty = LocalPrefs.getStringPref(LocalPrefs.Pref.last_known_county, context);
+                setDrawerFlagData(lastLocation, lastCounty);
+                DisplayUtils.generateToast(context, "Easpa rochtain idirlín");
             }
 
             @Override
@@ -301,6 +301,19 @@ public class MainActivity extends AppCompatActivity
                 return new JSONObject(rawJsonData);
             }
         });
+    }
+
+    private void setDrawerFlagData(String locality, String county) {
+        TextView localityName = (TextView) headerView.findViewById(R.id.nav_header_locality);
+        TextView countyName = (TextView) headerView.findViewById(R.id.nav_header_county);
+
+        localityName.setText(locality);
+        countyName.setText(county);
+
+        String countyFlagFile = getCountyFileName(county);
+        int flagDrawable = getResources().getIdentifier(countyFlagFile, "drawable", getPackageName());
+        ImageView countyFlag = (ImageView) findViewById(R.id.nav_header_county_flag);
+        countyFlag.setImageResource(flagDrawable);
     }
 
     private void setUpDrawer() {

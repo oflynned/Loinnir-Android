@@ -30,10 +30,12 @@ public class Endpoints {
     public static final String GET_USER = "/users/get";
     public static final String GET_ALL_USERS = "/users/get-all";
     public static final String GET_RANDOM_USER = "/users/get-random";
+    public static final String UPDATE_USER_META_DATA = "/users/update-user-meta-data";
 
     public static final String GET_MATCHED_COUNT = "/users/get-matched-count";
     public static final String GET_UNMATCHED_COUNT = "/users/get-unmatched-count";
     public static final String GET_BLOCKED_USERS = "/users/get-blocked-users";
+
     public static final String BLOCK_USER = "/users/block-user";
     public static final String UNBLOCK_USER = "/users/unblock-user";
 

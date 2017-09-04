@@ -47,16 +47,12 @@ public class NetworkAvailableService {
                         final String id = o.getString("local_id");
                         JSONObject data = o.getJSONObject("data");
 
-                        System.out.println(isLocality + " " + id);
-                        System.out.println(data);
-
                         String endpoint = isLocality ? Endpoints.SEND_LOCALITY_MESSAGE : Endpoints.SEND_PARTNER_MESSAGE;
                         RestClient.post(context, endpoint, data, new BaseJsonHttpResponseHandler<JSONObject>() {
                             @Override
                             public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                                LocalCacheDatabaseHelper.removeCachedItem(context, id);
-
                                 // force the locality page to update if cached items get sent
+                                LocalCacheDatabaseHelper.removeCachedItem(context, id);
                                 context.sendBroadcast(new Intent(BroadcastFilters.changed_locality.toString()));
                             }
 
@@ -67,6 +63,7 @@ public class NetworkAvailableService {
 
                             @Override
                             protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                System.out.println(rawJsonData);
                                 return new JSONObject(rawJsonData);
                             }
                         });

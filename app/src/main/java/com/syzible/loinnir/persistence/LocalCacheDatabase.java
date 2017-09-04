@@ -17,6 +17,7 @@ public class LocalCacheDatabase {
 
     public static abstract class Columns implements BaseColumns {
         public static final String TABLE_NAME = "local_message_cache";
+        public static final String ID = "id";                   // string
         public static final String TIME_SUBMITTED = "time";     // long
         public static final String SENDER = "sender";           // string -- me, but needs to be tracked if a user changes accounts
         public static final String RECIPIENT = "recipient";     // string -- can be a locality name or a user id
@@ -48,7 +49,7 @@ public class LocalCacheDatabase {
         }
 
         public String getMessage() {
-            return EncodingUtils.encodeText(message);
+            return message;
         }
 
         public boolean isLocalityMessage() {

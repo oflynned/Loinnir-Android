@@ -10,7 +10,7 @@ import android.preference.PreferenceManager;
 public class LocalPrefs {
     public enum Pref {
         id, fb_access_token, profile_pic, forename, surname, first_run_completed, should_share_location,
-        location_update_frequency, lat, lng, last_known_location
+        location_update_frequency, lat, lng, last_known_location, last_known_county
     }
 
     public static String getID(Context context) {
