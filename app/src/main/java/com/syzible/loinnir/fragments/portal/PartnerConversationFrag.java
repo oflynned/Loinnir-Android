@@ -30,7 +30,10 @@ import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.network.interfaces.OnCallback;
 import com.syzible.loinnir.objects.Message;
 import com.syzible.loinnir.objects.User;
+import com.syzible.loinnir.persistence.LocalCacheDatabase;
+import com.syzible.loinnir.persistence.LocalCacheDatabaseHelper;
 import com.syzible.loinnir.services.CachingUtil;
+import com.syzible.loinnir.services.NetworkAvailableService;
 import com.syzible.loinnir.services.NotificationUtils;
 import com.syzible.loinnir.utils.BitmapUtils;
 import com.syzible.loinnir.utils.BroadcastFilters;
@@ -99,6 +102,17 @@ public class PartnerConversationFrag extends Fragment {
         }
     };
 
+    private BroadcastReceiver onChangeInLocalityReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(BroadcastFilters.changed_locality.toString())) {
+                // the newest update in locality doesn't correspond to the last one on record
+                // a user should be changed into a new chat room and the messages be reloaded
+                loadMessages();
+            }
+        }
+    };
+
     private BroadcastReceiver onBlockEnactedReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -155,6 +169,8 @@ public class PartnerConversationFrag extends Fragment {
                 new IntentFilter(BroadcastFilters.new_partner_message.toString()));
         getActivity().registerReceiver(onBlockEnactedReceiver,
                 new IntentFilter(BroadcastFilters.block_enacted.toString()));
+        getActivity().registerReceiver(onChangeInLocalityReceiver,
+                new IntentFilter(BroadcastFilters.changed_locality.toString()));
 
         loadMessages();
     }
@@ -164,6 +180,7 @@ public class PartnerConversationFrag extends Fragment {
         super.onPause();
         getActivity().unregisterReceiver(newPartnerMessageReceiver);
         getActivity().unregisterReceiver(onBlockEnactedReceiver);
+        getActivity().unregisterReceiver(onChangeInLocalityReceiver);
     }
 
     private void setMessageInputListener(final MessagesListAdapter<Message> adapter) {
@@ -171,86 +188,101 @@ public class PartnerConversationFrag extends Fragment {
         messageInput.setInputListener(new MessageInput.InputListener() {
             @Override
             public boolean onSubmit(final CharSequence input) {
-                RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getIdPayload(getActivity()),
-                        new BaseJsonHttpResponseHandler<JSONObject>() {
-                            @Override
-                            public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                                try {
-                                    final User me = new User(response);
+                final String messageContent = input.toString().trim();
+                if (NetworkAvailableService.isInternetAvailable(getActivity())) {
+                    RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getIdPayload(getActivity()),
+                            new BaseJsonHttpResponseHandler<JSONObject>() {
+                                @Override
+                                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                                    try {
+                                        final User me = new User(response);
 
-                                    JSONObject payload = new JSONObject();
-                                    payload.put("my_id", me.getId());
-                                    payload.put("partner_id", partner.getId());
+                                        JSONObject payload = new JSONObject();
+                                        payload.put("my_id", me.getId());
+                                        payload.put("partner_id", partner.getId());
 
-                                    RestClient.post(getActivity(), Endpoints.GET_PARTNER_MESSAGES_COUNT,
-                                            JSONUtils.getPartnerInteractionPayload(partner.getId(), getActivity()),
-                                            new BaseJsonHttpResponseHandler<JSONObject>() {
-                                                @Override
-                                                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                                                    try {
-                                                        if (response.getInt("count") == 0)
-                                                            matchPartner(partner);
+                                        RestClient.post(getActivity(), Endpoints.GET_PARTNER_MESSAGES_COUNT,
+                                                JSONUtils.getPartnerInteractionPayload(partner.getId(), getActivity()),
+                                                new BaseJsonHttpResponseHandler<JSONObject>() {
+                                                    @Override
+                                                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                                                        try {
+                                                            if (response.getInt("count") == 0)
+                                                                matchPartner(partner);
 
-                                                        Message message = new Message(LocalPrefs.getID(getActivity()),
-                                                                me, System.currentTimeMillis(), input.toString());
-                                                        adapter.addToStart(message, true);
+                                                            Message message = new Message(LocalPrefs.getID(getActivity()),
+                                                                    me, System.currentTimeMillis(), messageContent);
+                                                            adapter.addToStart(message, true);
 
-                                                        // send to server
-                                                        JSONObject messagePayload = new JSONObject();
-                                                        messagePayload.put("from_id", LocalPrefs.getID(getActivity()));
-                                                        messagePayload.put("to_id", partner.getId());
-                                                        messagePayload.put("message", EncodingUtils.encodeText(message.getText().trim()));
+                                                            // send to server
+                                                            JSONObject messagePayload = new JSONObject();
+                                                            messagePayload.put("from_id", LocalPrefs.getID(getActivity()));
+                                                            messagePayload.put("to_id", partner.getId());
+                                                            messagePayload.put("message", EncodingUtils.encodeText(message.getText().trim()));
 
-                                                        RestClient.post(getActivity(), Endpoints.SEND_PARTNER_MESSAGE, messagePayload, new BaseJsonHttpResponseHandler<JSONObject>() {
-                                                            @Override
-                                                            public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                                                                System.out.println(response);
-                                                            }
+                                                            RestClient.post(getActivity(), Endpoints.SEND_PARTNER_MESSAGE, messagePayload, new BaseJsonHttpResponseHandler<JSONObject>() {
+                                                                @Override
+                                                                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                                                                    System.out.println(response);
+                                                                }
 
-                                                            @Override
-                                                            public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-                                                                System.out.println(rawJsonData);
-                                                            }
+                                                                @Override
+                                                                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+                                                                    System.out.println(rawJsonData);
+                                                                }
 
-                                                            @Override
-                                                            protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                                                return new JSONObject(rawJsonData);
-                                                            }
-                                                        });
-                                                    } catch (JSONException e) {
-                                                        e.printStackTrace();
+                                                                @Override
+                                                                protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                                                    return new JSONObject(rawJsonData);
+                                                                }
+                                                            });
+                                                        } catch (JSONException e) {
+                                                            e.printStackTrace();
+                                                        }
                                                     }
-                                                }
 
-                                                @Override
-                                                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-                                                    System.out.println(rawJsonData);
-                                                }
+                                                    @Override
+                                                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+                                                        System.out.println(rawJsonData);
+                                                    }
 
-                                                @Override
-                                                protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                                    return new JSONObject(rawJsonData);
-                                                }
-                                            });
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
+                                                    @Override
+                                                    protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                                        return new JSONObject(rawJsonData);
+                                                    }
+                                                });
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
                                 }
-                            }
 
-                            @Override
-                            public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+                                @Override
+                                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
 
-                            }
+                                }
 
-                            @Override
-                            protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                return new JSONObject(rawJsonData);
-                            }
-                        });
+                                @Override
+                                protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                    return new JSONObject(rawJsonData);
+                                }
+                            });
 
+                } else {
+                    cacheItem(messageContent);
+                    String myId = LocalPrefs.getID(getActivity());
+                    Message cachedMessage = new Message(myId, new User(myId), System.currentTimeMillis(), messageContent);
+                    adapter.addToStart(cachedMessage, true);
+                }
                 return true;
             }
         });
+    }
+
+    private void cacheItem(String messageContent) {
+        LocalCacheDatabase.CachedItem cachedItem = new LocalCacheDatabase.CachedItem(messageContent, partner.getId(), getActivity());
+        LocalCacheDatabaseHelper.cacheItem(cachedItem);
+        LocalCacheDatabaseHelper.printCachedItemsContents(getActivity());
+        DisplayUtils.generateToast(getActivity(), "Easpa rochtain idirlín, seolfar do theachtaireacht ar ball");
     }
 
     private void setLoadMoreListener(final MessagesListAdapter<Message> adapter) {

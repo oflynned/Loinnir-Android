@@ -53,7 +53,6 @@ import cz.msebera.android.httpclient.Header;
  */
 
 public class LocalityConversationFrag extends Fragment {
-
     private View view;
     private ArrayList<Message> messages = new ArrayList<>();
     private MessagesListAdapter<Message> adapter;
