@@ -102,14 +102,12 @@ public class PartnerConversationFrag extends Fragment {
         }
     };
 
-    private BroadcastReceiver onChangeInLocalityReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver internetAvailableReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(BroadcastFilters.changed_locality.toString())) {
-                // the newest update in locality doesn't correspond to the last one on record
-                // a user should be changed into a new chat room and the messages be reloaded
-                loadMessages();
-            }
+            if (intent.getAction().equals("android.net.conn.CONNECTIVITY_CHANGE"))
+                if (NetworkAvailableService.isInternetAvailable(getActivity()))
+                    NetworkAvailableService.syncCachedData(getActivity());
         }
     };
 
@@ -169,8 +167,8 @@ public class PartnerConversationFrag extends Fragment {
                 new IntentFilter(BroadcastFilters.new_partner_message.toString()));
         getActivity().registerReceiver(onBlockEnactedReceiver,
                 new IntentFilter(BroadcastFilters.block_enacted.toString()));
-        getActivity().registerReceiver(onChangeInLocalityReceiver,
-                new IntentFilter(BroadcastFilters.changed_locality.toString()));
+        getActivity().registerReceiver(internetAvailableReceiver,
+                new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
 
         loadMessages();
     }
@@ -180,7 +178,7 @@ public class PartnerConversationFrag extends Fragment {
         super.onPause();
         getActivity().unregisterReceiver(newPartnerMessageReceiver);
         getActivity().unregisterReceiver(onBlockEnactedReceiver);
-        getActivity().unregisterReceiver(onChangeInLocalityReceiver);
+        getActivity().unregisterReceiver(internetAvailableReceiver);
     }
 
     private void setMessageInputListener(final MessagesListAdapter<Message> adapter) {
