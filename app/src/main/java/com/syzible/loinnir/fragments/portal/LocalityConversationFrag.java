@@ -56,10 +56,9 @@ import cz.msebera.android.httpclient.Header;
 public class LocalityConversationFrag extends Fragment {
     private View view;
     private ArrayList<Message> messages = new ArrayList<>();
-    private MessagesListAdapter<Message> adapter;
+    private ArrayList<Message> paginatedMessages = new ArrayList<>();
 
-    private Handler handler = new Handler();
-    private Runnable runnable;
+    private MessagesListAdapter<Message> adapter;
 
     private BroadcastReceiver onChangeInLocalityReceiver = new BroadcastReceiver() {
         @Override
@@ -161,76 +160,12 @@ public class LocalityConversationFrag extends Fragment {
                 new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
     }
 
-    private void startSpammingBot() {
-        runnable = new Runnable() {
-            @Override
-            public void run() {
-                if (NetworkAvailableService.isInternetAvailable(getActivity())) {
-                    try {
-                        JSONObject messagePayload = new JSONObject();
-                        messagePayload.put("fb_id", LocalPrefs.getID(getActivity()));
-                        messagePayload.put("message", EncodingUtils.encodeText(String.valueOf(System.currentTimeMillis())));
-
-                        RestClient.post(getActivity(), Endpoints.SEND_LOCALITY_MESSAGE, messagePayload, new BaseJsonHttpResponseHandler<JSONObject>() {
-                            @Override
-                            public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                                RestClient.post(getActivity(), Endpoints.GET_LOCALITY_MESSAGES, JSONUtils.getIdPayload(getActivity()), new BaseJsonHttpResponseHandler<JSONArray>() {
-                                    @Override
-                                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
-                                        try {
-                                            JSONObject latestMessage = response.getJSONObject(response.length() - 1);
-                                            User sender = new User(latestMessage.getJSONObject("user"));
-                                            String userId = latestMessage.getJSONObject("_id").getString("$oid");
-                                            String userMessage = EncodingUtils.decodeText(latestMessage.getString("message"));
-                                            Message message = new Message(userId, sender, System.currentTimeMillis(), userMessage);
-                                            adapter.addToStart(message, true);
-                                        } catch (JSONException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
-
-                                    }
-
-                                    @Override
-                                    protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                        return new JSONArray(rawJsonData);
-                                    }
-                                });
-                            }
-
-                            @Override
-                            public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-
-                            }
-
-                            @Override
-                            protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                return new JSONObject(rawJsonData);
-                            }
-                        });
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                handler.postDelayed(this, 200);
-            }
-        };
-
-        handler.postDelayed(runnable, 200);
-    }
-
     @Override
     public void onPause() {
         super.onPause();
         getActivity().unregisterReceiver(onNewLocalityInfoReceiver);
         getActivity().unregisterReceiver(onChangeInLocalityReceiver);
         getActivity().unregisterReceiver(internetAvailableReceiver);
-
-        //handler.removeCallbacks(runnable);
     }
 
     private MessageHolders getIncomingHolder() {
@@ -320,7 +255,8 @@ public class LocalityConversationFrag extends Fragment {
                     JSONObject payload = new JSONObject();
                     try {
                         payload.put("fb_id", LocalPrefs.getID(getActivity()));
-                        payload.put("oldest_message_id", messages.get(messages.size() - 1).getId());
+                        Message oldestMessage = paginatedMessages.size() == 0 ? messages.get(messages.size() - 1) : paginatedMessages.get(paginatedMessages.size() - 1);
+                        payload.put("oldest_message_id", oldestMessage.getId());
                         payload.put("last_known_count", totalItemsCount - 1);
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -329,8 +265,8 @@ public class LocalityConversationFrag extends Fragment {
                     RestClient.post(getActivity(), Endpoints.GET_LOCALITY_MESSAGES_PAGINATION, payload, new BaseJsonHttpResponseHandler<JSONArray>() {
                         @Override
                         public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
+                            paginatedMessages.clear();
                             if (response.length() > 0) {
-                                ArrayList<Message> paginatedMessages = new ArrayList<>();
                                 for (int i = response.length() - 1; i >= 0; i--) {
                                     try {
                                         JSONObject o = response.getJSONObject(i);

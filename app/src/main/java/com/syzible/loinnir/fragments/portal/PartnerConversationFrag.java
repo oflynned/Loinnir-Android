@@ -298,7 +298,6 @@ public class PartnerConversationFrag extends Fragment {
 
                         Message oldestMessage = paginatedMessages.size() == 0 ? messages.get(messages.size() - 1) : paginatedMessages.get(paginatedMessages.size() - 1);
                         payload.put("oldest_message_id", oldestMessage.getId());
-                        System.out.println(payload);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -318,9 +317,6 @@ public class PartnerConversationFrag extends Fragment {
                                         e.printStackTrace();
                                     }
                                 }
-
-                                for (Message message : paginatedMessages)
-                                    System.out.println(message.getText());
 
                                 adapter.addToEnd(paginatedMessages, false);
                             }
