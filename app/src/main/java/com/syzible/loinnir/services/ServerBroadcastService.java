@@ -6,11 +6,15 @@ import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.syzible.loinnir.objects.Message;
 import com.syzible.loinnir.objects.User;
+import com.syzible.loinnir.persistence.LocalPrefs;
 import com.syzible.loinnir.utils.BroadcastFilters;
 import com.syzible.loinnir.utils.EncodingUtils;
+import com.syzible.loinnir.utils.FacebookUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.Map;
 
 /**
  * Created by ed on 26/05/2017.
@@ -19,29 +23,40 @@ import org.json.JSONObject;
 public class ServerBroadcastService extends FirebaseMessagingService {
 
     private enum NotificationTypes {
-        new_partner_message, new_locality_update, block_enacted
+        new_partner_message, new_locality_update, block_enacted, push_notification
     }
 
     @Override
     public void onMessageReceived(final RemoteMessage remoteMessage) {
+        super.onMessageReceived(remoteMessage);
         if (remoteMessage.getData().size() > 0) {
-            System.out.println("Data in packet: " + remoteMessage.getData());
-            String message_type = remoteMessage.getData().get("notification_type");
+            if (FacebookUtils.hasExistingToken(getApplicationContext())) {
+                System.out.println("Data in packet: " + remoteMessage.getData());
+                String message_type = remoteMessage.getData().get("notification_type");
 
-            if (message_type.equals(NotificationTypes.new_locality_update.name())) {
-                onLocalityInfoUpdate();
-            } else if (message_type.equals(NotificationTypes.new_partner_message.name())) {
-                try {
-                    onPartnerMessage(remoteMessage);
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                if (message_type.equals(NotificationTypes.new_locality_update.name())) {
+                    onLocalityInfoUpdate();
+                } else if (message_type.equals(NotificationTypes.new_partner_message.name())) {
+                    try {
+                        onPartnerMessage(remoteMessage);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                } else if (message_type.equals(NotificationTypes.block_enacted.name())) {
+                    onBlockEnacted(remoteMessage.getData().get("block_enacter_id"));
+                } else if (message_type.equals(NotificationTypes.push_notification.name())) {
+                    onPushNotification(remoteMessage.getData());
                 }
-            } else if (message_type.equals(NotificationTypes.block_enacted.name())) {
-                onBlockEnacted(remoteMessage.getData().get("block_enacter_id"));
             }
         }
+    }
 
-        super.onMessageReceived(remoteMessage);
+    private void onPushNotification(Map<String, String> data) {
+        String title = data.get("push_notification_title");
+        String content = data.get("push_notification_content");
+        String url = data.get("push_notification_link");
+
+        NotificationUtils.generatePushNotification(getApplicationContext(), title, content, url);
     }
 
     /**
@@ -56,21 +71,18 @@ public class ServerBroadcastService extends FirebaseMessagingService {
     }
 
     private void onLocalityInfoUpdate() {
-        System.out.println("Dispatching onLocalityInfoUpdate()");
-
-        // new locality update in chat, emit a broadcast to force an update if the locality fragment is active
+        // new locality update in chat
+        // emit a broadcast to force an update if the locality fragment is active
         String newLocalityIntent = BroadcastFilters.new_locality_info_update.toString();
         Intent intent = new Intent(newLocalityIntent);
         getApplicationContext().sendBroadcast(intent);
     }
 
     private void onPartnerMessage(RemoteMessage remoteMessage) throws JSONException {
-        System.out.println("Dispatching onPartnerMessage()");
         String notificationBody = remoteMessage.getData().get("message");
         User sender = new User(new JSONObject(remoteMessage.getData().get("from_details")));
 
         // on message received in the foreground
-        System.out.println(notificationBody);
         JSONObject notificationData = new JSONObject(notificationBody);
         String _id = notificationData.getString("_id");
         notificationData.remove("_id");

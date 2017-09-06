@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Vibrator;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
@@ -29,7 +30,10 @@ import com.syzible.loinnir.utils.EncodingUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -44,6 +48,35 @@ public class NotificationUtils {
     private static void vibrate(Context context) {
         Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
         vibrator.vibrate(VIBRATION_INTENSITY);
+    }
+
+    private static int generateUniqueId() {
+        Date now = new Date();
+        return Integer.parseInt(new SimpleDateFormat("ddHHmmss", Locale.getDefault()).format(now));
+    }
+
+    public static void generatePushNotification(Context context, String title, String content, String url) {
+        NotificationCompat.Builder notificationBuilder =
+                new NotificationCompat.Builder(context)
+                        .setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher))
+                        .setSmallIcon(R.drawable.logo_small)
+                        .setContentTitle(title)
+                        .setContentText(content);
+
+        Intent resultingIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+        stackBuilder.addParentStack(MainActivity.class);
+        stackBuilder.addNextIntent(resultingIntent);
+
+        PendingIntent resultingPendingIntent =
+                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        notificationBuilder.setContentIntent(resultingPendingIntent);
+
+        NotificationManager manager = (NotificationManager)
+                context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        manager.notify(generateUniqueId(), notificationBuilder.build());
     }
 
     public static void generateMessageNotification(final Context context, final User user,

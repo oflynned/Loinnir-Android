@@ -36,14 +36,12 @@ public class TokenService extends FirebaseInstanceIdService {
             RestClient.post(getApplicationContext(), Endpoints.EDIT_USER, payload, new BaseJsonHttpResponseHandler<JSONObject>() {
                 @Override
                 public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                    System.out.println(rawJsonResponse);
-                    System.out.println("Token refreshed successfully");
+
                 }
 
                 @Override
                 public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-                    System.out.println(rawJsonData);
-                    System.out.println("Token refresh failed?");
+
                 }
 
                 @Override
