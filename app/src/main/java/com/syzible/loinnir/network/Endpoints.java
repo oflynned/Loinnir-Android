@@ -3,6 +3,7 @@ package com.syzible.loinnir.network;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 
 /**
  * Created by ed on 17/05/2017.
@@ -13,11 +14,19 @@ public class Endpoints {
 
     private static final String LOCAL_ENDPOINT = "http://10.0.2.2:3000";
     private static final String REMOTE_ENDPOINT = "https://loinnir.herokuapp.com";
-    private static final String STEM_URL = REMOTE_ENDPOINT;
+    public static final String FACEBOOK_PAGE = "https://www.facebook.com/LoinnirApp";
+    private static final String STEM_URL = isDebugMode() ? LOCAL_ENDPOINT : REMOTE_ENDPOINT;
     private static final String API_URL = STEM_URL + "/api/v" + API_VERSION;
 
     public static boolean isDebugMode() {
-        return STEM_URL.equals(LOCAL_ENDPOINT);
+        return Build.FINGERPRINT.startsWith("generic")
+                || Build.FINGERPRINT.startsWith("unknown")
+                || Build.MODEL.contains("google_sdk")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK built for x86")
+                || Build.MANUFACTURER.contains("Genymotion")
+                || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
+                || "google_sdk".equals(Build.PRODUCT);
     }
 
     public static final String CREATE_USER = "/users/create";

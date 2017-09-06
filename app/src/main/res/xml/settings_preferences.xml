@@ -29,7 +29,12 @@
         <Preference
             android:key="pref_visit_website"
             android:summary="Téigh chuig Loinnir.ie chun tuilleadh a fheiceáil"
-            android:title="Tabhair Cuairt Dúinn" />
+            android:title="Cuairt chuig Loinnir.ie" />
+
+        <Preference
+            android:key="pref_visit_facebook_page"
+            android:summary="Téigh chuig ár leathanach Facebook chun a bheith ar an eolas"
+            android:title="Cuairt chuig Facebook" />
 
         <Preference
             android:key="pref_app_version"

@@ -40,7 +40,7 @@ import cz.msebera.android.httpclient.Header;
 public class SettingsFragment extends PreferenceFragment {
 
     SwitchPreference shouldShareLocation;
-    Preference manageBlockedUsers, shareApp, aboutLoinnir, visitWebsite;
+    Preference manageBlockedUsers, shareApp, aboutLoinnir, visitWebsite, visitFacebook;
     Preference appVersion, licences, privacyPolicy, termsOfService;
     Preference logOut, deleteAccount;
 
@@ -73,6 +73,7 @@ public class SettingsFragment extends PreferenceFragment {
         setListenerShareApp();
         setListenerAboutLoinnir();
         setListenerVisitWebsite();
+        setListenerVisitFacebook();
 
         // legal affairs
         setListenerLicences();
@@ -90,6 +91,7 @@ public class SettingsFragment extends PreferenceFragment {
         shareApp = findPreference("pref_share_app");
         aboutLoinnir = findPreference("pref_about_loinnir");
         visitWebsite = findPreference("pref_visit_website");
+        visitFacebook = findPreference("pref_visit_facebook");
         appVersion = findPreference("pref_app_version");
         licences = findPreference("pref_licences");
         privacyPolicy = findPreference("pref_privacy_policy");
@@ -219,6 +221,16 @@ public class SettingsFragment extends PreferenceFragment {
             @Override
             public boolean onPreferenceClick(Preference preference) {
                 Endpoints.openLink(context, Endpoints.getFrontendURL(""));
+                return false;
+            }
+        });
+    }
+
+    private void setListenerVisitFacebook() {
+        visitFacebook.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                Endpoints.openLink(context, Endpoints.FACEBOOK_PAGE);
                 return false;
             }
         });

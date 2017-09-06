@@ -45,6 +45,7 @@ public class ServerBroadcastService extends FirebaseMessagingService {
                 } else if (message_type.equals(NotificationTypes.block_enacted.name())) {
                     onBlockEnacted(remoteMessage.getData().get("block_enacter_id"));
                 } else if (message_type.equals(NotificationTypes.push_notification.name())) {
+                    System.out.println(remoteMessage.getData());
                     onPushNotification(remoteMessage.getData());
                 }
             }

@@ -61,7 +61,8 @@ public class NotificationUtils {
                         .setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher))
                         .setSmallIcon(R.drawable.logo_small)
                         .setContentTitle(title)
-                        .setContentText(content);
+                        .setContentText(content)
+                        .setStyle(new NotificationCompat.BigTextStyle().bigText(content));
 
         Intent resultingIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
 
