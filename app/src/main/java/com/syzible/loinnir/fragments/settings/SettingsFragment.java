@@ -41,7 +41,7 @@ public class SettingsFragment extends PreferenceFragment {
 
     SwitchPreference shouldShareLocation;
     Preference manageBlockedUsers, shareApp, aboutLoinnir, visitWebsite, visitFacebook;
-    Preference appVersion, licences, privacyPolicy, termsOfService;
+    Preference appVersion, privacyPolicy, termsOfService;
     Preference logOut, deleteAccount;
 
     private Activity context;
@@ -76,7 +76,6 @@ public class SettingsFragment extends PreferenceFragment {
         setListenerVisitFacebook();
 
         // legal affairs
-        setListenerLicences();
         setListenerPrivacyPolicy();
         setListenerTOS();
 
@@ -93,7 +92,6 @@ public class SettingsFragment extends PreferenceFragment {
         visitWebsite = findPreference("pref_visit_website");
         visitFacebook = findPreference("pref_visit_facebook");
         appVersion = findPreference("pref_app_version");
-        licences = findPreference("pref_licences");
         privacyPolicy = findPreference("pref_privacy_policy");
         termsOfService = findPreference("pref_tos");
         logOut = findPreference("pref_log_out");
@@ -231,16 +229,6 @@ public class SettingsFragment extends PreferenceFragment {
             @Override
             public boolean onPreferenceClick(Preference preference) {
                 Endpoints.openLink(context, Endpoints.FACEBOOK_PAGE);
-                return false;
-            }
-        });
-    }
-
-    private void setListenerLicences() {
-        licences.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                Endpoints.openLink(context, Endpoints.getFrontendURL(Endpoints.LICENCES));
                 return false;
             }
         });

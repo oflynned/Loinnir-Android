@@ -28,12 +28,12 @@
 
         <Preference
             android:key="pref_visit_website"
-            android:summary="Téigh chuig Loinnir.ie chun tuilleadh a fheiceáil"
+            android:summary="Téigh chuig Loinnir.ie chun sonraí dleathacha an léibhinn a fheiceáil"
             android:title="Cuairt chuig Loinnir.ie" />
 
         <Preference
-            android:key="pref_visit_facebook_page"
-            android:summary="Téigh chuig ár leathanach Facebook chun a bheith ar an eolas"
+            android:key="pref_visit_facebook"
+            android:summary="Téigh chuig ár leathanach Facebook chun a bheith ar an eolas agus cúrsaí reatha don aip"
             android:title="Cuairt chuig Facebook" />
 
         <Preference
@@ -48,15 +48,13 @@
 
         <Preference
             android:key="pref_tos"
-            android:title="Téarmaí Seirbhíse" />
+            android:title="Téarmaí Seirbhíse"
+            android:summary="Bí aireach ar rialacha, théarmaí agus choinníollacha a mbaineann lena bheith i d'úsáideoir." />
 
         <Preference
             android:key="pref_privacy_policy"
-            android:title="Polasaí Príobháideachais" />
-
-        <Preference
-            android:key="pref_licences"
-            android:title="Ceadúnais" />
+            android:title="Polasaí Príobháideachais"
+            android:summary="Coiméad ar an eolas cad a tharlaíonn do do shonraí a úsáidtear as ucht na seirbhíse seo." />
 
     </PreferenceCategory>
 
