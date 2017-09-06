@@ -61,6 +61,8 @@ public class PartnerConversationFrag extends Fragment {
     private View view;
 
     private ArrayList<Message> messages = new ArrayList<>();
+    ArrayList<Message> paginatedMessages = new ArrayList<>();
+
     private MessagesListAdapter<Message> adapter;
     private BroadcastReceiver newPartnerMessageReceiver = new BroadcastReceiver() {
         @Override
@@ -292,8 +294,11 @@ public class PartnerConversationFrag extends Fragment {
                     try {
                         payload.put("my_id", LocalPrefs.getID(getActivity()));
                         payload.put("partner_id", partner.getId());
-                        payload.put("oldest_message_id", messages.get(messages.size() - 1).getId());
                         payload.put("last_known_count", totalItemsCount - 1);
+
+                        Message oldestMessage = paginatedMessages.size() == 0 ? messages.get(messages.size() - 1) : paginatedMessages.get(paginatedMessages.size() - 1);
+                        payload.put("oldest_message_id", oldestMessage.getId());
+                        System.out.println(payload);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -301,8 +306,8 @@ public class PartnerConversationFrag extends Fragment {
                     RestClient.post(getActivity(), Endpoints.GET_PARTNER_MESSAGES_PAGINATION, payload, new BaseJsonHttpResponseHandler<JSONArray>() {
                         @Override
                         public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
+                            paginatedMessages.clear();
                             if (response.length() > 0) {
-                                ArrayList<Message> paginatedMessages = new ArrayList<>();
                                 for (int i = response.length() - 1; i >= 0; i--) {
                                     try {
                                         JSONObject o = response.getJSONObject(i);
@@ -313,6 +318,9 @@ public class PartnerConversationFrag extends Fragment {
                                         e.printStackTrace();
                                     }
                                 }
+
+                                for (Message message : paginatedMessages)
+                                    System.out.println(message.getText());
 
                                 adapter.addToEnd(paginatedMessages, false);
                             }
