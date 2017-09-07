@@ -14,7 +14,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.stfalcon.chatkit.commons.ImageLoader;
@@ -27,7 +26,6 @@ import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.GetImage;
 import com.syzible.loinnir.network.NetworkCallback;
 import com.syzible.loinnir.network.RestClient;
-import com.syzible.loinnir.network.interfaces.OnCallback;
 import com.syzible.loinnir.objects.Message;
 import com.syzible.loinnir.objects.User;
 import com.syzible.loinnir.persistence.LocalCacheDatabase;
@@ -174,48 +172,6 @@ public class PartnerConversationFrag extends Fragment {
 
         loadMessages();
         NotificationUtils.dismissNotification(getActivity(), partner);
-
-        RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getIdPayload(getActivity()), new BaseJsonHttpResponseHandler<JSONObject>() {
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                try {
-                    JSONArray blockedUsers = response.getJSONArray("blocked");
-                    for (int i=0; i<blockedUsers.length(); i++) {
-                        if (blockedUsers.getString(i).equals(partner.getId())) {
-                            RestClient.post(getActivity(), Endpoints.GET_PAST_CONVERSATION_PREVIEWS, JSONUtils.getIdPayload(getActivity()), new BaseJsonHttpResponseHandler<JSONArray>() {
-                                @Override
-                                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
-                                    MainActivity.clearBackstack(getFragmentManager());
-                                    MainActivity.setFragment(getFragmentManager(), new ConversationsListFrag().setResponse(response));
-                                }
-
-                                @Override
-                                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
-
-                                }
-
-                                @Override
-                                protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                    return new JSONArray(rawJsonData);
-                                }
-                            });
-                        }
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-
-            }
-
-            @Override
-            protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                return new JSONObject(rawJsonData);
-            }
-        });
     }
 
     @Override
@@ -390,7 +346,48 @@ public class PartnerConversationFrag extends Fragment {
                         @Override
                         public void onCallback() {
                             DisplayUtils.generateSnackbar(getActivity(), "Cuireadh cosc go rathúil ar " + LanguageUtils.lenite(((User) message.getUser()).getForename()));
-                            loadMessages();
+
+                            RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getIdPayload(getActivity()), new BaseJsonHttpResponseHandler<JSONObject>() {
+                                @Override
+                                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                                    try {
+                                        JSONArray blockedUsers = response.getJSONArray("blocked");
+                                        for (int i=0; i<blockedUsers.length(); i++) {
+                                            if (blockedUsers.getString(i).equals(partner.getId())) {
+                                                RestClient.post(getActivity(), Endpoints.GET_PAST_CONVERSATION_PREVIEWS, JSONUtils.getIdPayload(getActivity()), new BaseJsonHttpResponseHandler<JSONArray>() {
+                                                    @Override
+                                                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
+                                                        MainActivity.clearBackstack(getFragmentManager());
+                                                        MainActivity.setFragment(getFragmentManager(), new ConversationsListFrag().setResponse(response));
+                                                    }
+
+                                                    @Override
+                                                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
+
+                                                    }
+
+                                                    @Override
+                                                    protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                                        return new JSONArray(rawJsonData);
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+
+                                }
+
+                                @Override
+                                protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                    return new JSONObject(rawJsonData);
+                                }
+                            });
                         }
                     });
             }

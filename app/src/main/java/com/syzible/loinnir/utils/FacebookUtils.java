@@ -17,7 +17,7 @@ public class FacebookUtils {
         LocalPrefs.setStringPref(LocalPrefs.Pref.fb_access_token, token, context);
     }
 
-    private static String getToken(Context context) {
+    public static String getToken(Context context) {
         return LocalPrefs.getStringPref(LocalPrefs.Pref.fb_access_token, context);
     }
 
