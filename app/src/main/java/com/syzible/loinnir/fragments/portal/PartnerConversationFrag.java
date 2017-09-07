@@ -91,7 +91,7 @@ public class PartnerConversationFrag extends Fragment {
 
                                 @Override
                                 public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
-                                    System.out.println(rawJsonData);
+
                                 }
 
                                 @Override
@@ -173,6 +173,49 @@ public class PartnerConversationFrag extends Fragment {
                 new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
 
         loadMessages();
+        NotificationUtils.dismissNotification(getActivity(), partner);
+
+        RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getIdPayload(getActivity()), new BaseJsonHttpResponseHandler<JSONObject>() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                try {
+                    JSONArray blockedUsers = response.getJSONArray("blocked");
+                    for (int i=0; i<blockedUsers.length(); i++) {
+                        if (blockedUsers.getString(i).equals(partner.getId())) {
+                            RestClient.post(getActivity(), Endpoints.GET_PAST_CONVERSATION_PREVIEWS, JSONUtils.getIdPayload(getActivity()), new BaseJsonHttpResponseHandler<JSONArray>() {
+                                @Override
+                                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
+                                    MainActivity.clearBackstack(getFragmentManager());
+                                    MainActivity.setFragment(getFragmentManager(), new ConversationsListFrag().setResponse(response));
+                                }
+
+                                @Override
+                                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
+
+                                }
+
+                                @Override
+                                protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                    return new JSONArray(rawJsonData);
+                                }
+                            });
+                        }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+
+            }
+
+            @Override
+            protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                return new JSONObject(rawJsonData);
+            }
+        });
     }
 
     @Override

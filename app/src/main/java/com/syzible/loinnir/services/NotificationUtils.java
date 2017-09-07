@@ -62,7 +62,8 @@ public class NotificationUtils {
                         .setSmallIcon(R.drawable.logo_small)
                         .setContentTitle(title)
                         .setContentText(content)
-                        .setStyle(new NotificationCompat.BigTextStyle().bigText(content));
+                        .setStyle(new NotificationCompat.BigTextStyle().bigText(content))
+                        .setAutoCancel(true);
 
         Intent resultingIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
 

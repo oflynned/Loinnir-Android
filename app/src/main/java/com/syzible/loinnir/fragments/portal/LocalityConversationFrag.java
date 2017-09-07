@@ -150,6 +150,7 @@ public class LocalityConversationFrag extends Fragment {
     public void onResume() {
         super.onResume();
         loadMessages();
+
         getActivity().registerReceiver(onNewLocalityInfoReceiver,
                 new IntentFilter(BroadcastFilters.new_locality_info_update.toString()));
 
