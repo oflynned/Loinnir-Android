@@ -48,6 +48,8 @@ public class LoginFrag extends Fragment {
     private CallbackManager callbackManager;
     private LoginButton facebookLoginButton;
     private View view;
+    private ImageView logo;
+
     final int[] flags = {
             R.drawable.an_cabhan,
             R.drawable.an_clar,
@@ -102,6 +104,14 @@ public class LoginFrag extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.login_frag, container, false);
+
+        logo = (ImageView) view.findViewById(R.id.iv_login_app_logo);
+        logo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                YoYo.with(Techniques.RubberBand).duration(700).playOn(logo);
+            }
+        });
 
         facebookLoginButton = (LoginButton) view.findViewById(R.id.login_fb_login_button);
         facebookLoginButton.setFragment(this);

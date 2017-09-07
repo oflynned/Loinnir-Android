@@ -8,8 +8,8 @@
 
     <ImageView
         android:id="@+id/iv_login_app_logo"
-        android:layout_width="192dp"
-        android:layout_height="192dp"
+        android:layout_width="160dp"
+        android:layout_height="160dp"
         android:layout_centerHorizontal="true"
         android:layout_margin="16dp"
         android:src="@drawable/logo_small" />
