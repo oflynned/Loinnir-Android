@@ -235,7 +235,7 @@ public class MainActivity extends AppCompatActivity
             switch (invocationType) {
                 case "notification":
                     shouldDisplayGreeting = false;
-                    navigationView.getMenu().getItem(2).setChecked(true);
+                    navigationView.getMenu().getItem(1).setChecked(true);
 
                     String partnerId = getIntent().getStringExtra("user");
                     JSONObject chatPayload = new JSONObject();
