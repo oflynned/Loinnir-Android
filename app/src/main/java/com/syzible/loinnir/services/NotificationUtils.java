@@ -55,7 +55,7 @@ public class NotificationUtils {
         return Integer.parseInt(new SimpleDateFormat("ddHHmmss", Locale.getDefault()).format(now));
     }
 
-    public static void generatePushNotification(final Context context, String title, String content, final String url) {
+    public static void generatePushNotification(final Context context, String title, String content, final String url, final String notificationId) {
         final NotificationCompat.Builder notificationBuilder =
                 new NotificationCompat.Builder(context)
                         .setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher))
@@ -69,7 +69,7 @@ public class NotificationUtils {
         final OnIntentCallback onIntentCallback = new OnIntentCallback() {
             @Override
             public void onCallback(Intent intent) {
-                generatePushNotification(intent, context, notificationBuilder);
+                generatePushNotification(intent, context, notificationBuilder, notificationId);
             }
         };
 
@@ -79,17 +79,27 @@ public class NotificationUtils {
                 public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
                     try {
                         context.getPackageManager().getPackageInfo("com.facebook.katana", 0);
-                        resultingIntent[0] = new Intent(Intent.ACTION_VIEW, Uri.parse("fb://page/" + response.getString("id")));
+                        resultingIntent[0] = new Intent(context, MainActivity.class);
+                        resultingIntent[0].putExtra("push_notification_id", notificationId);
+                        resultingIntent[0].putExtra("url", Uri.parse("fb://page/" + response.getString("id")));
+                        resultingIntent[0].putExtra("invoker", "push_notification");
+
                         onIntentCallback.onCallback(resultingIntent[0]);
                     } catch (Exception e) {
-                        resultingIntent[0] = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        resultingIntent[0] = new Intent(context, MainActivity.class);
+                        resultingIntent[0].putExtra("push_notification_id", notificationId);
+                        resultingIntent[0].putExtra("url", Uri.parse(url));
+                        resultingIntent[0].putExtra("invoker", "push_notification");
                         onIntentCallback.onCallback(resultingIntent[0]);
                     }
                 }
 
                 @Override
                 public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-                    resultingIntent[0] = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    resultingIntent[0] = new Intent(context, MainActivity.class);
+                    resultingIntent[0].putExtra("push_notification_id", notificationId);
+                    resultingIntent[0].putExtra("url", Uri.parse(url));
+                    resultingIntent[0].putExtra("invoker", "push_notification");
                     onIntentCallback.onCallback(resultingIntent[0]);
                 }
 
@@ -99,12 +109,15 @@ public class NotificationUtils {
                 }
             });
         } else {
-            resultingIntent[0] = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            resultingIntent[0] = new Intent(context, MainActivity.class);
+            resultingIntent[0].putExtra("push_notification_id", notificationId);
+            resultingIntent[0].putExtra("url", Uri.parse(url));
+            resultingIntent[0].putExtra("event", "push_notification");
             onIntentCallback.onCallback(resultingIntent[0]);
         }
     }
 
-    private static void generatePushNotification(Intent resultingIntent, Context context, NotificationCompat.Builder notificationBuilder) {
+    private static void generatePushNotification(Intent resultingIntent, Context context, NotificationCompat.Builder notificationBuilder, String notificationId) {
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
         stackBuilder.addParentStack(MainActivity.class);
         stackBuilder.addNextIntent(resultingIntent);
@@ -121,16 +134,6 @@ public class NotificationUtils {
 
     private static String getPageName(String url) {
         return url.split("/")[3];
-    }
-
-    private static String getPageArguments(String url) {
-        String[] arguments = url.split("/");
-        String output = "";
-
-        for (int i = 4; i < arguments.length; i++)
-            output += arguments[i] + "/";
-
-        return output;
     }
 
     private static boolean isFacebookLink(String url) {

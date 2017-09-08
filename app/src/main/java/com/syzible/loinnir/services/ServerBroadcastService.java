@@ -4,6 +4,9 @@ import android.content.Intent;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+import com.loopj.android.http.BaseJsonHttpResponseHandler;
+import com.syzible.loinnir.network.Endpoints;
+import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.objects.Message;
 import com.syzible.loinnir.objects.User;
 import com.syzible.loinnir.persistence.LocalPrefs;
@@ -15,6 +18,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Map;
+
+import cz.msebera.android.httpclient.Header;
 
 /**
  * Created by ed on 26/05/2017.
@@ -56,8 +61,36 @@ public class ServerBroadcastService extends FirebaseMessagingService {
         String title = data.get("push_notification_title");
         String content = data.get("push_notification_content");
         String url = data.get("push_notification_link");
+        String notificationId = data.get("push_notification_id");
 
-        NotificationUtils.generatePushNotification(getApplicationContext(), title, content, url);
+        JSONObject payload = new JSONObject();
+        try {
+            payload.put("push_notification_id", notificationId);
+            payload.put("event", "delivery");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        RestClient.post(getApplicationContext(),
+                Endpoints.PUSH_NOTIFICATION_INTERACTION,
+                payload,
+                new BaseJsonHttpResponseHandler<JSONObject>() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+
+                    }
+
+                    @Override
+                    protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                        return new JSONObject(rawJsonData);
+                    }
+                });
+
+        NotificationUtils.generatePushNotification(getApplicationContext(), title, content, url, notificationId);
     }
 
     /**

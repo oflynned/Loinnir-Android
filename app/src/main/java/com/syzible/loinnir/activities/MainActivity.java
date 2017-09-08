@@ -288,6 +288,36 @@ public class MainActivity extends AppCompatActivity
                             return new JSONObject(rawJsonData);
                         }
                     });
+                case "push_notification":
+                    shouldDisplayGreeting = false;
+
+                    JSONObject payload = new JSONObject();
+                    try {
+                        payload.put("push_notification_id", getIntent().getStringExtra("push_notification_id"));
+                        payload.put("event", "interaction");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                    RestClient.post(getApplicationContext(),
+                            Endpoints.PUSH_NOTIFICATION_INTERACTION,
+                            payload,
+                            new BaseJsonHttpResponseHandler<JSONObject>() {
+                                @Override
+                                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+
+                                }
+
+                                @Override
+                                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+
+                                }
+
+                                @Override
+                                protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                    return new JSONObject(rawJsonData);
+                                }
+                            });
             }
         } else {
             setFragment(getFragmentManager(), new MapFrag());

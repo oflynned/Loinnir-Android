@@ -35,6 +35,7 @@ public class Endpoints {
 
     public static final String UPDATE_USER_LOCATION = "/users/update-location";
     public static final String GET_NEARBY_COUNT = "/users/get-nearby-count";
+    public static final String PUSH_NOTIFICATION_INTERACTION = "/users/push-notification-interaction";
 
     public static final String GET_USER = "/users/get";
     public static final String GET_ALL_USERS = "/users/get-all";
@@ -61,7 +62,6 @@ public class Endpoints {
     public static final String MARK_PARTNER_MESSAGES_SEEN = "/messages/mark-seen";
     public static final String SUBSCRIBE_TO_PARTNER = "/messages/subscribe-partner";
 
-    public static final String LICENCES = "/ceadunais";
     public static final String PRIVACY_POLICIES = "/priobhaideacht";
     public static final String TERMS_OF_SERVICE = "/tos";
 
