@@ -39,12 +39,12 @@ public class IntroductionActivity extends MaterialIntroActivity {
                 startActivity(new Intent(this, AuthenticationActivity.class));
             } else {
                 new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.DarkerDialogAppTheme))
-                        .setTitle("BETA BUILD TOS")
-                        .setMessage("De bheith ag glacadh leis na téarmaí seirbhíse, glacann tú leis an seans go scroisfí do chúntas agus do shonraí go do-iompaithe ó na freastalaithe fad is atá an aip á forbairt.")
+                        .setTitle("Téarmaí Seirbhíse")
+                        .setMessage("De bheith ag glacadh leis na téarmaí seirbhíse, glacann tú go bhfuil na siad léite agat, agus go ndéanfar iarracht iad a choimeád san intinn nuair a bhíonn an aip in úsáid.")
                         .setPositiveButton("Aontaím", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                DisplayUtils.generateSnackbar(IntroductionActivity.this, "Go raibh maith agat! " + EmojiUtils.getEmoji(EmojiUtils.HEART_EYES));
+                                DisplayUtils.generateToast(IntroductionActivity.this, "Go raibh maith agat! " + EmojiUtils.getEmoji(EmojiUtils.HEART_EYES));
                             }
                         })
                         .setNegativeButton("Ní Aontaím", new DialogInterface.OnClickListener() {
