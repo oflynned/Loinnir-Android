@@ -60,8 +60,8 @@ public class SplashActivity extends AppCompatActivity {
                             @Override
                             public void run() {
                                 handler.removeCallbacks(this);
-                                startActivity(new Intent(SplashActivity.this, IntroductionActivity.class));
                                 SplashActivity.this.finish();
+                                startActivity(new Intent(SplashActivity.this, IntroductionActivity.class));
                             }
                         };
 

@@ -159,7 +159,6 @@ public class MainActivity extends AppCompatActivity
         shouldDisplayGreeting = true;
 
         setUpDrawer();
-        checkNotificationInvocation();
 
         if (shouldDisplayGreeting)
             greetUser();
@@ -203,6 +202,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
+        checkNotificationInvocation();
         MainActivity.setAppResumed();
         registerBroadcastReceivers();
         startService(new Intent(getApplicationContext(), LocationService.class));
@@ -232,6 +232,7 @@ public class MainActivity extends AppCompatActivity
     private void checkNotificationInvocation() {
         String invocationType = getIntent().getStringExtra("invoker");
         if (invocationType != null) {
+            System.out.println("INVOKED! " + invocationType);
             switch (invocationType) {
                 case "notification":
                     shouldDisplayGreeting = false;

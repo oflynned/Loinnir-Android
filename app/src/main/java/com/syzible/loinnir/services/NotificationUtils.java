@@ -79,27 +79,17 @@ public class NotificationUtils {
                 public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
                     try {
                         context.getPackageManager().getPackageInfo("com.facebook.katana", 0);
-                        resultingIntent[0] = new Intent(context, MainActivity.class);
-                        resultingIntent[0].putExtra("push_notification_id", notificationId);
-                        resultingIntent[0].putExtra("url", Uri.parse("fb://page/" + response.getString("id")));
-                        resultingIntent[0].putExtra("invoker", "push_notification");
-
+                        resultingIntent[0] = new Intent(Intent.ACTION_VIEW, Uri.parse("fb://page/" + response.getString("id")));
                         onIntentCallback.onCallback(resultingIntent[0]);
                     } catch (Exception e) {
-                        resultingIntent[0] = new Intent(context, MainActivity.class);
-                        resultingIntent[0].putExtra("push_notification_id", notificationId);
-                        resultingIntent[0].putExtra("url", Uri.parse(url));
-                        resultingIntent[0].putExtra("invoker", "push_notification");
+                        resultingIntent[0] = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                         onIntentCallback.onCallback(resultingIntent[0]);
                     }
                 }
 
                 @Override
                 public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-                    resultingIntent[0] = new Intent(context, MainActivity.class);
-                    resultingIntent[0].putExtra("push_notification_id", notificationId);
-                    resultingIntent[0].putExtra("url", Uri.parse(url));
-                    resultingIntent[0].putExtra("invoker", "push_notification");
+                    resultingIntent[0] = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                     onIntentCallback.onCallback(resultingIntent[0]);
                 }
 
@@ -109,10 +99,7 @@ public class NotificationUtils {
                 }
             });
         } else {
-            resultingIntent[0] = new Intent(context, MainActivity.class);
-            resultingIntent[0].putExtra("push_notification_id", notificationId);
-            resultingIntent[0].putExtra("url", Uri.parse(url));
-            resultingIntent[0].putExtra("event", "push_notification");
+            resultingIntent[0] = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
             onIntentCallback.onCallback(resultingIntent[0]);
         }
     }
