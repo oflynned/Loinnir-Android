@@ -25,13 +25,11 @@ import com.syzible.loinnir.services.LocationService;
 public class MapCircleRenderer extends DefaultClusterRenderer<MapCircle> {
 
     private int GREEN_500;
-    private Drawable markerCircle;
 
     public MapCircleRenderer(Context context, GoogleMap map, ClusterManager<MapCircle> clusterManager) {
         super(context, map, clusterManager);
 
         GREEN_500 = ContextCompat.getColor(context, R.color.green500);
-        markerCircle = ContextCompat.getDrawable(context, R.drawable.marker_circle);
     }
 
     @Override

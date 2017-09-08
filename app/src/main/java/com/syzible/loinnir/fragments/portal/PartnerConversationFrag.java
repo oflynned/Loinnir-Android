@@ -150,8 +150,11 @@ public class PartnerConversationFrag extends Fragment {
         setupAdapter(view);
 
         ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
-        actionBar.setTitle(partner.getName());
-        actionBar.setSubtitle(formatSubtitle());
+        if (actionBar != null) {
+            actionBar.setTitle(partner.getName());
+            actionBar.setSubtitle(formatSubtitle());
+        }
+
         return view;
     }
 
@@ -352,7 +355,7 @@ public class PartnerConversationFrag extends Fragment {
                                 public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
                                     try {
                                         JSONArray blockedUsers = response.getJSONArray("blocked");
-                                        for (int i=0; i<blockedUsers.length(); i++) {
+                                        for (int i = 0; i < blockedUsers.length(); i++) {
                                             if (blockedUsers.getString(i).equals(partner.getId())) {
                                                 RestClient.post(getActivity(), Endpoints.GET_PAST_CONVERSATION_PREVIEWS, JSONUtils.getIdPayload(getActivity()), new BaseJsonHttpResponseHandler<JSONArray>() {
                                                     @Override

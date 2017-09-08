@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -104,8 +105,12 @@ public class ConversationsListFrag extends Fragment implements
     @Nullable
     @Override
     public View onCreateView(final LayoutInflater inflater, @Nullable final ViewGroup container, Bundle savedInstanceState) {
-        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.app_name);
-        ((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(null);
+        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+
+        if (actionBar != null) {
+            actionBar.setTitle(R.string.app_name);
+            actionBar.setSubtitle(null);
+        }
 
         View view;
         if (response.length() > 0) {

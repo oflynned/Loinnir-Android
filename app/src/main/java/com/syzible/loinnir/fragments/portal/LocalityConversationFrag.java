@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -335,8 +336,12 @@ public class LocalityConversationFrag extends Fragment {
                             String localUsers = nearbyUsers + " eile anseo";
 
                             // set title and subtitle
-                            ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(localityName);
-                            ((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(localUsers);
+                            ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+
+                            if (actionBar != null) {
+                                actionBar.setTitle(localityName);
+                                actionBar.setSubtitle(localUsers);
+                            }
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }

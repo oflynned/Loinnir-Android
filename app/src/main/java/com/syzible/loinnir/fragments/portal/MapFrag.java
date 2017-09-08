@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -70,8 +71,12 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         GREEN_500 = ContextCompat.getColor(getActivity(), R.color.green500);
         setMapPosition();
 
-        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.app_name);
-        ((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(null);
+        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+
+        if (actionBar != null) {
+            actionBar.setTitle(R.string.app_name);
+            actionBar.setSubtitle(null);
+        }
     }
 
     @Override

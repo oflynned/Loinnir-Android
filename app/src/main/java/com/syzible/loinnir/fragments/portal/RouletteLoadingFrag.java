@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.Nullable;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,8 +32,12 @@ public class RouletteLoadingFrag extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.roulette_loading_frag, container, false);
-        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.app_name);
-        ((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(null);
+        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+
+        if (actionBar != null) {
+            actionBar.setTitle(R.string.app_name);
+            actionBar.setSubtitle(null);
+        }
 
         ImageView rouletteButton = (ImageView) view.findViewById(R.id.roulette_spinner_button);
 
