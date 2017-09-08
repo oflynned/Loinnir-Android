@@ -11,6 +11,7 @@ import android.preference.SwitchPreference;
 import android.support.annotation.Nullable;
 import android.view.ContextThemeWrapper;
 
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.syzible.loinnir.R;
 import com.syzible.loinnir.activities.AuthenticationActivity;
@@ -29,6 +30,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import cz.msebera.android.httpclient.Header;
@@ -268,8 +270,14 @@ public class SettingsFragment extends PreferenceFragment {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 DisplayUtils.generateToast(context, "Logáil tú amach");
-
                                 FacebookUtils.deleteToken(context);
+
+                                try {
+                                    FirebaseInstanceId.getInstance().deleteInstanceId();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+
                                 getActivity().sendBroadcast(new Intent("finish_main_activity"));
                                 getActivity().finish();
                                 startActivity(new Intent(context, AuthenticationActivity.class));

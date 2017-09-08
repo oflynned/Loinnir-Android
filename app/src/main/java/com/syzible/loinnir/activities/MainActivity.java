@@ -159,6 +159,7 @@ public class MainActivity extends AppCompatActivity
         shouldDisplayGreeting = true;
 
         setUpDrawer();
+        checkNotificationInvocation();
 
         if (shouldDisplayGreeting)
             greetUser();
@@ -202,7 +203,6 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        checkNotificationInvocation();
         MainActivity.setAppResumed();
         registerBroadcastReceivers();
         startService(new Intent(getApplicationContext(), LocationService.class));
