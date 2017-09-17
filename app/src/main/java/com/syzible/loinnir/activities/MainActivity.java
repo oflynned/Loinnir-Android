@@ -104,8 +104,6 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        setGaLocale();
-
         String fcmToken = FirebaseInstanceId.getInstance().getToken();
         if (fcmToken != null) {
             if (!fcmToken.equals("")) {
@@ -175,11 +173,14 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void hideKeyboard() {
-        InputMethodManager inputMethodManager = (InputMethodManager) getApplicationContext().getSystemService(Activity.INPUT_METHOD_SERVICE);
-        inputMethodManager.hideSoftInputFromWindow(MainActivity.this.getCurrentFocus().getWindowToken(), 0);
+        InputMethodManager inputMethodManager = (InputMethodManager)
+                getApplicationContext().getSystemService(Activity.INPUT_METHOD_SERVICE);
+
+        View currentView = MainActivity.this.getCurrentFocus();
+        if (currentView != null)
+            inputMethodManager.hideSoftInputFromWindow(currentView.getWindowToken(), 0);
     }
 
-    // TODO send updates of last active etc to the server
     private void notifyMetaDataUpdate() {
         RestClient.post(this, Endpoints.UPDATE_USER_META_DATA, JSONUtils.getIdPayload(this),
                 new BaseJsonHttpResponseHandler<JSONObject>() {
@@ -203,6 +204,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
+        setGaLocale();
         MainActivity.setAppResumed();
         registerBroadcastReceivers();
         startService(new Intent(getApplicationContext(), LocationService.class));

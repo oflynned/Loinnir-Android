@@ -12,6 +12,11 @@ public class BitmapUtils {
     public static final int BITMAP_SIZE = 640;
     public static final int BITMAP_SIZE_SMALL = 128;
 
+    // TODO centre crop the given image to 1:1 aspect from the centre via smallest length
+    public static Bitmap getCroppedSquare(Bitmap bitmap) {
+        return null;
+    }
+
     public static Bitmap getCroppedCircle(Bitmap bitmap) {
         Bitmap scaledBitmap = scaleBitmap(bitmap, BITMAP_SIZE);
         final Bitmap outputBitmap = Bitmap.createBitmap(scaledBitmap.getWidth(),
