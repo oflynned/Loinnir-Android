@@ -2,6 +2,7 @@ package com.syzible.loinnir.fragments.portal;
 
 import android.app.Fragment;
 import android.graphics.Bitmap;
+import android.media.Image;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
@@ -16,6 +17,8 @@ import com.syzible.loinnir.R;
 import com.syzible.loinnir.activities.MainActivity;
 import com.syzible.loinnir.objects.User;
 import com.syzible.loinnir.utils.BitmapUtils;
+import com.syzible.loinnir.utils.DisplayUtils;
+import com.syzible.loinnir.utils.EmojiUtils;
 
 import mehdi.sakout.fancybuttons.FancyButton;
 
@@ -42,6 +45,7 @@ public class RouletteOutcomeFrag extends Fragment {
         }
 
         ImageView profilePictureImageView = (ImageView) view.findViewById(R.id.roulette_partner_profile_pic);
+        ImageView profilePictureBadgeView = (ImageView) view.findViewById(R.id.roulette_partner_profile_badge);
         TextView usernameTextView = (TextView) view.findViewById(R.id.name_text_roulette);
         TextView localityTextView = (TextView) view.findViewById(R.id.locality_text_roulette);
         TextView countyTextView = (TextView) view.findViewById(R.id.county_text_roulette);
@@ -82,6 +86,19 @@ public class RouletteOutcomeFrag extends Fragment {
                 "ach caillfidh tú an nasc leis an duine seo mura thosaíonn tú comhrá " +
                 (partner.isFemale() ? "léi" : "leis");
         matchWarningTextView.setText(outcome);
+
+        // Dónal, me
+        if (partner.getId().equals("10207354314614509") || partner.getId().equals("1433224973407916")) {
+            profilePictureBadgeView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    DisplayUtils.generateToast(getActivity(),
+                            "Ball den fhoireann Loinnir " + EmojiUtils.getEmoji(EmojiUtils.COOL));
+                }
+            });
+        } else {
+            profilePictureBadgeView.setVisibility(View.GONE);
+        }
 
         return view;
     }

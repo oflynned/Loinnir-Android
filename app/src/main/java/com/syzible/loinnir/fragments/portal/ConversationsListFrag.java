@@ -65,9 +65,8 @@ public class ConversationsListFrag extends Fragment implements
     private BroadcastReceiver newPartnerMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(BroadcastFilters.new_partner_message.toString())) {
+            if (intent.getAction().equals(BroadcastFilters.new_partner_message.toString()))
                 loadConversationPreviews();
-            }
         }
     };
 
@@ -186,6 +185,7 @@ public class ConversationsListFrag extends Fragment implements
             dialogsListAdapter.setOnDialogClickListener(ConversationsListFrag.this);
             dialogsListAdapter.setOnDialogLongClickListener(ConversationsListFrag.this);
             dialogsList.setAdapter(dialogsListAdapter);
+            dialogsList.scrollToPosition(conversations.size() - 1);
         } else {
             MainActivity.removeFragment(getFragmentManager());
             MainActivity.setFragment(getFragmentManager(), new NoConversationFrag());

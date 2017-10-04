@@ -28,6 +28,7 @@ import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.syzible.loinnir.R;
 import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.RestClient;
+import com.syzible.loinnir.objects.ClusterRenderer;
 import com.syzible.loinnir.objects.MapCircle;
 import com.syzible.loinnir.objects.User;
 import com.syzible.loinnir.services.LocationService;
@@ -50,6 +51,7 @@ import cz.msebera.android.httpclient.Header;
 
 public class MapFrag extends Fragment implements OnMapReadyCallback {
     private GoogleMap googleMap;
+
     private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -58,8 +60,9 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         }
     };
 
+    private LatLng lastKnownLocation;
+    private boolean hasZoomed = false;
     private ArrayList<MapCircle> userCircles = new ArrayList<>();
-
     private int GREEN_500;
 
     @Override
@@ -68,6 +71,7 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         getActivity().registerReceiver(locationUpdateReceiver,
                 new IntentFilter(BroadcastFilters.updated_location.toString()));
 
+        hasZoomed = false;
         GREEN_500 = ContextCompat.getColor(getActivity(), R.color.green500);
         setMapPosition();
 
@@ -130,13 +134,22 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
                         userCircles.clear();
+                        googleMap.clear();
                         for (int i = 0; i < response.length(); i++) {
                             try {
                                 User user = new User(response.getJSONObject(i));
                                 if (user.getId().equals(LocalPrefs.getID(getActivity()))) {
                                     userCircles.add(new MapCircle(user, true));
-                                    googleMap.moveCamera(CameraUpdateFactory.newLatLng(user.getLocation()));
-                                    zoomToLocation(user.getLocation());
+                                    if (lastKnownLocation == null)
+                                        lastKnownLocation = user.getLocation();
+
+                                    if (!hasZoomed || lastKnownLocation != user.getLocation()) {
+                                        googleMap.moveCamera(CameraUpdateFactory.newLatLng(user.getLocation()));
+                                        zoomToLocation(user.getLocation());
+                                        hasZoomed = true;
+                                    }
+
+                                    lastKnownLocation = user.getLocation();
                                 } else {
                                     userCircles.add(new MapCircle(user, false));
                                 }
@@ -146,7 +159,7 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
                         }
 
                         googleMap.clear();
-                        for(MapCircle circle : userCircles)
+                        for (MapCircle circle : userCircles)
                             googleMap.addCircle(getUserCircle(circle.getPosition()));
                     }
 
@@ -176,15 +189,15 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         return new CircleOptions()
                 .center(position)
                 .radius(LocationService.USER_LOCATION_RADIUS)
-                .strokeColor(GREEN_500)
-                .fillColor(getFillColour());
+                .strokeColor(getFillColour(true))
+                .fillColor(getFillColour(false));
     }
 
-    private int getFillColour() {
+    private int getFillColour(boolean isClear) {
         int r = (GREEN_500) & 0xFF;
         int g = (GREEN_500 >> 8) & 0xFF;
         int b = (GREEN_500 >> 16) & 0xFF;
-        int a = 128;
+        int a = isClear ? 0 : 128;
 
         return Color.argb(a, r, g, b);
     }

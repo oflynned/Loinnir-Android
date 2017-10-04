@@ -363,6 +363,12 @@ public class MainActivity extends AppCompatActivity
         TextView localityName = (TextView) headerView.findViewById(R.id.nav_header_locality);
         TextView countyName = (TextView) headerView.findViewById(R.id.nav_header_county);
 
+        if (locality.equals("abroad"))
+            locality = "Thar Sáile";
+
+        if (county.equals("abroad"))
+            county = "Éire";
+
         localityName.setText(locality);
         countyName.setText(county);
 

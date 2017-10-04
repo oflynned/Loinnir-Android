@@ -20,25 +20,41 @@
         android:text="Fuarthas Meaitseáil Nua!"
         android:textSize="24sp" />
 
-    <ImageView
-        android:id="@+id/roulette_partner_profile_pic"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <RelativeLayout
+        android:id="@+id/roulette_partner_profile_pic_area"
+        android:layout_width="192dp"
+        android:layout_height="192dp"
         android:layout_below="@+id/match_notification_text"
         android:layout_centerInParent="true"
-        android:layout_marginTop="16dp"
-        android:adjustViewBounds="true"
-        android:maxHeight="192dp"
-        android:maxWidth="192dp"
-        android:minHeight="192dp"
-        android:minWidth="192dp"
-        android:src="@mipmap/ic_launcher" />
+        android:layout_marginTop="16dp">
+
+        <ImageView
+            android:id="@+id/roulette_partner_profile_pic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:adjustViewBounds="true"
+            android:maxHeight="192dp"
+            android:maxWidth="192dp"
+            android:minHeight="192dp"
+            android:minWidth="192dp"
+            android:src="@mipmap/ic_launcher" />
+
+        <ImageView
+            android:id="@+id/roulette_partner_profile_badge"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:layout_margin="12dp"
+            android:src="@mipmap/ic_launcher" />
+    </RelativeLayout>
 
     <TextView
         android:id="@+id/name_text_roulette"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/roulette_partner_profile_pic"
+        android:layout_below="@+id/roulette_partner_profile_pic_area"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
         android:layout_marginTop="16dp"
