@@ -40,7 +40,7 @@ public class IntroductionActivity extends MaterialIntroActivity {
             } else {
                 new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.DarkerDialogAppTheme))
                         .setTitle("Téarmaí Seirbhíse")
-                        .setMessage("De bheith ag glacadh leis na téarmaí seirbhíse, glacann tú go bhfuil na siad léite agat, agus go ndéanfar iarracht iad a choimeád san intinn nuair a bhíonn an aip in úsáid.")
+                        .setMessage("De bheith ag glacadh leis na téarmaí seirbhíse, glacann tú go bhfuil na siad léite agat ar an suíomh idirlín, agus go ndéanfar iarracht iad a choimeád san intinn nuair a bhíonn an aip in úsáid.")
                         .setPositiveButton("Aontaím", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -88,7 +88,7 @@ public class IntroductionActivity extends MaterialIntroActivity {
                 .buttonsColor(R.color.amber500)
                 .image(R.drawable.ic_map_pin_white)
                 .title("Ceantar")
-                .description("Baintear úsáid as an gceantar garbh chun a fheiceáil ar an léarscáil cá bhfuil úsáideoirí eile lonnaithe")
+                .description("Féach umat cá bhfuil an Ghaeilge ar léarscáil agus labhair i seomra cainte atá bunaithe ar an áit a bhfuil tú lonnaithe.")
                 .build();
     }
 
@@ -98,7 +98,7 @@ public class IntroductionActivity extends MaterialIntroActivity {
                 .buttonsColor(R.color.blue500)
                 .image(R.drawable.ic_conversation_white)
                 .title("I mBun Allagair")
-                .description("Labhair i ngrúpa le h-úsáideoirí sa cheantar céanna, nó trí rúiléid chun bualadh le daoine nua fánacha.")
+                .description("Déan rúiléid chun bualadh le daoine nua timpeall na cruinne, agus fionn pobal le grá don Ghaeilge.")
                 .build();
     }
 

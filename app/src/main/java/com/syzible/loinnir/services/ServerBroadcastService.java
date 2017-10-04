@@ -52,7 +52,9 @@ public class ServerBroadcastService extends FirebaseMessagingService {
                 } else if (message_type.equals(NotificationTypes.push_notification.name())) {
                     onPushNotification(remoteMessage.getData());
                 } else if (message_type.equals(NotificationTypes.message_seen.name())) {
-                    onPartnerMessageSeen(remoteMessage.getData().get("partner_id"));
+                    // TODO disabled for 1.0.2
+                    // TODO add as a feature for 1.1.0
+                    // onPartnerMessageSeen(remoteMessage.getData().get("partner_id"));
                 }
             }
         }
