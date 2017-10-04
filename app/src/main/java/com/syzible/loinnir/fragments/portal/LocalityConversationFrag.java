@@ -115,8 +115,6 @@ public class LocalityConversationFrag extends Fragment {
                                     adapter.addToStart(message, true);
                                 } catch (JSONException e) {
                                     e.printStackTrace();
-                                } finally {
-                                    progressBar.setVisibility(View.INVISIBLE);
                                 }
                             }
 
@@ -388,6 +386,7 @@ public class LocalityConversationFrag extends Fragment {
                             }
                         }
                         adapter.addToEnd(messages, true);
+                        progressBar.setVisibility(View.INVISIBLE);
                     }
 
                     @Override

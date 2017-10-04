@@ -42,11 +42,11 @@
 
         <ImageView
             android:id="@+id/roulette_partner_profile_badge"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_alignParentBottom="true"
             android:layout_alignParentEnd="true"
-            android:layout_margin="12dp"
+            android:layout_margin="8dp"
             android:src="@mipmap/ic_launcher" />
     </RelativeLayout>
 
