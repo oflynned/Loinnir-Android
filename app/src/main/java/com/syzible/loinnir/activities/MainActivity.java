@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity
             if (!fcmToken.equals("")) {
                 JSONObject o = new JSONObject();
                 try {
-                    o.put("fb_id", LocalPrefs.getID(this));
+                    o.put("fb_id", LocalPrefs.getID(getApplicationContext()));
                     o.put("fcm_token", fcmToken);
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -168,8 +168,8 @@ public class MainActivity extends AppCompatActivity
         Locale.setDefault(locale);
         Configuration config = getBaseContext().getResources().getConfiguration();
         config.locale = locale;
-        getBaseContext().getResources().updateConfiguration(config,
-                getBaseContext().getResources().getDisplayMetrics());
+        getApplicationContext().getResources().updateConfiguration(
+                config, getApplicationContext().getResources().getDisplayMetrics());
     }
 
     private void hideKeyboard() {
@@ -425,7 +425,7 @@ public class MainActivity extends AppCompatActivity
             } else {
                 // if there's only one fragment on the stack we should prevent the default
                 // popping to ask for the user's permission to close the app
-                if (getFragmentManager().getBackStackEntryCount() == 0) {
+                if (getFragmentManager().getBackStackEntryCount() < 1) {
                     new AlertDialog.Builder(MainActivity.this)
                             .setTitle("An Aip a Dhúnadh?")
                             .setMessage("Má bhrúitear an chnaipe \"Dún\", dúnfar an aip. An bhfuil tú cinnte go bhfuil sé seo ag teastáil uait?")
@@ -478,7 +478,6 @@ public class MainActivity extends AppCompatActivity
             setFragment(getFragmentManager(), new MapFrag());
         } else if (id == R.id.nav_conversations) {
             clearBackstack(getFragmentManager());
-
             RestClient.post(this, Endpoints.GET_PAST_CONVERSATION_PREVIEWS,
                     JSONUtils.getIdPayload(this),
                     new BaseJsonHttpResponseHandler<JSONArray>() {

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.support.design.widget.Snackbar;
 import android.widget.Toast;
@@ -28,8 +29,8 @@ import cz.msebera.android.httpclient.util.LangUtils;
 
 public class DisplayUtils {
 
-    public static void generateToast(Activity activity, String message) {
-        Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
+    public static void generateToast(Context context, String message) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
     }
 
     public static void generateSnackbar(Activity activity, String message) {
@@ -41,8 +42,8 @@ public class DisplayUtils {
         void onCallback();
     }
 
-    public static AlertDialog generateBlockDialog(final Activity activity, final User blockee, final OnCallback callback) {
-        return new AlertDialog.Builder(activity)
+    public static AlertDialog generateBlockDialog(final Context context, final User blockee, final OnCallback callback) {
+        return new AlertDialog.Builder(context)
                 .setTitle("Cosc a Chur " + LanguageUtils.getPrepositionalForm("ar", LanguageUtils.lenite(blockee.getForename())) + "?")
                 .setMessage("Má chuireann tú cosc ar úsáideoir araile, ní féidir leat nó " +
                         LanguageUtils.getPrepositionalForm("le", blockee.getForename()) + " dul i dteagmháil lena chéile. " +
@@ -52,8 +53,8 @@ public class DisplayUtils {
                 .setPositiveButton("Cuir cosc i bhfeidhm", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, final int which) {
-                        RestClient.post(activity, Endpoints.BLOCK_USER,
-                                JSONUtils.getPartnerInteractionPayload(blockee, activity),
+                        RestClient.post(context, Endpoints.BLOCK_USER,
+                                JSONUtils.getPartnerInteractionPayload(blockee, context),
                                 new BaseJsonHttpResponseHandler<JSONObject>() {
                                     @Override
                                     public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {

@@ -64,6 +64,7 @@ public class PartnerConversationFrag extends Fragment {
 
     private ArrayList<Message> messages = new ArrayList<>();
     private ArrayList<Message> paginatedMessages = new ArrayList<>();
+    private Context context;
 
     private MessagesListAdapter<Message> adapter;
     private BroadcastReceiver newPartnerMessageReceiver = new BroadcastReceiver() {
@@ -187,10 +188,11 @@ public class PartnerConversationFrag extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.conversation_frag, container, false);
+        context = PartnerConversationFrag.this.getActivity();
         progressBar = (ProgressBar) view.findViewById(R.id.conversations_progress_bar);
         setupAdapter(view);
 
-        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        ActionBar actionBar = ((AppCompatActivity) context).getSupportActionBar();
         if (actionBar != null) {
             actionBar.setTitle(partner.getName());
             actionBar.setSubtitle(formatSubtitle());
@@ -206,29 +208,28 @@ public class PartnerConversationFrag extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-
         progressBar.setVisibility(View.VISIBLE);
 
-        getActivity().registerReceiver(newPartnerMessageReceiver,
+        context.registerReceiver(newPartnerMessageReceiver,
                 new IntentFilter(BroadcastFilters.new_partner_message.toString()));
-        getActivity().registerReceiver(onBlockEnactedReceiver,
+        context.registerReceiver(onBlockEnactedReceiver,
                 new IntentFilter(BroadcastFilters.block_enacted.toString()));
-        getActivity().registerReceiver(onSeenReceiver,
+        context.registerReceiver(onSeenReceiver,
                 new IntentFilter(BroadcastFilters.message_seen.toString()));
-        getActivity().registerReceiver(internetAvailableReceiver,
+        context.registerReceiver(internetAvailableReceiver,
                 new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
 
         loadMessages();
-        NotificationUtils.dismissNotification(getActivity(), partner);
+        NotificationUtils.dismissNotification(context, partner);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        getActivity().unregisterReceiver(newPartnerMessageReceiver);
-        getActivity().unregisterReceiver(onBlockEnactedReceiver);
-        getActivity().unregisterReceiver(onSeenReceiver);
-        getActivity().unregisterReceiver(internetAvailableReceiver);
+        context.unregisterReceiver(newPartnerMessageReceiver);
+        context.unregisterReceiver(onBlockEnactedReceiver);
+        context.unregisterReceiver(onSeenReceiver);
+        context.unregisterReceiver(internetAvailableReceiver);
     }
 
     private void setMessageInputListener(final MessagesListAdapter<Message> adapter) {
@@ -237,8 +238,8 @@ public class PartnerConversationFrag extends Fragment {
             @Override
             public boolean onSubmit(final CharSequence input) {
                 final String messageContent = input.toString().trim();
-                if (NetworkAvailableService.isInternetAvailable(getActivity())) {
-                    RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getIdPayload(getActivity()),
+                if (NetworkAvailableService.isInternetAvailable(context)) {
+                    RestClient.post(context, Endpoints.GET_USER, JSONUtils.getIdPayload(context),
                             new BaseJsonHttpResponseHandler<JSONObject>() {
                                 @Override
                                 public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
@@ -249,8 +250,8 @@ public class PartnerConversationFrag extends Fragment {
                                         payload.put("my_id", me.getId());
                                         payload.put("partner_id", partner.getId());
 
-                                        RestClient.post(getActivity(), Endpoints.GET_PARTNER_MESSAGES_COUNT,
-                                                JSONUtils.getPartnerInteractionPayload(partner.getId(), getActivity()),
+                                        RestClient.post(context, Endpoints.GET_PARTNER_MESSAGES_COUNT,
+                                                JSONUtils.getPartnerInteractionPayload(partner.getId(), context),
                                                 new BaseJsonHttpResponseHandler<JSONObject>() {
                                                     @Override
                                                     public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
@@ -258,17 +259,17 @@ public class PartnerConversationFrag extends Fragment {
                                                             if (response.getInt("count") == 0)
                                                                 matchPartner(partner);
 
-                                                            Message message = new Message(LocalPrefs.getID(getActivity()),
+                                                            Message message = new Message(LocalPrefs.getID(context),
                                                                     me, System.currentTimeMillis(), messageContent);
                                                             adapter.addToStart(message, true);
 
                                                             // send to server
                                                             JSONObject messagePayload = new JSONObject();
-                                                            messagePayload.put("from_id", LocalPrefs.getID(getActivity()));
+                                                            messagePayload.put("from_id", LocalPrefs.getID(context));
                                                             messagePayload.put("to_id", partner.getId());
                                                             messagePayload.put("message", EncodingUtils.encodeText(message.getText().trim()));
 
-                                                            RestClient.post(getActivity(), Endpoints.SEND_PARTNER_MESSAGE, messagePayload, new BaseJsonHttpResponseHandler<JSONObject>() {
+                                                            RestClient.post(context, Endpoints.SEND_PARTNER_MESSAGE, messagePayload, new BaseJsonHttpResponseHandler<JSONObject>() {
                                                                 @Override
                                                                 public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
                                                                     System.out.println(response);
@@ -317,7 +318,7 @@ public class PartnerConversationFrag extends Fragment {
 
                 } else {
                     cacheItem(messageContent);
-                    String myId = LocalPrefs.getID(getActivity());
+                    String myId = LocalPrefs.getID(context);
                     Message cachedMessage = new Message(myId, new User(myId), System.currentTimeMillis(), messageContent);
                     adapter.addToStart(cachedMessage, true);
                 }
@@ -327,10 +328,10 @@ public class PartnerConversationFrag extends Fragment {
     }
 
     private void cacheItem(String messageContent) {
-        LocalCacheDatabase.CachedItem cachedItem = new LocalCacheDatabase.CachedItem(messageContent, partner.getId(), getActivity());
+        LocalCacheDatabase.CachedItem cachedItem = new LocalCacheDatabase.CachedItem(messageContent, partner.getId(), context);
         LocalCacheDatabaseHelper.cacheItem(cachedItem);
-        LocalCacheDatabaseHelper.printCachedItemsContents(getActivity());
-        DisplayUtils.generateToast(getActivity(), "Easpa rochtain idirlín, seolfar do theachtaireacht ar ball");
+        LocalCacheDatabaseHelper.printCachedItemsContents(context);
+        DisplayUtils.generateToast(context, "Easpa rochtain idirlín, seolfar do theachtaireacht ar ball");
     }
 
     private void setLoadMoreListener(final MessagesListAdapter<Message> adapter) {
@@ -340,7 +341,7 @@ public class PartnerConversationFrag extends Fragment {
                 if (messages.size() > 0) {
                     JSONObject payload = new JSONObject();
                     try {
-                        payload.put("my_id", LocalPrefs.getID(getActivity()));
+                        payload.put("my_id", LocalPrefs.getID(context));
                         payload.put("partner_id", partner.getId());
                         payload.put("last_known_count", totalItemsCount - 1);
 
@@ -350,7 +351,7 @@ public class PartnerConversationFrag extends Fragment {
                         e.printStackTrace();
                     }
 
-                    RestClient.post(getActivity(), Endpoints.GET_PARTNER_MESSAGES_PAGINATION, payload, new BaseJsonHttpResponseHandler<JSONArray>() {
+                    RestClient.post(context, Endpoints.GET_PARTNER_MESSAGES_PAGINATION, payload, new BaseJsonHttpResponseHandler<JSONArray>() {
                         @Override
                         public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
                             paginatedMessages.clear();
@@ -390,20 +391,20 @@ public class PartnerConversationFrag extends Fragment {
             @Override
             public void onMessageViewLongClick(View view, final Message message) {
                 // should not be able to block yourself
-                if (!message.getUser().getId().equals(LocalPrefs.getID(getActivity())))
-                    DisplayUtils.generateBlockDialog(getActivity(), (User) message.getUser(), new DisplayUtils.OnCallback() {
+                if (!message.getUser().getId().equals(LocalPrefs.getID(context)))
+                    DisplayUtils.generateBlockDialog(context, (User) message.getUser(), new DisplayUtils.OnCallback() {
                         @Override
                         public void onCallback() {
                             DisplayUtils.generateSnackbar(getActivity(), "Cuireadh cosc go rathúil ar " + LanguageUtils.lenite(((User) message.getUser()).getForename()));
 
-                            RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getIdPayload(getActivity()), new BaseJsonHttpResponseHandler<JSONObject>() {
+                            RestClient.post(context, Endpoints.GET_USER, JSONUtils.getIdPayload(context), new BaseJsonHttpResponseHandler<JSONObject>() {
                                 @Override
                                 public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
                                     try {
                                         JSONArray blockedUsers = response.getJSONArray("blocked");
                                         for (int i = 0; i < blockedUsers.length(); i++) {
                                             if (blockedUsers.getString(i).equals(partner.getId())) {
-                                                RestClient.post(getActivity(), Endpoints.GET_PAST_CONVERSATION_PREVIEWS, JSONUtils.getIdPayload(getActivity()), new BaseJsonHttpResponseHandler<JSONArray>() {
+                                                RestClient.post(context, Endpoints.GET_PAST_CONVERSATION_PREVIEWS, JSONUtils.getIdPayload(context), new BaseJsonHttpResponseHandler<JSONArray>() {
                                                     @Override
                                                     public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
                                                         MainActivity.clearBackstack(getFragmentManager());
@@ -449,7 +450,7 @@ public class PartnerConversationFrag extends Fragment {
     }
 
     private void setupAdapter(View view) {
-        adapter = new MessagesListAdapter<>(LocalPrefs.getID(getActivity()), loadImage());
+        adapter = new MessagesListAdapter<>(LocalPrefs.getID(context), loadImage());
 
         setLongClickListener(adapter);
         setLoadMoreListener(adapter);
@@ -461,8 +462,8 @@ public class PartnerConversationFrag extends Fragment {
 
     private void loadMessages() {
         setupAdapter(view);
-        RestClient.post(getActivity(), Endpoints.GET_PARTNER_MESSAGES,
-                JSONUtils.getPartnerInteractionPayload(partner, getActivity()),
+        RestClient.post(context, Endpoints.GET_PARTNER_MESSAGES,
+                JSONUtils.getPartnerInteractionPayload(partner, context),
                 new BaseJsonHttpResponseHandler<JSONArray>() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
@@ -498,8 +499,8 @@ public class PartnerConversationFrag extends Fragment {
     }
 
     private void markSeen() {
-        RestClient.post(getActivity(), Endpoints.MARK_PARTNER_MESSAGES_SEEN,
-                JSONUtils.getPartnerInteractionPayload(partner, getActivity()),
+        RestClient.post(context, Endpoints.MARK_PARTNER_MESSAGES_SEEN,
+                JSONUtils.getPartnerInteractionPayload(partner, context),
                 new BaseJsonHttpResponseHandler<JSONObject>() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
@@ -530,13 +531,13 @@ public class PartnerConversationFrag extends Fragment {
                 // can only use Facebook to sign up so use the embedded id in the url
                 final String fileName = url.split("/")[3];
 
-                if (!CachingUtil.doesImageExist(getActivity(), fileName)) {
+                if (!CachingUtil.doesImageExist(context, fileName)) {
                     new GetImage(new NetworkCallback<Bitmap>() {
                         @Override
                         public void onResponse(Bitmap response) {
                             Bitmap croppedImage = BitmapUtils.getCroppedCircle(response);
                             final Bitmap scaledAvatar = BitmapUtils.scaleBitmap(croppedImage, BitmapUtils.BITMAP_SIZE_SMALL);
-                            CachingUtil.cacheImage(getActivity(), fileName, scaledAvatar);
+                            CachingUtil.cacheImage(context, fileName, scaledAvatar);
                             imageView.setImageBitmap(scaledAvatar);
                             imageView.setOnClickListener(new View.OnClickListener() {
                                 @Override
@@ -553,7 +554,7 @@ public class PartnerConversationFrag extends Fragment {
                         }
                     }, url, true).execute();
                 } else {
-                    final Bitmap cachedImage = CachingUtil.getCachedImage(getActivity(), fileName);
+                    final Bitmap cachedImage = CachingUtil.getCachedImage(context, fileName);
                     imageView.setImageBitmap(cachedImage);
                     imageView.setOnClickListener(new View.OnClickListener() {
                         @Override
@@ -568,8 +569,8 @@ public class PartnerConversationFrag extends Fragment {
     }
 
     private void matchPartner(User partner) {
-        RestClient.post(getActivity(), Endpoints.SUBSCRIBE_TO_PARTNER,
-                JSONUtils.getPartnerInteractionPayload(partner, getActivity()),
+        RestClient.post(context, Endpoints.SUBSCRIBE_TO_PARTNER,
+                JSONUtils.getPartnerInteractionPayload(partner, context),
                 new BaseJsonHttpResponseHandler<JSONObject>() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
