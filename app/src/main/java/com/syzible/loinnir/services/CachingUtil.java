@@ -19,17 +19,39 @@ public class CachingUtil {
         checkDirectoryExists(context);
         File[] files = new File(getDirectoryPath(context)).listFiles();
 
-        if(files == null)
+        if (files == null)
             return false;
 
         if (files.length == 0)
             return false;
 
-        for (File file : files)
-            if (file.getName().equals(getFileWithExtension(id)))
-                return true;
+        // does it exist?
+        boolean exists = false;
+        String fileName = "";
+        for (File file : files) {
+            if (id.equals(file.getName().split("_")[0])) {
+                exists = true;
+                fileName = file.getName();
+            }
+        }
 
-        return false;
+        if (!exists) return false;
+
+        //for(File file : files)
+        //    System.out.println(file.getName());
+
+        // it exists, but is it stale?
+        if (isStale(fileName)) {
+            for (File file : files) {
+                System.out.println(file.getName());
+                if (id.equals(file.getName().split("_")[0]))
+                    file.delete();
+            }
+
+            return false;
+        }
+
+        return true;
     }
 
     public static void cacheImage(Context context, String id, Bitmap image) {
@@ -43,7 +65,15 @@ public class CachingUtil {
     }
 
     public static Bitmap getCachedImage(Context context, String name) {
-        String pathToFile = getDirectoryPath(context) + "/" + getFileWithExtension(name);
+        File[] files = new File(getDirectoryPath(context)).listFiles();
+        String fileName = name;
+
+        for(File file : files) {
+            if (name.equals(file.getName().split("_")[0]))
+                fileName = file.getName();
+        }
+
+        String pathToFile = getDirectoryPath(context) + "/" + fileName;
         Bitmap bitmap = BitmapFactory.decodeFile(pathToFile);
 
         int[] pixels = new int[bitmap.getWidth() * bitmap.getHeight()];
@@ -52,8 +82,24 @@ public class CachingUtil {
         return bitmap;
     }
 
+    private static boolean isStale(String fileName) {
+        // first clear the cache of images that follow the old schema of just <id> for name
+        // now we should change to <id>_<time>.png
+
+        String[] fileData = fileName.split("_");
+        if (fileData.length > 1) {
+            // valid file under new schema
+            long oneWeekInMillis = 1000 * 60 * 60 * 24 * 7;
+            long cachingTime = Long.valueOf(fileData[1].replace(".png", ""));
+            return System.currentTimeMillis() - cachingTime > oneWeekInMillis;
+        } else {
+            // invalid -- purge and recache
+            return true;
+        }
+    }
+
     private static void saveToFile(Context context, String name, Bitmap file) {
-        File pictureFile = getOutputMediaFile(context, name);
+        File pictureFile = getOutputMediaFile(context, name + "_" + System.currentTimeMillis());
         assert pictureFile != null;
 
         try {
