@@ -15,6 +15,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
@@ -60,6 +61,7 @@ public class LocalityConversationFrag extends Fragment {
     private ArrayList<Message> paginatedMessages = new ArrayList<>();
 
     private MessagesListAdapter<Message> adapter;
+    private ProgressBar progressBar;
 
     private BroadcastReceiver onChangeInLocalityReceiver = new BroadcastReceiver() {
         @Override
@@ -113,6 +115,8 @@ public class LocalityConversationFrag extends Fragment {
                                     adapter.addToStart(message, true);
                                 } catch (JSONException e) {
                                     e.printStackTrace();
+                                } finally {
+                                    progressBar.setVisibility(View.INVISIBLE);
                                 }
                             }
 
@@ -144,12 +148,15 @@ public class LocalityConversationFrag extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.conversation_frag, container, false);
+        progressBar = (ProgressBar) view.findViewById(R.id.conversations_progress_bar);
         return view;
     }
 
     @Override
     public void onResume() {
         super.onResume();
+
+        progressBar.setVisibility(View.VISIBLE);
         loadMessages();
 
         getActivity().registerReceiver(onNewLocalityInfoReceiver,

@@ -58,10 +58,14 @@ public class ConversationsListFrag extends Fragment implements
         DialogsListAdapter.OnDialogClickListener<Conversation>,
         DialogsListAdapter.OnDialogLongClickListener<Conversation> {
 
+    private View view;
+    private ProgressBar progressBar;
+
     private ArrayList<Conversation> conversations = new ArrayList<>();
     private DialogsListAdapter<Conversation> dialogsListAdapter;
     private DialogsList dialogsList;
     private JSONArray response;
+    private boolean hasResponseContent = false;
 
     private BroadcastReceiver newPartnerMessageReceiver = new BroadcastReceiver() {
         @Override
@@ -89,10 +93,7 @@ public class ConversationsListFrag extends Fragment implements
                         setListLayout();
                         NotificationUtils.dismissNotifications(getActivity(), conversations);
 
-                        if (getView() != null) {
-                            ProgressBar progressBar = (ProgressBar) getView().findViewById(R.id.conversations_list_progress_bar);
-                            progressBar.setVisibility(View.GONE);
-                        }
+                        progressBar.setVisibility(View.INVISIBLE);
                     }
 
                     @Override
@@ -117,9 +118,10 @@ public class ConversationsListFrag extends Fragment implements
             actionBar.setSubtitle(null);
         }
 
-        View view;
         if (response.length() > 0) {
+            hasResponseContent = true;
             view = inflater.inflate(R.layout.conversations_list_frag, container, false);
+            progressBar = (ProgressBar) view.findViewById(R.id.conversations_list_progress_bar);
 
             dialogsList = (DialogsList) view.findViewById(R.id.conversations_list);
             dialogsListAdapter = new DialogsListAdapter<>(loadImage());
@@ -136,8 +138,11 @@ public class ConversationsListFrag extends Fragment implements
     public void onResume() {
         super.onResume();
 
-        Collections.reverse(conversations);
-        loadConversationPreviews();
+        if (hasResponseContent) {
+            progressBar.setVisibility(View.VISIBLE);
+            Collections.reverse(conversations);
+            loadConversationPreviews();
+        }
 
         getActivity().registerReceiver(newPartnerMessageReceiver,
                 new IntentFilter(BroadcastFilters.new_partner_message.toString()));

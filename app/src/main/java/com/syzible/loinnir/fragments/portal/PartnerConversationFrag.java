@@ -60,8 +60,10 @@ public class PartnerConversationFrag extends Fragment {
     private User partner;
     private View view;
 
+    private ProgressBar progressBar;
+
     private ArrayList<Message> messages = new ArrayList<>();
-    ArrayList<Message> paginatedMessages = new ArrayList<>();
+    private ArrayList<Message> paginatedMessages = new ArrayList<>();
 
     private MessagesListAdapter<Message> adapter;
     private BroadcastReceiver newPartnerMessageReceiver = new BroadcastReceiver() {
@@ -185,6 +187,7 @@ public class PartnerConversationFrag extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.conversation_frag, container, false);
+        progressBar = (ProgressBar) view.findViewById(R.id.conversations_progress_bar);
         setupAdapter(view);
 
         ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
@@ -203,6 +206,8 @@ public class PartnerConversationFrag extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+
+        progressBar.setVisibility(View.VISIBLE);
 
         getActivity().registerReceiver(newPartnerMessageReceiver,
                 new IntentFilter(BroadcastFilters.new_partner_message.toString()));
@@ -475,9 +480,7 @@ public class PartnerConversationFrag extends Fragment {
                         }
 
                         adapter.addToEnd(messages, true);
-
-                        ProgressBar progressBar = (ProgressBar) view.findViewById(R.id.conversations_progress_bar);
-                        progressBar.setVisibility(View.GONE);
+                        progressBar.setVisibility(View.INVISIBLE);
                     }
 
                     @Override
