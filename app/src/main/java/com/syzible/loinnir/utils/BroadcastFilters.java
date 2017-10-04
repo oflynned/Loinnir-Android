@@ -45,5 +45,12 @@ public enum BroadcastFilters {
         public String toString() {
             return "com.syzible.loinnir.block_enacted";
         }
+    },
+
+    message_seen {
+        @Override
+        public String toString() {
+            return "com.syzible.loinnir.message_seen";
+        }
     }
 }

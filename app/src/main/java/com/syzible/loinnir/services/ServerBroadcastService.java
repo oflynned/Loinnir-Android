@@ -28,7 +28,7 @@ import cz.msebera.android.httpclient.Header;
 public class ServerBroadcastService extends FirebaseMessagingService {
 
     private enum NotificationTypes {
-        new_partner_message, new_locality_update, block_enacted, push_notification
+        new_partner_message, new_locality_update, block_enacted, push_notification, message_seen
     }
 
     @Override
@@ -51,6 +51,8 @@ public class ServerBroadcastService extends FirebaseMessagingService {
                     onBlockEnacted(remoteMessage.getData().get("block_enacter_id"));
                 } else if (message_type.equals(NotificationTypes.push_notification.name())) {
                     onPushNotification(remoteMessage.getData());
+                } else if (message_type.equals(NotificationTypes.message_seen.name())) {
+                    onPartnerMessageSeen(remoteMessage.getData().get("partner_id"));
                 }
             }
         }
@@ -95,6 +97,7 @@ public class ServerBroadcastService extends FirebaseMessagingService {
     /**
      * A broadcast should notify the app if the user has been blocked, and update/disable/remove
      * parts of the app that may or may not be showing to prevent contact and overriding blocks
+     *
      * @param userBlockingMeId id of the user who has enacted the block
      */
     private void onBlockEnacted(String userBlockingMeId) {
@@ -108,6 +111,13 @@ public class ServerBroadcastService extends FirebaseMessagingService {
         // emit a broadcast to force an update if the locality fragment is active
         String newLocalityIntent = BroadcastFilters.new_locality_info_update.toString();
         Intent intent = new Intent(newLocalityIntent);
+        getApplicationContext().sendBroadcast(intent);
+    }
+
+    private void onPartnerMessageSeen(String partnerId) {
+        String seenZonedIntent = BroadcastFilters.message_seen.toString();
+        Intent intent = new Intent(seenZonedIntent);
+        intent.putExtra("partner_id", partnerId);
         getApplicationContext().sendBroadcast(intent);
     }
 

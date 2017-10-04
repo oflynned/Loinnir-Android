@@ -16,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.stfalcon.chatkit.commons.ImageLoader;
@@ -87,6 +88,11 @@ public class ConversationsListFrag extends Fragment implements
                         loadMessages(response);
                         setListLayout();
                         NotificationUtils.dismissNotifications(getActivity(), conversations);
+
+                        if (getView() != null) {
+                            ProgressBar progressBar = (ProgressBar) getView().findViewById(R.id.conversations_list_progress_bar);
+                            progressBar.setVisibility(View.GONE);
+                        }
                     }
 
                     @Override

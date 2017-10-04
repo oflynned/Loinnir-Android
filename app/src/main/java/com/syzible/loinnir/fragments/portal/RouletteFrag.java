@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
@@ -66,6 +67,11 @@ public class RouletteFrag extends Fragment {
                                 usersLeftMessage = "Tá " + count + " úsáideoir eile ag baint úsáide as an aip seo nár bhuail tú leo go fóill " + EmojiUtils.getEmoji(EmojiUtils.COOL);
 
                             unmatchedUserCountTextView.setText(usersLeftMessage);
+
+                            if (getView() != null) {
+                                ProgressBar progressBar = (ProgressBar) getView().findViewById(R.id.roulette_progress_bar);
+                                progressBar.setVisibility(View.GONE);
+                            }
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -95,8 +101,6 @@ public class RouletteFrag extends Fragment {
                             @Override
                             public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
                                 try {
-                                    System.out.println(response);
-
                                     if (response.has("success")) {
                                         DisplayUtils.generateSnackbar(getActivity(),
                                                 "Níl aon úsáideoirí nua ann le nasc a dhéanamh " +

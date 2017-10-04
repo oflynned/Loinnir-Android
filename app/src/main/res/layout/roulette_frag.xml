@@ -39,4 +39,14 @@
         android:layout_marginRight="16dp"
         android:layout_marginTop="64dp"
         android:gravity="center_horizontal" />
+
+    <ProgressBar
+        android:layout_marginTop="48dp"
+        android:layout_below="@+id/roulette_spinner_button"
+        android:id="@+id/roulette_progress_bar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_centerHorizontal="true"
+        android:indeterminate="true" />
 </RelativeLayout>

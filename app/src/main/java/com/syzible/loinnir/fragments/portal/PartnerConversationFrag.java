@@ -14,9 +14,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.stfalcon.chatkit.commons.ImageLoader;
+import com.stfalcon.chatkit.messages.MessageHolders;
 import com.stfalcon.chatkit.messages.MessageInput;
 import com.stfalcon.chatkit.messages.MessagesList;
 import com.stfalcon.chatkit.messages.MessagesListAdapter;
@@ -143,6 +145,42 @@ public class PartnerConversationFrag extends Fragment {
         }
     };
 
+    private BroadcastReceiver onSeenReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(BroadcastFilters.message_seen.toString())) {
+                String partnerId = intent.getStringExtra("partner_id");
+                if (partner.getId().equals(partnerId)) {
+                    JSONObject payload = JSONUtils.getPartnerInteractionPayload(partnerId, getActivity());
+                    RestClient.post(getActivity(), Endpoints.GET_PARTNER_MESSAGES, payload,
+                            new BaseJsonHttpResponseHandler<JSONArray>() {
+                                @Override
+                                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
+                                    try {
+                                        JSONObject latestPayload = response.getJSONObject(response.length() - 1);
+                                        User sender = new User(latestPayload.getJSONObject("user"));
+                                        Message message = new Message(sender, latestPayload.getJSONObject("message"));
+                                        adapter.addToStart(message, true);
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
+
+                                }
+
+                                @Override
+                                protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                    return new JSONArray(rawJsonData);
+                                }
+                            });
+                }
+            }
+        }
+    };
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
@@ -170,6 +208,8 @@ public class PartnerConversationFrag extends Fragment {
                 new IntentFilter(BroadcastFilters.new_partner_message.toString()));
         getActivity().registerReceiver(onBlockEnactedReceiver,
                 new IntentFilter(BroadcastFilters.block_enacted.toString()));
+        getActivity().registerReceiver(onSeenReceiver,
+                new IntentFilter(BroadcastFilters.message_seen.toString()));
         getActivity().registerReceiver(internetAvailableReceiver,
                 new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
 
@@ -182,6 +222,7 @@ public class PartnerConversationFrag extends Fragment {
         super.onPause();
         getActivity().unregisterReceiver(newPartnerMessageReceiver);
         getActivity().unregisterReceiver(onBlockEnactedReceiver);
+        getActivity().unregisterReceiver(onSeenReceiver);
         getActivity().unregisterReceiver(internetAvailableReceiver);
     }
 
@@ -397,6 +438,11 @@ public class PartnerConversationFrag extends Fragment {
         });
     }
 
+    private MessageHolders getViewHolder() {
+        return new MessageHolders()
+                .setOutcomingTextConfig(SentMessageHolder.class, R.layout.sent_message_holder);
+    }
+
     private void setupAdapter(View view) {
         adapter = new MessagesListAdapter<>(LocalPrefs.getID(getActivity()), loadImage());
 
@@ -429,6 +475,9 @@ public class PartnerConversationFrag extends Fragment {
                         }
 
                         adapter.addToEnd(messages, true);
+
+                        ProgressBar progressBar = (ProgressBar) view.findViewById(R.id.conversations_progress_bar);
+                        progressBar.setVisibility(View.GONE);
                     }
 
                     @Override
