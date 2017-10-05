@@ -61,9 +61,9 @@ public class ServerBroadcastService extends FirebaseMessagingService {
     }
 
     private void onPushNotification(Map<String, String> data) {
-        String title = data.get("push_notification_title");
-        String content = data.get("push_notification_content");
-        String url = data.get("push_notification_link");
+        String title = EncodingUtils.decodeText(data.get("push_notification_title"));
+        String content = EncodingUtils.decodeText(data.get("push_notification_content"));
+        String url = EncodingUtils.decodeText(data.get("push_notification_link"));
         String notificationId = data.get("push_notification_id");
 
         JSONObject payload = new JSONObject();
