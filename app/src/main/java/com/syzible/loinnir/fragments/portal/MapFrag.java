@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -42,6 +43,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.util.ArrayList;
+import java.util.regex.Matcher;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -128,6 +130,30 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         setMapPosition();
     }
 
+    public static float coordinateDistanceToMeters(float lat1, float lng1, float lat2, float lng2) {
+        double earthRadius = 6371000;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        System.out.println((float) c);
+        return (float) (earthRadius * c);
+    }
+
+    private boolean hasUserMovedPositions(User user) {
+        Location userLocation = new Location("");
+        userLocation.setLatitude(user.getLatitude());
+        userLocation.setLongitude(user.getLongitude());
+
+        Location oldLocation = new Location("");
+        oldLocation.setLatitude(lastKnownLocation.latitude);
+        oldLocation.setLongitude(lastKnownLocation.longitude);
+
+        return userLocation.distanceTo(oldLocation) > 200;
+    }
+
     private void getWebServerLocation() {
         RestClient.post(getActivity(), Endpoints.GET_ALL_USERS, JSONUtils.getIdPayload(getActivity().getBaseContext()),
                 new BaseJsonHttpResponseHandler<JSONArray>() {
@@ -143,13 +169,13 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
                                     if (lastKnownLocation == null)
                                         lastKnownLocation = user.getLocation();
 
-                                    if (!hasZoomed || lastKnownLocation != user.getLocation()) {
+                                    if (!hasZoomed || hasUserMovedPositions(user)) {
                                         googleMap.moveCamera(CameraUpdateFactory.newLatLng(user.getLocation()));
                                         zoomToLocation(user.getLocation());
                                         hasZoomed = true;
+                                        lastKnownLocation = user.getLocation();
                                     }
 
-                                    lastKnownLocation = user.getLocation();
                                 } else {
                                     userCircles.add(new MapCircle(user, false));
                                 }
