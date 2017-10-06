@@ -44,7 +44,7 @@ public class DisplayUtils {
 
     public static AlertDialog generateBlockDialog(final Context context, final User blockee, final OnCallback callback) {
         return new AlertDialog.Builder(context)
-                .setTitle("Cosc a Chur " + LanguageUtils.getPrepositionalForm("ar", LanguageUtils.lenite(blockee.getForename())) + "?")
+                .setTitle("Cosc a Chur " + LanguageUtils.getPrepositionalForm("ar", blockee.getForename()) + "?")
                 .setMessage("Má chuireann tú cosc ar úsáideoir araile, ní féidir leat nó " +
                         LanguageUtils.getPrepositionalForm("le", blockee.getForename()) + " dul i dteagmháil lena chéile. " +
                         "Bain úsáid as seo amháin go bhfuil tú cinnte nach dteastaíonn uait faic a chloisteáil a thuilleadh ón úsáideoir seo. " +

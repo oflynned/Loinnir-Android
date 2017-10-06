@@ -9,7 +9,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
@@ -20,7 +19,6 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.DisplayMetrics;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -44,6 +42,7 @@ import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.objects.User;
 import com.syzible.loinnir.persistence.LocalPrefs;
 import com.syzible.loinnir.services.CachingUtil;
+import com.syzible.loinnir.services.GPSAvailableService;
 import com.syzible.loinnir.services.LocationService;
 import com.syzible.loinnir.services.NotificationUtils;
 import com.syzible.loinnir.utils.BitmapUtils;
@@ -60,7 +59,6 @@ import org.json.JSONObject;
 import java.util.Locale;
 
 import cz.msebera.android.httpclient.Header;
-import cz.msebera.android.httpclient.MessageConstraintException;
 
 import static com.syzible.loinnir.persistence.Constants.getCountyFileName;
 
@@ -71,6 +69,7 @@ public class MainActivity extends AppCompatActivity
 
     private boolean shouldDisplayGreeting;
     private View headerView;
+    private AlertDialog isGPSEnabledDialog;
 
     private BroadcastReceiver finishMainActivityReceiver = new BroadcastReceiver() {
         @Override
@@ -78,6 +77,20 @@ public class MainActivity extends AppCompatActivity
             assert finishMainActivityReceiver != null;
             if (intent.getAction().equals(BroadcastFilters.finish_main_activity.name())) {
                 finish();
+            }
+        }
+    };
+
+    private BroadcastReceiver changeGPSEnabledReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            assert changeGPSEnabledReceiver != null;
+            if (intent.getAction().equals("android.location.PROVIDERS_CHANGED")) {
+                if (!GPSAvailableService.isGPSAvailable(MainActivity.this)) {
+                    isGPSEnabledDialog.show();
+                } else {
+                    isGPSEnabledDialog.cancel();
+                }
             }
         }
     };
@@ -156,6 +169,8 @@ public class MainActivity extends AppCompatActivity
 
         shouldDisplayGreeting = true;
 
+        isGPSEnabledDialog = GPSAvailableService.getGPSEnabledDialog(MainActivity.this);
+
         setUpDrawer();
         checkNotificationInvocation();
 
@@ -206,9 +221,20 @@ public class MainActivity extends AppCompatActivity
         super.onResume();
         setGaLocale();
         MainActivity.setAppResumed();
-        registerBroadcastReceivers();
+
+        registerReceiver(finishMainActivityReceiver,
+                new IntentFilter(BroadcastFilters.finish_main_activity.toString()));
+        registerReceiver(changeGPSEnabledReceiver,
+                new IntentFilter("android.location.PROVIDERS_CHANGED"));
+
         startService(new Intent(getApplicationContext(), LocationService.class));
         notifyMetaDataUpdate();
+
+        if (!GPSAvailableService.isGPSAvailable(MainActivity.this)) {
+            isGPSEnabledDialog.show();
+        } else {
+            isGPSEnabledDialog.cancel();
+        }
     }
 
     @Override
@@ -217,12 +243,8 @@ public class MainActivity extends AppCompatActivity
         MainActivity.setAppPausedOrDead();
         stopService(new Intent(this, LocationService.class));
         unregisterReceiver(finishMainActivityReceiver);
+        unregisterReceiver(changeGPSEnabledReceiver);
         notifyMetaDataUpdate();
-    }
-
-    private void registerBroadcastReceivers() {
-        registerReceiver(finishMainActivityReceiver,
-                new IntentFilter(BroadcastFilters.finish_main_activity.toString()));
     }
 
     private void greetUser() {
