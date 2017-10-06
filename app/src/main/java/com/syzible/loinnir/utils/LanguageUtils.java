@@ -153,6 +153,9 @@ public class LanguageUtils {
         if (input.equals("Liam"))
             return input;
 
+        if (input.equals("Éamonn"))
+            return "Éamoinn";
+
         // check if the word is broad
         int wordLength = input.length();
         String secondLastLetter = String.valueOf(input.charAt(wordLength - 2));

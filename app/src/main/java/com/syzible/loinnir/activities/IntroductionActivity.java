@@ -11,6 +11,7 @@ import android.support.v4.content.ContextCompat;
 import android.view.ContextThemeWrapper;
 
 import com.syzible.loinnir.R;
+import com.syzible.loinnir.persistence.Constants;
 import com.syzible.loinnir.utils.DisplayUtils;
 import com.syzible.loinnir.utils.EmojiUtils;
 import com.syzible.loinnir.utils.FacebookUtils;
@@ -44,6 +45,7 @@ public class IntroductionActivity extends MaterialIntroActivity {
                         .setPositiveButton("Aontaím", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
+                                LocalPrefs.setUserAgreementsVersion(getApplicationContext(), Constants.USER_AGREEMENT_VERSION);
                                 DisplayUtils.generateToast(IntroductionActivity.this, "Go raibh maith agat! " + EmojiUtils.getEmoji(EmojiUtils.HEART_EYES));
                             }
                         })
