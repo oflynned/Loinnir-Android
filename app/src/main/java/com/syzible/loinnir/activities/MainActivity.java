@@ -40,6 +40,7 @@ import com.syzible.loinnir.network.GetImage;
 import com.syzible.loinnir.network.NetworkCallback;
 import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.objects.User;
+import com.syzible.loinnir.persistence.Constants;
 import com.syzible.loinnir.persistence.LocalPrefs;
 import com.syzible.loinnir.services.CachingUtil;
 import com.syzible.loinnir.services.GPSAvailableService;
@@ -176,6 +177,10 @@ public class MainActivity extends AppCompatActivity
 
         if (shouldDisplayGreeting)
             greetUser();
+
+        if (Constants.USER_AGREEMENT_VERSION != LocalPrefs.getUserAgreementsVersion(this)) {
+            DisplayUtils.notifyChangeInTOS(this);
+        }
     }
 
     private void setGaLocale() {

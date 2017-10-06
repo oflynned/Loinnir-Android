@@ -10,11 +10,21 @@ import android.preference.PreferenceManager;
 public class LocalPrefs {
     public enum Pref {
         id, fb_access_token, profile_pic, forename, surname, first_run_completed, should_share_location,
-        location_update_frequency, lat, lng, last_known_location, last_known_county
+        location_update_frequency, lat, lng, last_known_location, last_known_county, user_agreements_version
     }
 
     public static String getID(Context context) {
         return PreferenceManager.getDefaultSharedPreferences(context).getString("id", "");
+    }
+
+    public static int getUserAgreementsVersion(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context)
+                .getInt(Pref.user_agreements_version.name(), -1);
+    }
+
+    public static void setUserAgreementsVersion(Context context, int version) {
+        PreferenceManager.getDefaultSharedPreferences(context).edit()
+                .putInt(Pref.user_agreements_version.name(), version).apply();
     }
 
     public static String getStringPref(Pref key, Context context) {

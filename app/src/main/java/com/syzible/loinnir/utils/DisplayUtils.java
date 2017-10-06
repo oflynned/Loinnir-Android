@@ -17,6 +17,8 @@ import com.syzible.loinnir.fragments.portal.NoConversationFrag;
 import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.objects.User;
+import com.syzible.loinnir.persistence.Constants;
+import com.syzible.loinnir.persistence.LocalPrefs;
 
 import org.json.JSONObject;
 
@@ -74,6 +76,23 @@ public class DisplayUtils {
                     }
                 })
                 .setNegativeButton("Ná cuir", null)
+                .show();
+    }
+
+    public static void notifyChangeInTOS(final Activity activity) {
+        new AlertDialog.Builder(activity)
+                .setTitle("Athrú sna Téarmaí Seirbhíse")
+                .setMessage("Tá athrú tar éis teacht i bhfeidhm leis na téarmaí seirbhíse a ghabhann le Loinnir. " +
+                        "Ionas go mbeidh an t-eispéireas is fearr agat mar úsáideoir, molaimid dul chuig nascanna do na téarmaí seirbhíse agus polasaí príobhádachais sna socruithe. " +
+                        "Molaimid é seo chun a fheiceáil céard atá tar éis athrú, agus coimeád ar an eolas i dtaobh cén saghas sonraí a bhailraítear agus céard a tharlaíonn dóibh. " +
+                        "Guímid an t-ádh dearg ort as ucht ár seirbhísí a úsáid! " + EmojiUtils.getEmoji(EmojiUtils.HAPPY))
+                .setPositiveButton("Tá go maith", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        LocalPrefs.setUserAgreementsVersion(activity, Constants.USER_AGREEMENT_VERSION);
+                    }
+                })
+                .create()
                 .show();
     }
 

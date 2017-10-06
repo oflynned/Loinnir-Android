@@ -422,11 +422,6 @@ public class LocalityConversationFrag extends Fragment {
                     imageView.setImageBitmap(cachedImage);
                 }
 
-                /*
-                // should not be able to block yourself
-
-                 */
-
                 imageView.setOnLongClickListener(new View.OnLongClickListener() {
                     @Override
                     public boolean onLongClick(View v) {

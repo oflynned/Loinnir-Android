@@ -66,8 +66,6 @@ public class SplashActivity extends AppCompatActivity {
                         };
 
                         handler.postDelayed(runnable, 1500);
-
-                        YoYo.with(Techniques.FadeIn).duration(300).playOn(splashLogo);
                         YoYo.with(Techniques.RubberBand).delay(300).duration(700).playOn(splashLogo);
                     }
 
