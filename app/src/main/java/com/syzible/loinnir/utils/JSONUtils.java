@@ -15,9 +15,13 @@ import org.json.JSONObject;
 public class JSONUtils {
 
     public static JSONObject getIdPayload(Context context) {
+        return getUserIdPayload(context, LocalPrefs.getID(context));
+    }
+
+    public static JSONObject getUserIdPayload(Context context, String id) {
         JSONObject o = new JSONObject();
         try {
-            o.put("fb_id", LocalPrefs.getID(context));
+            o.put("fb_id", id);
         } catch (JSONException e) {
             e.printStackTrace();
         }

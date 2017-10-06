@@ -51,6 +51,8 @@ import java.util.ArrayList;
 
 import cz.msebera.android.httpclient.Header;
 
+import static android.R.id.message;
+
 /**
  * Created by ed on 07/05/2017.
  */
@@ -308,15 +310,7 @@ public class LocalityConversationFrag extends Fragment {
         adapter.setOnMessageViewLongClickListener(new MessagesListAdapter.OnMessageViewLongClickListener<Message>() {
             @Override
             public void onMessageViewLongClick(View view, final Message message) {
-                // should not be able to block yourself
-                if (!message.getUser().getId().equals(LocalPrefs.getID(getActivity())))
-                    DisplayUtils.generateBlockDialog(getActivity(), (User) message.getUser(), new DisplayUtils.OnCallback() {
-                        @Override
-                        public void onCallback() {
-                            DisplayUtils.generateSnackbar(getActivity(), "Cuireadh cosc go rathúil ar " + LanguageUtils.lenite(((User) message.getUser()).getForename()));
-                            loadMessages();
-                        }
-                    });
+                EncodingUtils.copyText(getActivity(), message);
             }
         });
     }
@@ -406,16 +400,16 @@ public class LocalityConversationFrag extends Fragment {
             @Override
             public void loadImage(final ImageView imageView, final String url) {
                 // can only use Facebook to sign up so use the embedded id in the url
-                final String fileName = url.split("/")[3];
+                final String id = url.split("/")[3];
 
-                if (!CachingUtil.doesImageExist(getActivity(), fileName)) {
+                if (!CachingUtil.doesImageExist(getActivity(), id)) {
                     new GetImage(new NetworkCallback<Bitmap>() {
                         @Override
                         public void onResponse(Bitmap response) {
                             Bitmap croppedImage = BitmapUtils.getCroppedCircle(response);
                             Bitmap scaledAvatar = BitmapUtils.scaleBitmap(croppedImage, BitmapUtils.BITMAP_SIZE_SMALL);
                             imageView.setImageBitmap(scaledAvatar);
-                            CachingUtil.cacheImage(getActivity(), fileName, scaledAvatar);
+                            CachingUtil.cacheImage(getActivity(), id, scaledAvatar);
                         }
 
                         @Override
@@ -424,9 +418,50 @@ public class LocalityConversationFrag extends Fragment {
                         }
                     }, url, true).execute();
                 } else {
-                    Bitmap cachedImage = CachingUtil.getCachedImage(getActivity(), fileName);
+                    Bitmap cachedImage = CachingUtil.getCachedImage(getActivity(), id);
                     imageView.setImageBitmap(cachedImage);
                 }
+
+                /*
+                // should not be able to block yourself
+
+                 */
+
+                imageView.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View v) {
+                        if (!id.equals(LocalPrefs.getID(getActivity()))) {
+                            RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getUserIdPayload(getActivity(), id), new BaseJsonHttpResponseHandler<JSONObject>() {
+                                @Override
+                                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                                    try {
+                                        final User user = new User(response);
+                                        DisplayUtils.generateBlockDialog(getActivity(), user, new DisplayUtils.OnCallback() {
+                                            @Override
+                                            public void onCallback() {
+                                                DisplayUtils.generateSnackbar(getActivity(), "Cuireadh cosc go rathúil " + LanguageUtils.getPrepositionalForm("ar", user.getForename()));
+                                                loadMessages();
+                                            }
+                                        });
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+                                    DisplayUtils.generateToast(getActivity(), "Easpa rochtain idirlín");
+                                }
+
+                                @Override
+                                protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                    return new JSONObject(rawJsonData);
+                                }
+                            });
+                        }
+                        return false;
+                    }
+                });
             }
         };
     }

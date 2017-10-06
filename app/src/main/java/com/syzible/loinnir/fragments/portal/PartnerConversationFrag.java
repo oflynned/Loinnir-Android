@@ -52,6 +52,8 @@ import java.util.ArrayList;
 
 import cz.msebera.android.httpclient.Header;
 
+import static com.syzible.loinnir.utils.EncodingUtils.copyText;
+
 /**
  * Created by ed on 07/05/2017.
  */
@@ -387,66 +389,12 @@ public class PartnerConversationFrag extends Fragment {
     }
 
     private void setLongClickListener(MessagesListAdapter<Message> adapter) {
-        adapter.setOnMessageViewLongClickListener(new MessagesListAdapter.OnMessageViewLongClickListener<Message>() {
+        adapter.setOnMessageLongClickListener(new MessagesListAdapter.OnMessageLongClickListener<Message>() {
             @Override
-            public void onMessageViewLongClick(View view, final Message message) {
-                // should not be able to block yourself
-                if (!message.getUser().getId().equals(LocalPrefs.getID(context)))
-                    DisplayUtils.generateBlockDialog(context, (User) message.getUser(), new DisplayUtils.OnCallback() {
-                        @Override
-                        public void onCallback() {
-                            DisplayUtils.generateSnackbar(getActivity(), "Cuireadh cosc go rathúil ar " + LanguageUtils.lenite(((User) message.getUser()).getForename()));
-
-                            RestClient.post(context, Endpoints.GET_USER, JSONUtils.getIdPayload(context), new BaseJsonHttpResponseHandler<JSONObject>() {
-                                @Override
-                                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                                    try {
-                                        JSONArray blockedUsers = response.getJSONArray("blocked");
-                                        for (int i = 0; i < blockedUsers.length(); i++) {
-                                            if (blockedUsers.getString(i).equals(partner.getId())) {
-                                                RestClient.post(context, Endpoints.GET_PAST_CONVERSATION_PREVIEWS, JSONUtils.getIdPayload(context), new BaseJsonHttpResponseHandler<JSONArray>() {
-                                                    @Override
-                                                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
-                                                        MainActivity.clearBackstack(getFragmentManager());
-                                                        MainActivity.setFragment(getFragmentManager(), new ConversationsListFrag().setResponse(response));
-                                                    }
-
-                                                    @Override
-                                                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
-
-                                                    }
-
-                                                    @Override
-                                                    protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                                        return new JSONArray(rawJsonData);
-                                                    }
-                                                });
-                                            }
-                                        }
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-
-                                @Override
-                                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-
-                                }
-
-                                @Override
-                                protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                    return new JSONObject(rawJsonData);
-                                }
-                            });
-                        }
-                    });
+            public void onMessageLongClick(Message message) {
+                copyText(getActivity(), message);
             }
         });
-    }
-
-    private MessageHolders getViewHolder() {
-        return new MessageHolders()
-                .setOutcomingTextConfig(SentMessageHolder.class, R.layout.sent_message_holder);
     }
 
     private void setupAdapter(View view) {

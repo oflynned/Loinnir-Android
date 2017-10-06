@@ -1,5 +1,10 @@
 package com.syzible.loinnir.utils;
 
+import android.content.Context;
+
+import com.syzible.loinnir.objects.Message;
+import com.syzible.loinnir.objects.User;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -9,6 +14,17 @@ import java.net.URLEncoder;
  */
 
 public class EncodingUtils {
+
+    public static void copyText(Context context, Message message) {
+        android.content.ClipboardManager clipboard = (android.content.ClipboardManager)
+                context.getSystemService(Context.CLIPBOARD_SERVICE);
+        android.content.ClipData clip = android.content.ClipData.newPlainText("Copied Text",
+                EncodingUtils.decodeText(message.getText()));
+        clipboard.setPrimaryClip(clip);
+
+        DisplayUtils.generateToast(context, "Rinneadh cóipeáil den téacs " +
+                LanguageUtils.getPrepositionalForm("ó", ((User) message.getUser()).getForename()));
+    }
 
     public static String encodeText(String text) {
         try {
