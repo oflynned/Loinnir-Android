@@ -87,6 +87,8 @@ public class LanguageUtils {
     }
 
     public static String lenite(String input) {
+        if (input.charAt(1) == 'h')
+            return input;
         return getMutation(lenitionRules, input);
     }
 

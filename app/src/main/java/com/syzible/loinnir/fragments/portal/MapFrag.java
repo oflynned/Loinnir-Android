@@ -1,5 +1,6 @@
 package com.syzible.loinnir.fragments.portal;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -10,6 +11,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
@@ -130,18 +132,6 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         setMapPosition();
     }
 
-    public static float coordinateDistanceToMeters(float lat1, float lng1, float lat2, float lng2) {
-        double earthRadius = 6371000;
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLng = Math.toRadians(lng2 - lng1);
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                        Math.sin(dLng / 2) * Math.sin(dLng / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        System.out.println((float) c);
-        return (float) (earthRadius * c);
-    }
-
     private boolean hasUserMovedPositions(User user) {
         Location userLocation = new Location("");
         userLocation.setLatitude(user.getLatitude());
@@ -158,35 +148,63 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         RestClient.post(getActivity(), Endpoints.GET_ALL_USERS, JSONUtils.getIdPayload(getActivity().getBaseContext()),
                 new BaseJsonHttpResponseHandler<JSONArray>() {
                     @Override
-                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
-                        userCircles.clear();
-                        googleMap.clear();
-                        for (int i = 0; i < response.length(); i++) {
-                            try {
-                                User user = new User(response.getJSONObject(i));
-                                if (user.getId().equals(LocalPrefs.getID(getActivity()))) {
-                                    userCircles.add(new MapCircle(user, true));
-                                    if (lastKnownLocation == null)
-                                        lastKnownLocation = user.getLocation();
+                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, final JSONArray response) {
 
-                                    if (!hasZoomed || hasUserMovedPositions(user)) {
-                                        googleMap.moveCamera(CameraUpdateFactory.newLatLng(user.getLocation()));
-                                        zoomToLocation(user.getLocation());
-                                        hasZoomed = true;
-                                        lastKnownLocation = user.getLocation();
+                        final Context context = MapFrag.this.getActivity();
+                        final Handler loadCirclesHandler = new Handler();
+                        final Runnable loadCirclesRunnable = new Runnable() {
+                            public void run() {
+                                userCircles.clear();
+                                googleMap.clear();
+                                for (int i = 0; i < response.length(); i++) {
+                                    try {
+                                        User user = new User(response.getJSONObject(i));
+
+                                        if (context != null)
+                                            userCircles.add(new MapCircle(user,
+                                                    user.getId().equals(LocalPrefs.getID(context))));
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
                                     }
-
-                                } else {
-                                    userCircles.add(new MapCircle(user, false));
                                 }
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
 
-                        googleMap.clear();
-                        for (MapCircle circle : userCircles)
-                            googleMap.addCircle(getUserCircle(circle.getPosition()));
+                                googleMap.clear();
+                                for (MapCircle circle : userCircles)
+                                    googleMap.addCircle(getUserCircle(circle.getPosition()));
+                            }
+                        };
+
+                        loadCirclesHandler.postDelayed(loadCirclesRunnable, 2500);
+
+                        final Handler zoomToLocationHandler = new Handler();
+                        final Runnable zoomToLocationRunnable = new Runnable() {
+                            public void run() {
+                                for (int i = 0; i < response.length(); i++) {
+                                    try {
+                                        User user = new User(response.getJSONObject(i));
+                                        if (context != null) {
+                                            if (user.getId().equals(LocalPrefs.getID(context))) {
+                                                if (lastKnownLocation == null)
+                                                    lastKnownLocation = user.getLocation();
+
+                                                if (!hasZoomed || hasUserMovedPositions(user)) {
+                                                    googleMap.moveCamera(CameraUpdateFactory.newLatLng(user.getLocation()));
+                                                    zoomToLocation(user.getLocation());
+                                                    hasZoomed = true;
+                                                    lastKnownLocation = user.getLocation();
+                                                }
+                                                break;
+                                            }
+                                        }
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+                        };
+
+                        zoomToLocationHandler.postDelayed(zoomToLocationRunnable, 0);
+
                     }
 
                     @Override

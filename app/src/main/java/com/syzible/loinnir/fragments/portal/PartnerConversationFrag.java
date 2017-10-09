@@ -477,15 +477,15 @@ public class PartnerConversationFrag extends Fragment {
             @Override
             public void loadImage(final ImageView imageView, final String url) {
                 // can only use Facebook to sign up so use the embedded id in the url
-                final String fileName = url.split("/")[3];
+                final String id = url.split("/")[3];
 
-                if (!CachingUtil.doesImageExist(context, fileName)) {
+                if (!CachingUtil.doesImageExist(context, id)) {
                     new GetImage(new NetworkCallback<Bitmap>() {
                         @Override
                         public void onResponse(Bitmap response) {
                             Bitmap croppedImage = BitmapUtils.getCroppedCircle(response);
                             final Bitmap scaledAvatar = BitmapUtils.scaleBitmap(croppedImage, BitmapUtils.BITMAP_SIZE_SMALL);
-                            CachingUtil.cacheImage(context, fileName, scaledAvatar);
+                            CachingUtil.cacheImage(context, id, scaledAvatar);
                             imageView.setImageBitmap(scaledAvatar);
                             imageView.setOnClickListener(new View.OnClickListener() {
                                 @Override
@@ -502,7 +502,7 @@ public class PartnerConversationFrag extends Fragment {
                         }
                     }, url, true).execute();
                 } else {
-                    final Bitmap cachedImage = CachingUtil.getCachedImage(context, fileName);
+                    final Bitmap cachedImage = CachingUtil.getCachedImage(context, id);
                     imageView.setImageBitmap(cachedImage);
                     imageView.setOnClickListener(new View.OnClickListener() {
                         @Override
@@ -512,6 +512,42 @@ public class PartnerConversationFrag extends Fragment {
                         }
                     });
                 }
+
+                imageView.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View v) {
+                        if (!id.equals(LocalPrefs.getID(getActivity()))) {
+                            RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getUserIdPayload(getActivity(), id), new BaseJsonHttpResponseHandler<JSONObject>() {
+                                @Override
+                                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                                    try {
+                                        final User user = new User(response);
+                                        DisplayUtils.generateBlockDialog(getActivity(), user, new DisplayUtils.OnCallback() {
+                                            @Override
+                                            public void onCallback() {
+                                                DisplayUtils.generateSnackbar(getActivity(), "Cuireadh cosc go rathúil " + LanguageUtils.getPrepositionalForm("ar", user.getForename()));
+                                                loadMessages();
+                                            }
+                                        });
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+                                    DisplayUtils.generateToast(getActivity(), "Easpa rochtain idirlín");
+                                }
+
+                                @Override
+                                protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                    return new JSONObject(rawJsonData);
+                                }
+                            });
+                        }
+                        return false;
+                    }
+                });
             }
         };
     }
