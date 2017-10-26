@@ -87,6 +87,9 @@ public class LanguageUtils {
     }
 
     public static String lenite(String input) {
+        if(input.length() < 3)
+            return input;
+
         if (input.charAt(1) == 'h')
             return input;
         return getMutation(lenitionRules, input);
@@ -103,7 +106,9 @@ public class LanguageUtils {
     private static String palatalise(String input) {
         // Seán -> Seáin
         int wordLength = input.length();
-        return input.substring(0, wordLength - 1) + "i" + input.substring(wordLength - 1, wordLength);
+        if (wordLength > 2)
+            return input.substring(0, wordLength - 1) + "i" + input.substring(wordLength - 1, wordLength);
+        return input;
     }
 
     public static String getPrepositionalForm(String preposition, String noun) {
@@ -161,7 +166,6 @@ public class LanguageUtils {
         // check if the word is broad
         int wordLength = input.length();
         String secondLastLetter = String.valueOf(input.charAt(wordLength - 2));
-        System.out.println(secondLastLetter);
         boolean hasBroadFinal = secondLastLetter.toLowerCase().matches("a|á");
 
         // check it's not starting with a vowel

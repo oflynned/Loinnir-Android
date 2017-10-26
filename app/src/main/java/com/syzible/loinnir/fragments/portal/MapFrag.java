@@ -24,8 +24,11 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.VisibleRegion;
 import com.google.maps.android.clustering.ClusterManager;
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.syzible.loinnir.R;
@@ -45,6 +48,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.regex.Matcher;
 
 import cz.msebera.android.httpclient.Header;
@@ -59,7 +63,7 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
     private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(BroadcastFilters.updated_location.toString()))
+            if (Objects.equals(intent.getAction(), BroadcastFilters.updated_location.toString()))
                 getWebServerLocation();
         }
     };
@@ -68,6 +72,10 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
     private boolean hasZoomed = false;
     private ArrayList<MapCircle> userCircles = new ArrayList<>();
     private int GREEN_500;
+
+    private static final float MAP_EDGE_THRESHOLD = 500; //m
+    private static final int MAP_UPDATE_THRESHOLD = 500; //ms
+    private long lastMapUpdateCall = Long.MIN_VALUE;
 
     @Override
     public void onResume() {
@@ -91,6 +99,24 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
     public void onPause() {
         super.onPause();
         getActivity().unregisterReceiver(locationUpdateReceiver);
+    }
+
+    private void drawVisibleCircles() {
+        Runnable zoomToLocationRunnable = () -> {
+            VisibleRegion region = googleMap.getProjection().getVisibleRegion();
+            LatLng nw = getAdjustedCoord(region.latLngBounds.northeast, MAP_EDGE_THRESHOLD, MAP_EDGE_THRESHOLD);
+            LatLng se = getAdjustedCoord(region.latLngBounds.southwest, -MAP_EDGE_THRESHOLD, -MAP_EDGE_THRESHOLD);
+
+            LatLngBounds bounds = new LatLngBounds(se, nw);
+            googleMap.clear();
+
+            for (MapCircle circle : userCircles) {
+                if (bounds.contains(circle.getUser().getLocation()))
+                    googleMap.addCircle(getUserCircle(circle.getPosition()));
+            }
+        };
+
+        new Handler().postDelayed(zoomToLocationRunnable, 0);
     }
 
     private void setMapPosition() {
@@ -118,12 +144,19 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
     @Override
     public void onMapReady(GoogleMap googleMap) {
         this.googleMap = googleMap;
+        this.googleMap.setOnCameraChangeListener((i) -> {
+            final long snap = System.currentTimeMillis();
+            if (lastMapUpdateCall + MAP_UPDATE_THRESHOLD > snap) {
+                lastMapUpdateCall = snap;
+                return;
+            }
 
-        ClusterManager<MapCircle> clusterManager = new ClusterManager<>(getActivity(), this.googleMap);
-        clusterManager.setRenderer(new MapCircleRenderer(getActivity(), this.googleMap, clusterManager));
-        this.googleMap.setOnCameraIdleListener(clusterManager);
+            drawVisibleCircles();
 
-        if (Constants.DEV_MODE)
+            lastMapUpdateCall = snap;
+        });
+
+        if (Endpoints.isDebugMode())
             this.googleMap.getUiSettings().setZoomControlsEnabled(true);
 
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
@@ -144,6 +177,17 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         return userLocation.distanceTo(oldLocation) > 200;
     }
 
+    private static LatLng getAdjustedCoord(LatLng coord, float dx, float dy) {
+        float earthRadius = 6378137;
+        double newLatitude = coord.latitude + (dy / earthRadius) * (180 / Math.PI);
+        double newLongitude = coord.longitude + (dx / earthRadius) * (180 / Math.PI) /
+                Math.cos(coord.latitude * Math.PI / 180);
+
+        System.out.println("(" + newLatitude + ", " + newLongitude + ")");
+
+        return new LatLng(newLatitude, newLongitude);
+    }
+
     private void getWebServerLocation() {
         RestClient.post(getActivity(), Endpoints.GET_ALL_USERS, JSONUtils.getIdPayload(getActivity().getBaseContext()),
                 new BaseJsonHttpResponseHandler<JSONArray>() {
@@ -152,53 +196,47 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
 
                         final Context context = MapFrag.this.getActivity();
                         final Handler loadCirclesHandler = new Handler();
-                        final Runnable loadCirclesRunnable = new Runnable() {
-                            public void run() {
-                                userCircles.clear();
-                                googleMap.clear();
-                                for (int i = 0; i < response.length(); i++) {
-                                    try {
-                                        User user = new User(response.getJSONObject(i));
+                        final Runnable loadCirclesRunnable = () -> {
+                            userCircles.clear();
+                            googleMap.clear();
+                            for (int i = 0; i < response.length(); i++) {
+                                try {
+                                    User user = new User(response.getJSONObject(i));
 
-                                        if (context != null)
-                                            userCircles.add(new MapCircle(user,
-                                                    user.getId().equals(LocalPrefs.getID(context))));
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
+                                    if (context != null)
+                                        userCircles.add(new MapCircle(user,
+                                                user.getId().equals(LocalPrefs.getID(context))));
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
                                 }
-
-                                googleMap.clear();
-                                for (MapCircle circle : userCircles)
-                                    googleMap.addCircle(getUserCircle(circle.getPosition()));
                             }
+
+                            drawVisibleCircles();
                         };
 
                         loadCirclesHandler.postDelayed(loadCirclesRunnable, 2500);
 
                         final Handler zoomToLocationHandler = new Handler();
-                        final Runnable zoomToLocationRunnable = new Runnable() {
-                            public void run() {
-                                for (int i = 0; i < response.length(); i++) {
-                                    try {
-                                        User user = new User(response.getJSONObject(i));
-                                        if (context != null) {
-                                            if (user.getId().equals(LocalPrefs.getID(context))) {
-                                                if (lastKnownLocation == null)
-                                                    lastKnownLocation = user.getLocation();
+                        final Runnable zoomToLocationRunnable = () -> {
+                            for (int i = 0; i < response.length(); i++) {
+                                try {
+                                    User user = new User(response.getJSONObject(i));
+                                    if (context != null) {
+                                        if (user.getId().equals(LocalPrefs.getID(context))) {
+                                            if (lastKnownLocation == null)
+                                                lastKnownLocation = user.getLocation();
 
-                                                if (!hasZoomed || hasUserMovedPositions(user)) {
-                                                    googleMap.moveCamera(CameraUpdateFactory.newLatLng(user.getLocation()));
-                                                    zoomToLocation(user.getLocation());
-                                                    hasZoomed = true;
-                                                    lastKnownLocation = user.getLocation();
-                                                }
-                                                break;
+                                            if (!hasZoomed || hasUserMovedPositions(user)) {
+                                                googleMap.moveCamera(CameraUpdateFactory.newLatLng(user.getLocation()));
+                                                zoomToLocation(user.getLocation());
+                                                hasZoomed = true;
+                                                lastKnownLocation = user.getLocation();
                                             }
+                                            break;
                                         }
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
                                     }
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
                                 }
                             }
                         };
@@ -220,13 +258,8 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
     }
 
     private void zoomToLocation(final LatLng location) {
-        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location,
-                        LocationService.MY_LOCATION_ZOOM));
-            }
-        }, 1000);
+        new Handler(Looper.getMainLooper()).postDelayed(() -> googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location,
+                LocationService.MY_LOCATION_ZOOM)), 1000);
     }
 
     private CircleOptions getUserCircle(LatLng position) {

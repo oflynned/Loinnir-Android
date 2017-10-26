@@ -48,6 +48,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -68,7 +69,7 @@ public class LocalityConversationFrag extends Fragment {
     private BroadcastReceiver onChangeInLocalityReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(BroadcastFilters.changed_locality.toString())) {
+            if (Objects.equals(intent.getAction(), BroadcastFilters.changed_locality.toString())) {
                 // the newest update in locality doesn't correspond to the last one on record
                 // a user should be changed into a new chat room and the messages be reloaded
                 loadMessages();
@@ -78,8 +79,8 @@ public class LocalityConversationFrag extends Fragment {
 
     private BroadcastReceiver onNewLocalityInfoReceiver = new BroadcastReceiver() {
         @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(BroadcastFilters.new_locality_info_update.toString())) {
+        public void onReceive(final Context context, Intent intent) {
+            if (Objects.equals(intent.getAction(), BroadcastFilters.new_locality_info_update.toString())) {
                 RestClient.post(getActivity(), Endpoints.GET_NEARBY_COUNT, JSONUtils.getIdPayload(getActivity()),
                         new BaseJsonHttpResponseHandler<JSONObject>() {
                             @Override
@@ -88,8 +89,13 @@ public class LocalityConversationFrag extends Fragment {
                                     String localityName = response.getString("locality");
                                     int nearbyUsers = response.getInt("count");
                                     String localUsers = nearbyUsers + " eile anseo";
-                                    ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(localityName);
-                                    ((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(localUsers);
+
+                                    ActionBar actionBar = ((AppCompatActivity) context).getSupportActionBar();
+                                    if (actionBar != null) {
+                                        actionBar.setTitle(localityName);
+                                        actionBar.setSubtitle(localUsers);
+                                    }
+
                                 } catch (JSONException e) {
                                     e.printStackTrace();
                                 }
@@ -138,7 +144,7 @@ public class LocalityConversationFrag extends Fragment {
     private BroadcastReceiver internetAvailableReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals("android.net.conn.CONNECTIVITY_CHANGE"))
+            if (Objects.equals(intent.getAction(), "android.net.conn.CONNECTIVITY_CHANGE"))
                 if (NetworkAvailableService.isInternetAvailable(getActivity()))
                     NetworkAvailableService.syncCachedData(getActivity());
         }
@@ -298,6 +304,7 @@ public class LocalityConversationFrag extends Fragment {
 
                         @Override
                         protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                            System.out.println(rawJsonData);
                             return new JSONArray(rawJsonData);
                         }
                     });
