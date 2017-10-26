@@ -1,6 +1,5 @@
 package com.syzible.loinnir.fragments.portal;
 
-import android.app.Activity;
 import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -11,8 +10,8 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -24,32 +23,28 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.VisibleRegion;
-import com.google.maps.android.clustering.ClusterManager;
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.syzible.loinnir.R;
 import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.RestClient;
-import com.syzible.loinnir.objects.ClusterRenderer;
 import com.syzible.loinnir.objects.MapCircle;
 import com.syzible.loinnir.objects.User;
 import com.syzible.loinnir.services.LocationService;
-import com.syzible.loinnir.persistence.Constants;
 import com.syzible.loinnir.utils.BroadcastFilters;
 import com.syzible.loinnir.utils.JSONUtils;
 import com.syzible.loinnir.persistence.LocalPrefs;
-import com.syzible.loinnir.utils.MapCircleRenderer;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.regex.Matcher;
+import java.util.function.Predicate;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -73,7 +68,7 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
     private ArrayList<MapCircle> userCircles = new ArrayList<>();
     private int GREEN_500;
 
-    private static final float MAP_EDGE_THRESHOLD = 500; //m
+    private static final float MAP_TOLERANCE = 500; //m
     private static final int MAP_UPDATE_THRESHOLD = 500; //ms
     private long lastMapUpdateCall = Long.MIN_VALUE;
 
@@ -104,8 +99,8 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
     private void drawVisibleCircles() {
         Runnable zoomToLocationRunnable = () -> {
             VisibleRegion region = googleMap.getProjection().getVisibleRegion();
-            LatLng nw = getAdjustedCoord(region.latLngBounds.northeast, MAP_EDGE_THRESHOLD, MAP_EDGE_THRESHOLD);
-            LatLng se = getAdjustedCoord(region.latLngBounds.southwest, -MAP_EDGE_THRESHOLD, -MAP_EDGE_THRESHOLD);
+            LatLng nw = getAdjustedCoord(region.latLngBounds.northeast, MAP_TOLERANCE, MAP_TOLERANCE);
+            LatLng se = getAdjustedCoord(region.latLngBounds.southwest, -MAP_TOLERANCE, -MAP_TOLERANCE);
 
             LatLngBounds bounds = new LatLngBounds(se, nw);
             googleMap.clear();
@@ -117,6 +112,10 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         };
 
         new Handler().postDelayed(zoomToLocationRunnable, 0);
+    }
+
+    private void clusterCirclesWithinTolerance() {
+
     }
 
     private void setMapPosition() {
@@ -137,6 +136,22 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         View view = inflater.inflate(R.layout.map_frag, container, false);
         MapFragment mapFragment = (MapFragment) getChildFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        FloatingActionButton focusLocation = (FloatingActionButton) view.findViewById(R.id.focus_gps_fab);
+        focusLocation.setOnClickListener(v -> {
+            if (googleMap != null) {
+                if (LocalPrefs.getBooleanPref(LocalPrefs.Pref.should_share_location, getActivity())) {
+                    for (MapCircle circle : userCircles) {
+                        if (circle.isMe()) {
+                            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(circle.getUser().getLocation(), LocationService.MY_LOCATION_ZOOM));
+                            break;
+                        }
+                    }
+                } else {
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(LocationService.ATHLONE, LocationService.INITIAL_LOCATION_ZOOM));
+                }
+            }
+        });
 
         return view;
     }
@@ -183,8 +198,6 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         double newLongitude = coord.longitude + (dx / earthRadius) * (180 / Math.PI) /
                 Math.cos(coord.latitude * Math.PI / 180);
 
-        System.out.println("(" + newLatitude + ", " + newLongitude + ")");
-
         return new LatLng(newLatitude, newLongitude);
     }
 
@@ -202,7 +215,6 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
                             for (int i = 0; i < response.length(); i++) {
                                 try {
                                     User user = new User(response.getJSONObject(i));
-
                                     if (context != null)
                                         userCircles.add(new MapCircle(user,
                                                 user.getId().equals(LocalPrefs.getID(context))));
