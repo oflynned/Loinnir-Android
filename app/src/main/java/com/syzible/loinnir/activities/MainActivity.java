@@ -489,6 +489,8 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.action_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
+        } else if (id == R.id.action_suggestion_box) {
+            startActivity(new Intent(this, SuggestionsActivity.class));
         }
 
         return super.onOptionsItemSelected(item);

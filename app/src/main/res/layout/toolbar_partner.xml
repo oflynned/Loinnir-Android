@@ -17,6 +17,6 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/partner_convo_toolbar_title"
         android:textAppearance="?android:attr/textAppearanceSearchResultSubtitle"
-        android:textColor="#EEEEEE" />
+        android:textColor="#FAFAFA" />
 
 </RelativeLayout>

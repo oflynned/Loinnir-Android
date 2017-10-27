@@ -69,6 +69,14 @@
         </activity>
 
         <activity
+            android:name=".activities.SuggestionsActivity"
+            android:label="Moltaí don Aip"
+            android:screenOrientation="portrait"
+            android:theme="@style/DarkerAppTheme">
+
+        </activity>
+
+        <activity
             android:name=".activities.SettingsActivity"
             android:label="Socruithe"
             android:screenOrientation="portrait"
