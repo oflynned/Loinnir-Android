@@ -21,6 +21,7 @@ public class User implements IUser {
     private String avatar;
     private String locality, county;
     private boolean isFemale;
+    private long lastActive;
 
     public User(String fb_id) {
         this.fb_id = fb_id;
@@ -35,6 +36,7 @@ public class User implements IUser {
         this.surname = EncodingUtils.decodeText(data.getString("surname"));
         this.isFemale = data.getString("gender").equals("female");
         this.avatar = data.getString("profile_pic");
+        this.lastActive = data.getLong("last_active");
 
         if (data.getString("locality").equals("abroad"))
             this.locality = "Thar Sáile";
@@ -92,5 +94,9 @@ public class User implements IUser {
 
     public boolean isFemale() {
         return isFemale;
+    }
+
+    public long getLastActive() {
+        return lastActive;
     }
 }

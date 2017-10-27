@@ -27,7 +27,13 @@ import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.android.gms.maps.model.TileOverlay;
+import com.google.android.gms.maps.model.TileOverlayOptions;
+import com.google.android.gms.maps.model.TileProvider;
 import com.google.android.gms.maps.model.VisibleRegion;
+import com.google.maps.android.heatmaps.Gradient;
+import com.google.maps.android.heatmaps.HeatmapTileProvider;
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.syzible.loinnir.R;
 import com.syzible.loinnir.network.Endpoints;
@@ -42,8 +48,12 @@ import com.syzible.loinnir.persistence.LocalPrefs;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import cz.msebera.android.httpclient.Header;
@@ -54,6 +64,7 @@ import cz.msebera.android.httpclient.Header;
 
 public class MapFrag extends Fragment implements OnMapReadyCallback {
     private GoogleMap googleMap;
+    private HeatmapTileProvider provider;
 
     private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
         @Override
@@ -66,11 +77,14 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
     private LatLng lastKnownLocation;
     private boolean hasZoomed = false;
     private ArrayList<MapCircle> userCircles = new ArrayList<>();
-    private int GREEN_500;
+    private int GREEN_500, AMBER_500;
 
+    private static final int MIN_GROUP_SIZE_TOLERANCE = 5;
+    private static final float GROUP_DISTANCE_TOLERANCE = 500; //m
     private static final float MAP_TOLERANCE = 500; //m
     private static final int MAP_UPDATE_THRESHOLD = 500; //ms
     private long lastMapUpdateCall = Long.MIN_VALUE;
+
 
     @Override
     public void onResume() {
@@ -80,6 +94,7 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
 
         hasZoomed = false;
         GREEN_500 = ContextCompat.getColor(getActivity(), R.color.green500);
+        AMBER_500 = ContextCompat.getColor(getActivity(), R.color.amber500);
         setMapPosition();
 
         ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
@@ -94,6 +109,138 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
     public void onPause() {
         super.onPause();
         getActivity().unregisterReceiver(locationUpdateReceiver);
+    }
+
+    public float distanceTo(LatLng p1, LatLng p2) {
+        double earthRadius = 3958.75;
+        double latDiff = Math.toRadians(p2.latitude - p1.latitude);
+        double lngDiff = Math.toRadians(p2.longitude - p1.longitude);
+        double a = Math.sin(latDiff / 2) * Math.sin(latDiff / 2) +
+                Math.cos(Math.toRadians(p1.latitude)) * Math.cos(Math.toRadians(p2.latitude)) *
+                        Math.sin(lngDiff / 2) * Math.sin(lngDiff / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double distance = earthRadius * c;
+
+        int meterConversion = 1609;
+
+        return (float) (distance * meterConversion);
+    }
+
+    private LatLng getAverageLocation(HashSet<MapCircle> list) {
+        double aggregateLat = 0, aggregateLng = 0;
+        for (MapCircle overlappingCircle : list) {
+            aggregateLat += overlappingCircle.getPosition().latitude;
+            aggregateLng += overlappingCircle.getPosition().longitude;
+        }
+
+        aggregateLat /= list.size();
+        aggregateLng /= list.size();
+
+        return new LatLng(aggregateLat, aggregateLng);
+    }
+
+    private void getCirclesWithinTolerance() {
+        ArrayList<HashSet<MapCircle>> groomedCircles = new ArrayList<>();
+        ArrayList<MapCircle> nonOverlappingUsers = new ArrayList<>();
+        HashSet<MapCircle> items = new HashSet<>();
+
+        boolean wasAdded = false;
+
+        // restrict first to circles around dublin for the example to restrict loads
+        for (int i = 0; i < userCircles.size(); i++) {
+            if (userCircles.get(i).getUser().getCounty().equals("Áth Cliath")) {
+                MapCircle focusedCircle = userCircles.get(i);
+                for (int j = i + 1; j < userCircles.size(); j++) {
+                    if (i == userCircles.size() - 1)
+                        j = 0;
+
+                    if (userCircles.get(j).getUser().getCounty().equals("Áth Cliath")) {
+                        MapCircle testingCircle = userCircles.get(j);
+                        double distance = focusedCircle.distanceTo(testingCircle.getPosition());
+                        if (distance < GROUP_DISTANCE_TOLERANCE) {
+                            wasAdded = true;
+                            items.add(userCircles.get(j));
+                        }
+                    }
+                }
+
+                items.add(userCircles.get(i));
+                groomedCircles.add(items);
+                items = new HashSet<>();
+
+                if (!wasAdded)
+                    nonOverlappingUsers.add(userCircles.get(i));
+
+                wasAdded = false;
+            }
+        }
+
+        ArrayList<HashSet<MapCircle>> overlappingCirclesGroups = new ArrayList<>();
+
+        // now reduce the sets into cardinal sets by reducing into set groups of people in a certain distance from each other
+        for (int i = 0; i < groomedCircles.size(); i++) {
+            HashSet<MapCircle> firstSet = groomedCircles.get(i);
+            for (int j = 1; j < groomedCircles.size(); j++) {
+                if (i == userCircles.size() - 1)
+                    j = 0;
+
+                HashSet<MapCircle> secondSet = groomedCircles.get(j);
+
+                if (firstSet.size() > MIN_GROUP_SIZE_TOLERANCE && secondSet.size() > MIN_GROUP_SIZE_TOLERANCE) {
+                    if (firstSet.containsAll(secondSet) && secondSet.containsAll(firstSet)) {
+                        if (!overlappingCirclesGroups.contains(firstSet)) {
+                            System.out.println("set: " + firstSet);
+                            overlappingCirclesGroups.add(firstSet);
+                        }
+                    }
+                }
+            }
+        }
+
+        ArrayList<MapCircle> overlappingCircles = new ArrayList<>();
+
+        for (HashSet<MapCircle> overlappingLocality : overlappingCirclesGroups) {
+            LatLng location = getAverageLocation(overlappingLocality);
+            //System.out.println(location);
+            overlappingCircles.add(new MapCircle(location));
+        }
+
+        // now we have the population groups, we should aggregate over them to find the ones
+        // within a tolerance to each to each other and calculate a new average for the centre
+        // of the group's shape
+        ArrayList<ArrayList<MapCircle>> output = new ArrayList<>();
+        boolean wasGroupAdded = false;
+
+        for (int i = 0; i < overlappingCircles.size(); i++) {
+            ArrayList<MapCircle> groupsPertaining = new ArrayList<>();
+            groupsPertaining.add(overlappingCircles.get(i));
+            for (int j = 1; j < overlappingCircles.size(); j++) {
+                if (j == overlappingCircles.size())
+                    j = 0;
+
+                if (distanceTo(overlappingCircles.get(i).getGroupLocation(), overlappingCircles.get(j).getGroupLocation()) < GROUP_DISTANCE_TOLERANCE) {
+                    groupsPertaining.add(overlappingCircles.get(j));
+                    System.out.println("Adding ");
+                }
+            }
+
+            output.add(groupsPertaining);
+        }
+
+        for (ArrayList<MapCircle> item : output)
+            for (MapCircle circle : item)
+                System.out.println(circle.getGroupLocation());
+
+        // groom the original group to those that aren't in
+        googleMap.clear();
+        for (MapCircle mapCircle : nonOverlappingUsers) {
+            //googleMap.addCircle(getUserCircle(mapCircle.getPosition()));
+        }
+
+        // now re-add the groups reduced to a giant group cardinality
+        //for (MapCircle group : output) {
+        //    googleMap.addCircle(getUserCircle(group.getGroupLocation(), MAP_TOLERANCE));
+        //}
     }
 
     private void drawVisibleCircles() {
@@ -112,10 +259,6 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         };
 
         new Handler().postDelayed(zoomToLocationRunnable, 0);
-    }
-
-    private void clusterCirclesWithinTolerance() {
-
     }
 
     private void setMapPosition() {
@@ -166,6 +309,9 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
                 return;
             }
 
+            // on map moved actions
+
+            //getCirclesWithinTolerance();
             drawVisibleCircles();
 
             lastMapUpdateCall = snap;
@@ -216,13 +362,14 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
                                 try {
                                     User user = new User(response.getJSONObject(i));
                                     if (context != null)
-                                        userCircles.add(new MapCircle(user,
-                                                user.getId().equals(LocalPrefs.getID(context))));
+                                        userCircles.add(new MapCircle(user, user.getId().equals(LocalPrefs.getID(context))));
                                 } catch (JSONException e) {
                                     e.printStackTrace();
                                 }
                             }
 
+
+                            //getCirclesWithinTolerance();
                             drawVisibleCircles();
                         };
 
@@ -282,10 +429,27 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
                 .fillColor(getFillColour(false));
     }
 
+    private CircleOptions getUserCircle(LatLng position, float radius) {
+        return new CircleOptions()
+                .center(position)
+                .radius(LocationService.USER_LOCATION_RADIUS)
+                .strokeColor(getGroupedColour(true))
+                .fillColor(getGroupedColour(false));
+    }
+
     private int getFillColour(boolean isClear) {
         int r = (GREEN_500) & 0xFF;
         int g = (GREEN_500 >> 8) & 0xFF;
         int b = (GREEN_500 >> 16) & 0xFF;
+        int a = isClear ? 0 : 128;
+
+        return Color.argb(a, r, g, b);
+    }
+
+    private int getGroupedColour(boolean isClear) {
+        int r = (AMBER_500) & 0xFF;
+        int g = (AMBER_500 >> 8) & 0xFF;
+        int b = (AMBER_500 >> 16) & 0xFF;
         int a = isClear ? 0 : 128;
 
         return Color.argb(a, r, g, b);

@@ -32,6 +32,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Random;
 
 import cz.msebera.android.httpclient.Header;
@@ -90,17 +91,12 @@ public class AuthenticationActivity extends AppCompatActivity {
         LocalPrefs.setBooleanPref(LocalPrefs.Pref.should_share_location, true, this);
 
         logo = (ImageView) findViewById(R.id.iv_login_app_logo);
-        logo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                YoYo.with(Techniques.RubberBand).duration(700).playOn(logo);
-            }
-        });
+        logo.setOnClickListener(v -> YoYo.with(Techniques.RubberBand).duration(700).playOn(logo));
 
         callbackManager = CallbackManager.Factory.create();
 
         facebookLoginButton = (LoginButton) findViewById(R.id.login_fb_login_button);
-        facebookLoginButton.setReadPermissions(Arrays.asList("public_profile"));
+        facebookLoginButton.setReadPermissions(Collections.singletonList("public_profile"));
 
         registerFacebookCallback();
         animateFlag();
@@ -163,60 +159,57 @@ public class AuthenticationActivity extends AppCompatActivity {
                 FacebookUtils.saveToken(accessToken, AuthenticationActivity.this);
 
                 GraphRequest request = GraphRequest.newMeRequest(loginResult.getAccessToken(),
-                        new GraphRequest.GraphJSONObjectCallback() {
-                            @Override
-                            public void onCompleted(JSONObject o, GraphResponse response) {
-                                try {
-                                    System.out.println("Received o: " + o.toString());
-                                    String id = o.getString("id");
-                                    String forename = o.getString("first_name");
-                                    String surname = o.getString("last_name");
-                                    String gender = o.getString("gender");
-                                    String pic = "https://graph.facebook.com/" + id + "/picture?type=large";
+                        (o, response) -> {
+                            try {
+                                System.out.println("Received o: " + o.toString());
+                                String id = o.getString("id");
+                                String forename = o.getString("first_name");
+                                String surname = o.getString("last_name");
+                                String gender = o.getString("gender");
+                                String pic = "https://graph.facebook.com/" + id + "/picture?type=large";
 
-                                    JSONObject postData = new JSONObject();
-                                    postData.put("fb_id", id);
-                                    postData.put("forename", EncodingUtils.encodeText(forename));
-                                    postData.put("surname", EncodingUtils.encodeText(surname));
-                                    postData.put("gender", gender);
-                                    postData.put("profile_pic", pic);
-                                    postData.put("show_location", true);
+                                JSONObject postData = new JSONObject();
+                                postData.put("fb_id", id);
+                                postData.put("forename", EncodingUtils.encodeText(forename));
+                                postData.put("surname", EncodingUtils.encodeText(surname));
+                                postData.put("gender", gender);
+                                postData.put("profile_pic", pic);
+                                postData.put("show_location", true);
 
-                                    // temp location until the phone updates
-                                    postData.put("lat", LocationService.ATHLONE.latitude);
-                                    postData.put("lng", LocationService.ATHLONE.longitude);
+                                // temp location until the phone updates
+                                postData.put("lat", LocationService.ATHLONE.latitude);
+                                postData.put("lng", LocationService.ATHLONE.longitude);
 
-                                    LocalPrefs.setStringPref(LocalPrefs.Pref.id, id, AuthenticationActivity.this);
-                                    LocalPrefs.setStringPref(LocalPrefs.Pref.forename, forename, AuthenticationActivity.this);
-                                    LocalPrefs.setStringPref(LocalPrefs.Pref.surname, surname, AuthenticationActivity.this);
-                                    LocalPrefs.setStringPref(LocalPrefs.Pref.profile_pic, pic, AuthenticationActivity.this);
+                                LocalPrefs.setStringPref(LocalPrefs.Pref.id, id, AuthenticationActivity.this);
+                                LocalPrefs.setStringPref(LocalPrefs.Pref.forename, forename, AuthenticationActivity.this);
+                                LocalPrefs.setStringPref(LocalPrefs.Pref.surname, surname, AuthenticationActivity.this);
+                                LocalPrefs.setStringPref(LocalPrefs.Pref.profile_pic, pic, AuthenticationActivity.this);
 
-                                    Intent startFCMTokenService = new Intent(AuthenticationActivity.this, TokenService.class);
-                                    AuthenticationActivity.this.startService(startFCMTokenService);
+                                Intent startFCMTokenService = new Intent(AuthenticationActivity.this, TokenService.class);
+                                AuthenticationActivity.this.startService(startFCMTokenService);
 
-                                    RestClient.post(AuthenticationActivity.this, Endpoints.CREATE_USER, postData, new BaseJsonHttpResponseHandler<JSONObject>() {
-                                        @Override
-                                        public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                                            DisplayUtils.generateToast(AuthenticationActivity.this, "Nuashonreofar do cheantar laistigh de chúpla nóiméad");
-                                            startMain();
-                                        }
+                                RestClient.post(AuthenticationActivity.this, Endpoints.CREATE_USER, postData, new BaseJsonHttpResponseHandler<JSONObject>() {
+                                    @Override
+                                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                                        DisplayUtils.generateToast(AuthenticationActivity.this, "Nuashonreofar do cheantar laistigh de chúpla nóiméad");
+                                        startMain();
+                                    }
 
-                                        @Override
-                                        public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-                                            DisplayUtils.generateSnackbar(AuthenticationActivity.this, "Thit earáid amach (" + statusCode + ") " + EmojiUtils.getEmoji(EmojiUtils.SAD));
-                                        }
+                                    @Override
+                                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+                                        DisplayUtils.generateSnackbar(AuthenticationActivity.this, "Thit earáid amach (" + statusCode + ") " + EmojiUtils.getEmoji(EmojiUtils.SAD));
+                                    }
 
-                                        @Override
-                                        protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                            return new JSONObject(rawJsonData);
-                                        }
-                                    });
+                                    @Override
+                                    protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                        return new JSONObject(rawJsonData);
+                                    }
+                                });
 
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
-
+                            } catch (JSONException e) {
+                                e.printStackTrace();
                             }
+
                         });
 
                 Bundle parameters = new Bundle();

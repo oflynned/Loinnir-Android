@@ -36,7 +36,6 @@ public class ServerBroadcastService extends FirebaseMessagingService {
         super.onMessageReceived(remoteMessage);
         if (remoteMessage.getData().size() > 0) {
             if (FacebookUtils.hasExistingToken(getApplicationContext())) {
-                System.out.println("Data in packet: " + remoteMessage.getData());
                 String message_type = remoteMessage.getData().get("notification_type");
 
                 if (message_type.equals(NotificationTypes.new_locality_update.name())) {

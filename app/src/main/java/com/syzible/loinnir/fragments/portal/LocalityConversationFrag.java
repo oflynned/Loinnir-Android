@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,6 +39,7 @@ import com.syzible.loinnir.services.NetworkAvailableService;
 import com.syzible.loinnir.utils.BitmapUtils;
 import com.syzible.loinnir.utils.BroadcastFilters;
 import com.syzible.loinnir.utils.DisplayUtils;
+import com.syzible.loinnir.utils.EmojiUtils;
 import com.syzible.loinnir.utils.EncodingUtils;
 import com.syzible.loinnir.utils.JSONUtils;
 import com.syzible.loinnir.utils.LanguageUtils;
@@ -189,12 +191,15 @@ public class LocalityConversationFrag extends Fragment {
     }
 
     private void setSendMessageListener(final MessagesListAdapter<Message> adapter) {
-        MessageInput messageInput = (MessageInput) view.findViewById(R.id.message_input);
-        messageInput.setInputListener(new MessageInput.InputListener() {
-            @Override
-            public boolean onSubmit(final CharSequence input) {
-                final String messageContent = input.toString().trim();
+        final boolean[] outcome = {true};
 
+        MessageInput messageInput = (MessageInput) view.findViewById(R.id.message_input);
+        messageInput.setInputListener(input -> {
+            final String messageContent = input.toString().trim();
+            outcome[0] = Patterns.WEB_URL.matcher(messageContent.toLowerCase()).matches();
+
+            // check if the message contains a link
+            if (!outcome[0]) {
                 if (NetworkAvailableService.isInternetAvailable(getActivity())) {
                     try {
                         JSONObject messagePayload = new JSONObject();
@@ -250,8 +255,10 @@ public class LocalityConversationFrag extends Fragment {
                     Message cachedMessage = new Message(myId, new User(myId), System.currentTimeMillis(), messageContent);
                     adapter.addToStart(cachedMessage, true);
                 }
-                return true;
+            } else {
+                DisplayUtils.generateSnackbar(getActivity(), "Ní cheadaítear nascanna sa seomra seo. " + EmojiUtils.getEmoji(EmojiUtils.TONGUE));
             }
+            return !outcome[0];
         });
     }
 
@@ -263,63 +270,55 @@ public class LocalityConversationFrag extends Fragment {
     }
 
     private void setLoadMoreListener(final MessagesListAdapter<Message> adapter) {
-        adapter.setLoadMoreListener(new MessagesListAdapter.OnLoadMoreListener() {
-            @Override
-            public void onLoadMore(int page, int totalItemsCount) {
-                if (messages.size() > 0) {
-                    JSONObject payload = new JSONObject();
-                    try {
-                        payload.put("fb_id", LocalPrefs.getID(getActivity()));
-                        Message oldestMessage = paginatedMessages.size() == 0 ? messages.get(messages.size() - 1) : paginatedMessages.get(paginatedMessages.size() - 1);
-                        payload.put("oldest_message_id", oldestMessage.getId());
-                        payload.put("last_known_count", totalItemsCount - 1);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+        adapter.setLoadMoreListener((page, totalItemsCount) -> {
+            if (messages.size() > 0) {
+                JSONObject payload = new JSONObject();
+                try {
+                    payload.put("fb_id", LocalPrefs.getID(getActivity()));
+                    Message oldestMessage = paginatedMessages.size() == 0 ? messages.get(messages.size() - 1) : paginatedMessages.get(paginatedMessages.size() - 1);
+                    payload.put("oldest_message_id", oldestMessage.getId());
+                    payload.put("last_known_count", totalItemsCount - 1);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                RestClient.post(getActivity(), Endpoints.GET_LOCALITY_MESSAGES_PAGINATION, payload, new BaseJsonHttpResponseHandler<JSONArray>() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
+                        paginatedMessages.clear();
+                        if (response.length() > 0) {
+                            for (int i = response.length() - 1; i >= 0; i--) {
+                                try {
+                                    JSONObject o = response.getJSONObject(i);
+                                    User sender = new User(o.getJSONObject("user"));
+                                    Message message = new Message(sender, o);
+                                    paginatedMessages.add(message);
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            adapter.addToEnd(paginatedMessages, false);
+                        }
                     }
 
-                    RestClient.post(getActivity(), Endpoints.GET_LOCALITY_MESSAGES_PAGINATION, payload, new BaseJsonHttpResponseHandler<JSONArray>() {
-                        @Override
-                        public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
-                            paginatedMessages.clear();
-                            if (response.length() > 0) {
-                                for (int i = response.length() - 1; i >= 0; i--) {
-                                    try {
-                                        JSONObject o = response.getJSONObject(i);
-                                        User sender = new User(o.getJSONObject("user"));
-                                        Message message = new Message(sender, o);
-                                        paginatedMessages.add(message);
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
 
-                                adapter.addToEnd(paginatedMessages, false);
-                            }
-                        }
+                    }
 
-                        @Override
-                        public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
-
-                        }
-
-                        @Override
-                        protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                            System.out.println(rawJsonData);
-                            return new JSONArray(rawJsonData);
-                        }
-                    });
-                }
+                    @Override
+                    protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                        System.out.println(rawJsonData);
+                        return new JSONArray(rawJsonData);
+                    }
+                });
             }
         });
     }
 
     private void setMessageOnLongClick(MessagesListAdapter<Message> adapter) {
-        adapter.setOnMessageViewLongClickListener(new MessagesListAdapter.OnMessageViewLongClickListener<Message>() {
-            @Override
-            public void onMessageViewLongClick(View view, final Message message) {
-                EncodingUtils.copyText(getActivity(), message);
-            }
-        });
+        adapter.setOnMessageViewLongClickListener((view, message) -> EncodingUtils.copyText(getActivity(), message));
     }
 
     private void setupAdapter(View view) {
@@ -403,68 +402,59 @@ public class LocalityConversationFrag extends Fragment {
     }
 
     private ImageLoader loadImage() {
-        return new ImageLoader() {
-            @Override
-            public void loadImage(final ImageView imageView, final String url) {
-                // can only use Facebook to sign up so use the embedded id in the url
-                final String id = url.split("/")[3];
+        return (imageView, url) -> {
+            // can only use Facebook to sign up so use the embedded id in the url
+            final String id = url.split("/")[3];
 
-                if (!CachingUtil.doesImageExist(getActivity(), id)) {
-                    new GetImage(new NetworkCallback<Bitmap>() {
-                        @Override
-                        public void onResponse(Bitmap response) {
-                            Bitmap croppedImage = BitmapUtils.getCroppedCircle(response);
-                            Bitmap scaledAvatar = BitmapUtils.scaleBitmap(croppedImage, BitmapUtils.BITMAP_SIZE_SMALL);
-                            imageView.setImageBitmap(scaledAvatar);
-                            CachingUtil.cacheImage(getActivity(), id, scaledAvatar);
-                        }
-
-                        @Override
-                        public void onFailure() {
-                            System.out.println("dl failure on chat pic");
-                        }
-                    }, url, true).execute();
-                } else {
-                    Bitmap cachedImage = CachingUtil.getCachedImage(getActivity(), id);
-                    imageView.setImageBitmap(cachedImage);
-                }
-
-                imageView.setOnLongClickListener(new View.OnLongClickListener() {
+            if (!CachingUtil.doesImageExist(getActivity(), id)) {
+                new GetImage(new NetworkCallback<Bitmap>() {
                     @Override
-                    public boolean onLongClick(View v) {
-                        if (!id.equals(LocalPrefs.getID(getActivity()))) {
-                            RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getUserIdPayload(getActivity(), id), new BaseJsonHttpResponseHandler<JSONObject>() {
-                                @Override
-                                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                                    try {
-                                        final User user = new User(response);
-                                        DisplayUtils.generateBlockDialog(getActivity(), user, new DisplayUtils.OnCallback() {
-                                            @Override
-                                            public void onCallback() {
-                                                DisplayUtils.generateSnackbar(getActivity(), "Cuireadh cosc go rathúil " + LanguageUtils.getPrepositionalForm("ar", user.getForename()));
-                                                loadMessages();
-                                            }
-                                        });
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-
-                                @Override
-                                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-                                    DisplayUtils.generateToast(getActivity(), "Easpa rochtain idirlín");
-                                }
-
-                                @Override
-                                protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                    return new JSONObject(rawJsonData);
-                                }
-                            });
-                        }
-                        return false;
+                    public void onResponse(Bitmap response) {
+                        Bitmap croppedImage = BitmapUtils.getCroppedCircle(response);
+                        Bitmap scaledAvatar = BitmapUtils.scaleBitmap(croppedImage, BitmapUtils.BITMAP_SIZE_SMALL);
+                        imageView.setImageBitmap(scaledAvatar);
+                        CachingUtil.cacheImage(getActivity(), id, scaledAvatar);
                     }
-                });
+
+                    @Override
+                    public void onFailure() {
+                        System.out.println("dl failure on chat pic");
+                    }
+                }, url, true).execute();
+            } else {
+                Bitmap cachedImage = CachingUtil.getCachedImage(getActivity(), id);
+                imageView.setImageBitmap(cachedImage);
             }
+
+            imageView.setOnLongClickListener(v -> {
+                if (!id.equals(LocalPrefs.getID(getActivity()))) {
+                    RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getUserIdPayload(getActivity(), id), new BaseJsonHttpResponseHandler<JSONObject>() {
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                            try {
+                                final User user = new User(response);
+                                DisplayUtils.generateBlockDialog(getActivity(), user, () -> {
+                                    DisplayUtils.generateSnackbar(getActivity(), "Cuireadh cosc go rathúil " + LanguageUtils.getPrepositionalForm("ar", user.getForename()));
+                                    loadMessages();
+                                });
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+                            DisplayUtils.generateToast(getActivity(), "Easpa rochtain idirlín");
+                        }
+
+                        @Override
+                        protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                            return new JSONObject(rawJsonData);
+                        }
+                    });
+                }
+                return false;
+            });
         };
     }
 }
