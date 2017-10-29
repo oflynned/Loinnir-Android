@@ -37,6 +37,7 @@ import com.syzible.loinnir.fragments.portal.RouletteFrag;
 import com.syzible.loinnir.fragments.portal.RouletteOutcomeFrag;
 import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.GetImage;
+import com.syzible.loinnir.network.MetaDataUpdate;
 import com.syzible.loinnir.network.NetworkCallback;
 import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.objects.User;
@@ -201,26 +202,6 @@ public class MainActivity extends AppCompatActivity
             inputMethodManager.hideSoftInputFromWindow(currentView.getWindowToken(), 0);
     }
 
-    private void notifyMetaDataUpdate() {
-        RestClient.post(this, Endpoints.UPDATE_USER_META_DATA, JSONUtils.getIdPayload(this),
-                new BaseJsonHttpResponseHandler<JSONObject>() {
-                    @Override
-                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-
-                    }
-
-                    @Override
-                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-
-                    }
-
-                    @Override
-                    protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                        return new JSONObject(rawJsonData);
-                    }
-                });
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -233,7 +214,7 @@ public class MainActivity extends AppCompatActivity
                 new IntentFilter("android.location.PROVIDERS_CHANGED"));
 
         startService(new Intent(getApplicationContext(), LocationService.class));
-        notifyMetaDataUpdate();
+        MetaDataUpdate.updateLastActive(this);
 
         if (!GPSAvailableService.isGPSAvailable(MainActivity.this)) {
             isGPSEnabledDialog.show();
@@ -249,7 +230,7 @@ public class MainActivity extends AppCompatActivity
         stopService(new Intent(this, LocationService.class));
         unregisterReceiver(finishMainActivityReceiver);
         unregisterReceiver(changeGPSEnabledReceiver);
-        notifyMetaDataUpdate();
+        MetaDataUpdate.updateLastActive(this);
     }
 
     private void greetUser() {
@@ -261,7 +242,6 @@ public class MainActivity extends AppCompatActivity
     private void checkNotificationInvocation() {
         String invocationType = getIntent().getStringExtra("invoker");
         if (invocationType != null) {
-            System.out.println("INVOKED! " + invocationType);
             switch (invocationType) {
                 case "notification":
                     shouldDisplayGreeting = false;
@@ -402,7 +382,11 @@ public class MainActivity extends AppCompatActivity
         String countyFlagFile = getCountyFileName(county);
         int flagDrawable = getResources().getIdentifier(countyFlagFile, "drawable", getPackageName());
         ImageView countyFlag = (ImageView) findViewById(R.id.nav_header_county_flag);
-        countyFlag.setImageResource(flagDrawable);
+        if (flagDrawable != 0) {
+            countyFlag.setImageResource(flagDrawable);
+        } else {
+            countyFlag.setImageResource(R.mipmap.ic_launcher);
+        }
     }
 
     private void setUpDrawer() {

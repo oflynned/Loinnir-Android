@@ -67,7 +67,7 @@
                 android:id="@+id/suggestions_version_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Version:" />
+                android:text="Leagan:" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -78,7 +78,6 @@
         </RelativeLayout>
 
         <EditText
-            style="@style/Widget.AppCompat.EditText"
             android:id="@+id/suggestion_box_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

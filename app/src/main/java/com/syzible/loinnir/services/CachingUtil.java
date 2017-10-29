@@ -68,7 +68,7 @@ public class CachingUtil {
         File[] files = new File(getDirectoryPath(context)).listFiles();
         String fileName = name;
 
-        for(File file : files) {
+        for (File file : files) {
             if (name.equals(file.getName().split("_")[0]))
                 fileName = file.getName();
         }
@@ -133,9 +133,7 @@ public class CachingUtil {
 
     private static String getDirectoryPath(Context context) {
         return Environment.getExternalStorageDirectory()
-                + "/Android/data/"
-                + context.getPackageName()
-                + "/Images";
+                + "/Android/data/com.syzible.loinnir/Images";
     }
 
     private static String getFileWithExtension(String name) {

@@ -99,4 +99,8 @@ public class User implements IUser {
     public long getLastActive() {
         return lastActive;
     }
+
+    public void setLastActive(long lastActive) {
+        this.lastActive = lastActive;
+    }
 }

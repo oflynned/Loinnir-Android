@@ -30,6 +30,7 @@ import com.syzible.loinnir.R;
 import com.syzible.loinnir.activities.MainActivity;
 import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.GetImage;
+import com.syzible.loinnir.network.MetaDataUpdate;
 import com.syzible.loinnir.network.NetworkCallback;
 import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.objects.Message;
@@ -106,6 +107,7 @@ public class PartnerConversationFrag extends Fragment {
                                         adapter.addToStart(message, true);
                                         markSeen();
                                         NotificationUtils.dismissNotification(getActivity(), partner);
+                                        partner.setLastActive(sender.getLastActive());
                                     } catch (JSONException e) {
                                         e.printStackTrace();
                                     }
@@ -371,6 +373,8 @@ public class PartnerConversationFrag extends Fragment {
                                                         messagePayload.put("from_id", LocalPrefs.getID(context));
                                                         messagePayload.put("to_id", partner.getId());
                                                         messagePayload.put("message", EncodingUtils.encodeText(message.getText().trim()));
+
+                                                        MetaDataUpdate.updateLastActive(PartnerConversationFrag.this.getActivity());
 
                                                         RestClient.post(context, Endpoints.SEND_PARTNER_MESSAGE, messagePayload, new BaseJsonHttpResponseHandler<JSONObject>() {
                                                             @Override

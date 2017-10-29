@@ -247,30 +247,27 @@ public class ConversationsListFrag extends Fragment implements
     }
 
     private ImageLoader loadImage() {
-        return new ImageLoader() {
-            @Override
-            public void loadImage(final ImageView imageView, final String url) {
-                // can only use Facebook to sign up so use the embedded id in the url
-                final String fileName = url.split("/")[3];
+        return (imageView, url) -> {
+            // can only use Facebook to sign up so use the embedded id in the url
+            final String fileName = url.split("/")[3];
 
-                if (!CachingUtil.doesImageExist(getActivity(), fileName)) {
-                    new GetImage(new NetworkCallback<Bitmap>() {
-                        @Override
-                        public void onResponse(Bitmap response) {
-                            Bitmap scaledAvatar = BitmapUtils.generateMetUserAvatar(response);
-                            imageView.setImageBitmap(scaledAvatar);
-                            CachingUtil.cacheImage(getActivity(), fileName, scaledAvatar);
-                        }
+            if (!CachingUtil.doesImageExist(getActivity(), fileName)) {
+                new GetImage(new NetworkCallback<Bitmap>() {
+                    @Override
+                    public void onResponse(Bitmap response) {
+                        Bitmap scaledAvatar = BitmapUtils.generateMetUserAvatar(response);
+                        imageView.setImageBitmap(scaledAvatar);
+                        CachingUtil.cacheImage(getActivity(), fileName, scaledAvatar);
+                    }
 
-                        @Override
-                        public void onFailure() {
-                            System.out.println("dl failure on chat pic");
-                        }
-                    }, url, true).execute();
-                } else {
-                    Bitmap cachedImage = CachingUtil.getCachedImage(getActivity(), fileName);
-                    imageView.setImageBitmap(cachedImage);
-                }
+                    @Override
+                    public void onFailure() {
+                        System.out.println("dl failure on chat pic");
+                    }
+                }, url, true).execute();
+            } else {
+                Bitmap cachedImage = CachingUtil.getCachedImage(getActivity(), fileName);
+                imageView.setImageBitmap(cachedImage);
             }
         };
     }
