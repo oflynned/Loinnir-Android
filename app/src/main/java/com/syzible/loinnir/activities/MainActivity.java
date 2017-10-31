@@ -131,14 +131,12 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.M ) {
-            checkPermission();
-        }
-
         setContentView(R.layout.activity_main);
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        checkPermission();
 
         String fcmToken = FirebaseInstanceId.getInstance().getToken();
         if (fcmToken != null) {
@@ -252,25 +250,35 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void checkPermission() {
+        System.out.println("checking permissions");
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
+            System.out.println("no permissions");
             ActivityCompat.requestPermissions(this,
                     new String[]{
                             Manifest.permission.ACCESS_FINE_LOCATION,
                             Manifest.permission.ACCESS_COARSE_LOCATION
                     }, 123);
+        } else {
+            System.out.println("Granted permissions");
+            MainActivity.this.startService(new Intent(this, LocationService.class));
         }
-        MainActivity.this.startService(new Intent(this, LocationService.class));
 
         MetaDataUpdate.updateLastActive(this);
 
         if (!GPSAvailableService.isGPSAvailable(MainActivity.this)) {
             isGPSEnabledDialog.show();
-        } else {
-            isGPSEnabledDialog.cancel();
         }
 
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            MainActivity.this.startService(new Intent(this, LocationService.class));
+        } else {
+            this.finish();
+        }
     }
 
     @Override
