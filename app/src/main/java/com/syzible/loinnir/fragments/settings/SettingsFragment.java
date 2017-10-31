@@ -44,7 +44,7 @@ public class SettingsFragment extends PreferenceFragment {
     SwitchPreference shouldShareLocation;
     Preference manageBlockedUsers, shareApp, aboutLoinnir, visitWebsite, visitFacebook;
     Preference appVersion, privacyPolicy, termsOfService;
-    Preference logOut, deleteAccount;
+    Preference clearCache, logOut, deleteAccount;
 
     private Activity context;
 
@@ -82,6 +82,7 @@ public class SettingsFragment extends PreferenceFragment {
         setListenerTOS();
 
         // danger area
+        setListenerClearCache();
         setListenerLogOut();
         setListenerDeleteAccount();
     }
@@ -96,6 +97,7 @@ public class SettingsFragment extends PreferenceFragment {
         appVersion = findPreference("pref_app_version");
         privacyPolicy = findPreference("pref_privacy_policy");
         termsOfService = findPreference("pref_tos");
+        clearCache = findPreference("pref_clear_cache");
         logOut = findPreference("pref_log_out");
         deleteAccount = findPreference("pref_delete_account");
     }
@@ -255,6 +257,22 @@ public class SettingsFragment extends PreferenceFragment {
                         startActivity(new Intent(context, AuthenticationActivity.class));
                     })
                     .setNegativeButton("Ná Logáil Amach", null)
+                    .create()
+                    .show();
+            return false;
+        });
+    }
+
+    private void setListenerClearCache() {
+        clearCache.setOnPreferenceClickListener(preference -> {
+            new AlertDialog.Builder(new ContextThemeWrapper(context, R.style.DangerAppTheme))
+                    .setTitle("An Taisce a Ghlanadh?")
+                    .setMessage("Bainfear na h-íomhánna réamh-íoslódáilte den ghléas agus gheofar níos mó spáis. Íoslódáilfear íomhánna nach bhfuil ann i gcomhrá nó i bhfoinsí eile arís.")
+                    .setPositiveButton("Glan", (dialog, which) -> {
+                        CachingUtil.clearCache(getActivity());
+                        DisplayUtils.generateSnackbar(getActivity(), "Glanadh an taisce go rathúil.");
+                    })
+                    .setNegativeButton("Ná Glan", null)
                     .create()
                     .show();
             return false;

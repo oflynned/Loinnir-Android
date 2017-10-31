@@ -60,6 +60,11 @@
 
     <PreferenceCategory android:title="An Ceantar Baoil">
         <Preference
+            android:key="pref_clear_cache"
+            android:title="Glan an Taisce"
+            android:summary="Bainfear na h-íomhánna réamh-íoslódáilte de do ghléas."/>
+
+        <Preference
             android:key="pref_log_out"
             android:title="Logáil Amach" />
 
