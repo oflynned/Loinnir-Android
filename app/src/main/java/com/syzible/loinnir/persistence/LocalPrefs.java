@@ -10,7 +10,8 @@ import android.preference.PreferenceManager;
 public class LocalPrefs {
     public enum Pref {
         id, fb_access_token, profile_pic, forename, surname, first_run_completed, should_share_location,
-        location_update_frequency, lat, lng, last_known_location, last_known_county, user_agreements_version
+        location_update_frequency, lat, lng, last_known_location, last_known_county, user_agreements_version,
+        facebook_permissions_version
     }
 
     public static String getID(Context context) {
@@ -20,6 +21,11 @@ public class LocalPrefs {
     public static int getUserAgreementsVersion(Context context) {
         return PreferenceManager.getDefaultSharedPreferences(context)
                 .getInt(Pref.user_agreements_version.name(), -1);
+    }
+
+    public static int getFacebookPermissionsVersion(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context)
+                .getInt(Pref.facebook_permissions_version.name(), -1);
     }
 
     public static void setUserAgreementsVersion(Context context, int version) {
@@ -42,6 +48,11 @@ public class LocalPrefs {
     public static void setStringPref(Pref key, String value, Context context) {
         PreferenceManager.getDefaultSharedPreferences(context)
                 .edit().putString(key.name(), value).apply();
+    }
+
+    public static void setIntPref(Pref key, int value, Context context) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit().putInt(key.name(), value).apply();
     }
 
     public static void setBooleanPref(Pref key, boolean value, Context context) {

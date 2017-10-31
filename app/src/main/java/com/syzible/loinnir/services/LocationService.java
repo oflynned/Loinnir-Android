@@ -1,25 +1,28 @@
 package com.syzible.loinnir.services;
 
+import android.app.ActivityManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.location.Location;
-import android.location.LocationManager;
-import android.os.Bundle;
+import android.os.Binder;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
+import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
-import com.loopj.android.http.BaseJsonHttpResponseHandler;
+import com.syzible.loinnir.activities.MainActivity;
 import com.syzible.loinnir.network.Endpoints;
-import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.persistence.Constants;
-import com.syzible.loinnir.persistence.LocalPrefs;
-import com.syzible.loinnir.utils.BroadcastFilters;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import cz.msebera.android.httpclient.Header;
 
 /**
  * Created by ed on 30/05/2017.
@@ -27,151 +30,189 @@ import cz.msebera.android.httpclient.Header;
 
 public class LocationService extends Service {
 
+    private static final String PACKAGE_NAME = "com.syzible.loinnir.locationservice";
+    private static final String TAG = LocationService.class.getSimpleName();
+    public static final String BROADCAST_ACTION = PACKAGE_NAME + ".broadcast";
+    public static final String BROADCAST_LOCATION = PACKAGE_NAME + ".location";
+
+    private final IBinder binder = new LocalBinder();
+
     public static final LatLng ATHLONE = new LatLng(53.4232575, -7.9402598);
     public static final float INITIAL_LOCATION_ZOOM = 6.0f;
     public static final float MY_LOCATION_ZOOM = 14.0f;
     public static final int USER_LOCATION_RADIUS = 500;
 
-    private static final int LOCATION_FOREGROUND_INTERVAL = Endpoints.isDebugMode() ? Constants.ONE_SECOND : Constants.FIVE_MINUTES;
+    private static final int LOCATION_FOREGROUND_INTERVAL = Endpoints.isDebugMode() ? Constants.ONE_SECOND : Constants.ONE_MINUTE;
+    private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS = LOCATION_FOREGROUND_INTERVAL / 2;
 
-    // update every time 500m of a distance change is observed
-    private static final float LOCATION_DISTANCE = 500f;
+    private LocationRequest locationRequest;
+    private FusedLocationProviderClient mFusedLocationClient;
 
-    private LocationManager locationManager = null;
+    private LocationCallback mLocationCallback;
+    private Handler mServiceHandler;
 
-    private class LocationListener implements android.location.LocationListener {
+    private boolean mChangingConfiguration = false;
 
-        private Location lastLocation;
-
-        LocationListener(String provider) {
-            this.lastLocation = new Location(provider);
-        }
-
-        @Override
-        public void onLocationChanged(Location location) {
-            if (LocalPrefs.getBooleanPref(LocalPrefs.Pref.should_share_location, getApplicationContext()))
-                lastLocation.set(location);
-            syncWithServer(location);
-        }
-
-        private void syncWithServer(Location location) {
-            if (!LocalPrefs.getID(getApplicationContext()).equals("")) {
-                JSONObject payload = new JSONObject();
-
-                try {
-                    payload.put("fb_id", LocalPrefs.getID(getApplicationContext()));
-                    payload.put("lng", location.getLongitude());
-                    payload.put("lat", location.getLatitude());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-                // don't care about response on user side
-                RestClient.post(getApplicationContext(), Endpoints.UPDATE_USER_LOCATION, payload, new BaseJsonHttpResponseHandler<JSONObject>() {
-                    @Override
-                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                        try {
-                            String currentLocality = response.getJSONObject("user").getString("locality");
-                            if (!LocalPrefs.getStringPref(LocalPrefs.Pref.last_known_location, getApplicationContext()).equals(currentLocality))
-                                getApplicationContext().sendBroadcast(new Intent(BroadcastFilters.changed_locality.toString()));
-
-                            LocalPrefs.setStringPref(LocalPrefs.Pref.last_known_location, currentLocality, getApplicationContext());
-
-                            if (LocalPrefs.getBooleanPref(LocalPrefs.Pref.should_share_location, getApplicationContext()))
-                                getApplicationContext().sendBroadcast(new Intent(BroadcastFilters.updated_location.toString()));
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-
-                    }
-
-                    @Override
-                    protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                        return new JSONObject(rawJsonData);
-                    }
-                });
-            }
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-            System.out.println("onStatusChanged: " + provider);
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-            System.out.println("onProviderEnabled: " + provider);
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-            System.out.println("onProviderDisabled: " + provider);
-        }
+    private Location mLocation;
+    public LocationService() {
     }
 
-    LocationListener[] locationListeners = new LocationListener[]{
-            new LocationListener(LocationManager.GPS_PROVIDER),
-            new LocationListener(LocationManager.NETWORK_PROVIDER)
-    };
-
     @Override
-    public IBinder onBind(Intent arg0) {
-        return null;
+    public void onCreate() {
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        mLocationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                super.onLocationResult(locationResult);
+                onNewLocation(locationResult.getLastLocation());
+            }
+        };
+
+        createLocationRequest();
+        getLastLocation();
+
+        HandlerThread handlerThread = new HandlerThread(TAG);
+        handlerThread.start();
+        mServiceHandler = new Handler(handlerThread.getLooper());
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        super.onStartCommand(intent, flags, startId);
-        //stopPollingLocation();
-        startPollingLocation(LOCATION_FOREGROUND_INTERVAL);
-        return START_STICKY;
+        if (!MainActivity.isActivityVisible()) {
+            removeLocationUpdates();
+            stopSelf();
+        }
+
+        return START_NOT_STICKY;
     }
 
-    private void startPollingLocation(int frequency) {
-        initializeLocationManager();
-        try {
-            locationManager.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER, frequency, LOCATION_DISTANCE,
-                    locationListeners[1]);
-        } catch (java.lang.SecurityException | IllegalArgumentException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, frequency, LOCATION_DISTANCE,
-                    locationListeners[0]);
-        } catch (java.lang.SecurityException | IllegalArgumentException e) {
-            e.printStackTrace();
-        }
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mChangingConfiguration = true;
     }
 
-    private void stopPollingLocation() {
-        if (locationManager != null) {
-            for (LocationListener locationListener : locationListeners) {
-                try {
-                    locationManager.removeUpdates(locationListener);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
+    @Override
+    public IBinder onBind(Intent intent) {
+        stopForeground(true);
+        mChangingConfiguration = false;
+        return binder;
+    }
+
+    @Override
+    public void onRebind(Intent intent) {
+        // Called when a client (MainActivity in case of this sample) returns to the foreground
+        // and binds once again with this service. The service should cease to be a foreground
+        // service when that happens.
+        Log.i(TAG, "in onRebind()");
+        stopForeground(true);
+        mChangingConfiguration = false;
+        super.onRebind(intent);
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        if (!mChangingConfiguration && LocationUtils.requestingLocationUpdates(this)) {
+            Log.i(TAG, "Starting foreground service");
+            /*
+            if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O) {
+                mNotificationManager.startServiceInForeground(new Intent(this,
+                        LocationUpdatesService.class), NOTIFICATION_ID, getNotification());
+            } else {
+                startForeground(NOTIFICATION_ID, getNotification());
+            }*/
         }
+        return true;
     }
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
-        stopPollingLocation();
-        //startPollingLocation(LOCATION_BACKGROUND_INTERVAL);
+        mServiceHandler.removeCallbacksAndMessages(null);
     }
 
-    private void initializeLocationManager() {
-        if (locationManager == null) {
-            locationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
+    public void requestLocationUpdates() {
+        Log.i(TAG, "Requesting location updates");
+        LocationUtils.setRequestingLocationUpdates(this, true);
+        startService(new Intent(getApplicationContext(), LocationService.class));
+        try {
+            mFusedLocationClient.requestLocationUpdates(locationRequest,
+                    mLocationCallback, Looper.myLooper());
+        } catch (SecurityException unlikely) {
+            LocationUtils.setRequestingLocationUpdates(this, false);
+            Log.e(TAG, "Lost location permission. Could not request updates. " + unlikely);
         }
+    }
+
+    /**
+     * Removes location updates. Note that in this sample we merely log the
+     * {@link SecurityException}.
+     */
+    public void removeLocationUpdates() {
+        Log.i(TAG, "Removing location updates");
+        try {
+            mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+            LocationUtils.setRequestingLocationUpdates(this, false);
+            stopSelf();
+        } catch (SecurityException unlikely) {
+            LocationUtils.setRequestingLocationUpdates(this, true);
+            Log.e(TAG, "Lost location permission. Could not remove updates. " + unlikely);
+        }
+    }
+
+    private void getLastLocation() {
+        try {
+            mFusedLocationClient.getLastLocation()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful() && task.getResult() != null) {
+                            mLocation = task.getResult();
+                        } else {
+                            Log.w(TAG, "Failed to get location.");
+                        }
+                    });
+        } catch (SecurityException unlikely) {
+            Log.e(TAG, "Lost location permission." + unlikely);
+        }
+    }
+
+    private void onNewLocation(Location location) {
+        Log.i(TAG, "New location: " + location);
+
+        mLocation = location;
+
+        Intent intent = new Intent(BROADCAST_ACTION);
+        intent.putExtra(BROADCAST_LOCATION, location);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
+        // Update notification content if running as a foreground service.
+        if (serviceIsRunningInForeground(this)) {
+            // TODO should broadcast new location and update server location value
+
+        }
+    }
+
+    private void createLocationRequest() {
+        locationRequest = new LocationRequest();
+        locationRequest.setInterval(LOCATION_FOREGROUND_INTERVAL);
+        locationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+    }
+
+    public class LocalBinder extends Binder {
+        public LocationService getService() {
+            return LocationService.this;
+        }
+    }
+
+    public boolean serviceIsRunningInForeground(Context context) {
+        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (getClass().getName().equals(service.service.getClassName())) {
+                if (service.foreground) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

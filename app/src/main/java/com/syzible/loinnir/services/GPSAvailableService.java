@@ -39,12 +39,7 @@ public class GPSAvailableService {
                 .setMessage("Níl an tseirbhís GPS ar siúl faoi láthair. " +
                         "Tá an tseirbhís seo riachtanach as ucht meaitseála agus seirbhísí Loinnir. " +
                         "Mura dteastaíonn uait do cheantar a roinnt d'úsáideoirí eile, bainistigh do roghanna sna socruithe.")
-                .setPositiveButton("Cuir ar Siúl", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        activity.startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-                    }
-                })
+                .setPositiveButton("Cuir ar Siúl", (dialog, which) -> activity.startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)))
                 .setCancelable(false)
                 .create();
     }

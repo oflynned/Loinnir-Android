@@ -20,6 +20,7 @@ import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.syzible.loinnir.R;
 import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.RestClient;
+import com.syzible.loinnir.persistence.Constants;
 import com.syzible.loinnir.persistence.LocalPrefs;
 import com.syzible.loinnir.services.LocationService;
 import com.syzible.loinnir.services.TokenService;
@@ -31,8 +32,12 @@ import com.syzible.loinnir.utils.FacebookUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Random;
 
 import cz.msebera.android.httpclient.Header;
@@ -90,13 +95,13 @@ public class AuthenticationActivity extends AppCompatActivity {
 
         LocalPrefs.setBooleanPref(LocalPrefs.Pref.should_share_location, true, this);
 
-        logo = (ImageView) findViewById(R.id.iv_login_app_logo);
+        logo = findViewById(R.id.iv_login_app_logo);
         logo.setOnClickListener(v -> YoYo.with(Techniques.RubberBand).duration(700).playOn(logo));
 
         callbackManager = CallbackManager.Factory.create();
 
-        facebookLoginButton = (LoginButton) findViewById(R.id.login_fb_login_button);
-        facebookLoginButton.setReadPermissions(Collections.singletonList("public_profile"));
+        facebookLoginButton = findViewById(R.id.login_fb_login_button);
+        facebookLoginButton.setReadPermissions(Arrays.asList("public_profile",  "user_birthday"));
 
         registerFacebookCallback();
         animateFlag();
@@ -123,7 +128,7 @@ public class AuthenticationActivity extends AppCompatActivity {
 
 
     private void animateFlag() {
-        final ImageView flagView = (ImageView) findViewById(R.id.iv_login_flag_generation);
+        final ImageView flagView = findViewById(R.id.iv_login_flag_generation);
 
         final Handler handler = new Handler();
         Runnable runnable = new Runnable() {
@@ -168,43 +173,52 @@ public class AuthenticationActivity extends AppCompatActivity {
                                 String gender = o.getString("gender");
                                 String pic = "https://graph.facebook.com/" + id + "/picture?type=large";
 
-                                JSONObject postData = new JSONObject();
-                                postData.put("fb_id", id);
-                                postData.put("forename", EncodingUtils.encodeText(forename));
-                                postData.put("surname", EncodingUtils.encodeText(surname));
-                                postData.put("gender", gender);
-                                postData.put("profile_pic", pic);
-                                postData.put("show_location", true);
+                                String dob = o.getString("birthday");
 
-                                // temp location until the phone updates
-                                postData.put("lat", LocationService.ATHLONE.latitude);
-                                postData.put("lng", LocationService.ATHLONE.longitude);
+                                if (isOldEnough(dob)) {
+                                    JSONObject postData = new JSONObject();
+                                    postData.put("fb_id", id);
+                                    postData.put("forename", EncodingUtils.encodeText(forename));
+                                    postData.put("surname", EncodingUtils.encodeText(surname));
+                                    postData.put("gender", gender);
+                                    postData.put("profile_pic", pic);
+                                    postData.put("show_location", true);
+                                    postData.put("birthday", dob);
 
-                                LocalPrefs.setStringPref(LocalPrefs.Pref.id, id, AuthenticationActivity.this);
-                                LocalPrefs.setStringPref(LocalPrefs.Pref.forename, forename, AuthenticationActivity.this);
-                                LocalPrefs.setStringPref(LocalPrefs.Pref.surname, surname, AuthenticationActivity.this);
-                                LocalPrefs.setStringPref(LocalPrefs.Pref.profile_pic, pic, AuthenticationActivity.this);
+                                    // temp location until the phone updates
+                                    postData.put("lat", LocationService.ATHLONE.latitude);
+                                    postData.put("lng", LocationService.ATHLONE.longitude);
 
-                                Intent startFCMTokenService = new Intent(AuthenticationActivity.this, TokenService.class);
-                                AuthenticationActivity.this.startService(startFCMTokenService);
+                                    LocalPrefs.setStringPref(LocalPrefs.Pref.id, id, AuthenticationActivity.this);
+                                    LocalPrefs.setStringPref(LocalPrefs.Pref.forename, forename, AuthenticationActivity.this);
+                                    LocalPrefs.setStringPref(LocalPrefs.Pref.surname, surname, AuthenticationActivity.this);
+                                    LocalPrefs.setStringPref(LocalPrefs.Pref.profile_pic, pic, AuthenticationActivity.this);
 
-                                RestClient.post(AuthenticationActivity.this, Endpoints.CREATE_USER, postData, new BaseJsonHttpResponseHandler<JSONObject>() {
-                                    @Override
-                                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                                        DisplayUtils.generateToast(AuthenticationActivity.this, "Nuashonreofar do cheantar laistigh de chúpla nóiméad");
-                                        startMain();
-                                    }
+                                    Intent startFCMTokenService = new Intent(AuthenticationActivity.this, TokenService.class);
+                                    AuthenticationActivity.this.startService(startFCMTokenService);
 
-                                    @Override
-                                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-                                        DisplayUtils.generateSnackbar(AuthenticationActivity.this, "Thit earáid amach (" + statusCode + ") " + EmojiUtils.getEmoji(EmojiUtils.SAD));
-                                    }
+                                    RestClient.post(AuthenticationActivity.this, Endpoints.CREATE_USER, postData, new BaseJsonHttpResponseHandler<JSONObject>() {
+                                        @Override
+                                        public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                                            LocalPrefs.setIntPref(LocalPrefs.Pref.facebook_permissions_version, Constants.FACEBOOK_PERMISSIONS_VERSIONS, AuthenticationActivity.this);
+                                            DisplayUtils.generateToast(AuthenticationActivity.this, "Nuashonreofar do cheantar laistigh de chúpla nóiméad");
+                                            startMain();
+                                        }
 
-                                    @Override
-                                    protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                        return new JSONObject(rawJsonData);
-                                    }
-                                });
+                                        @Override
+                                        public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+                                            DisplayUtils.generateSnackbar(AuthenticationActivity.this, "Thit earáid amach (" + statusCode + ") " + EmojiUtils.getEmoji(EmojiUtils.SAD));
+                                        }
+
+                                        @Override
+                                        protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                            return new JSONObject(rawJsonData);
+                                        }
+                                    });
+                                } else {
+                                    DisplayUtils.generateSnackbar(AuthenticationActivity.this, "Tá brón orainn! Caifear a bheith ar a laghad 18 mbliana d'aois chun an tseirbhís a úsáid. " + EmojiUtils.getEmoji(EmojiUtils.TONGUE));
+                                    FacebookUtils.deleteToken(AuthenticationActivity.this);
+                                }
 
                             } catch (JSONException e) {
                                 e.printStackTrace();
@@ -213,7 +227,7 @@ public class AuthenticationActivity extends AppCompatActivity {
                         });
 
                 Bundle parameters = new Bundle();
-                parameters.putString("fields", "id, first_name, last_name, gender");
+                parameters.putString("fields", "id, first_name, last_name, gender, birthday");
                 request.setParameters(parameters);
                 request.executeAsync();
             }
@@ -221,6 +235,7 @@ public class AuthenticationActivity extends AppCompatActivity {
             @Override
             public void onCancel() {
                 DisplayUtils.generateSnackbar(AuthenticationActivity.this, "Cuireadh an logáil isteach le Facebook ar ceal " + EmojiUtils.getEmoji(EmojiUtils.TONGUE));
+                FacebookUtils.deleteToken(AuthenticationActivity.this);
             }
 
             @Override
@@ -230,5 +245,24 @@ public class AuthenticationActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         });
+    }
+
+    private boolean isOldEnough(String date) {
+        try {
+            Date dateOfBirth = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH).parse(date);
+            Date currentDate = new Date(System.currentTimeMillis());
+            int age = currentDate.getYear() - dateOfBirth.getYear();
+
+            if (age > 18) {
+                return true;
+            } else if (age == 18) {
+                return dateOfBirth.getDay() >= currentDate.getDay() &&
+                        dateOfBirth.getMonth() >= currentDate.getMonth();
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
 }

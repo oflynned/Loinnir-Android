@@ -7,8 +7,6 @@ import java.nio.charset.Charset;
  */
 
 public class Constants {
-    public static final boolean DEV_MODE = false;
-
     public static String getCountyFileName(String county) {
         return county.toLowerCase().replace(" ", "_")
                 .replace("á", "a").replace("é", "e")
@@ -22,4 +20,5 @@ public class Constants {
     public static final int ONE_HOUR = ONE_MINUTE * 60;
 
     public static final int USER_AGREEMENT_VERSION = 1;
+    public static final int FACEBOOK_PERMISSIONS_VERSIONS = 1; // 1
 }

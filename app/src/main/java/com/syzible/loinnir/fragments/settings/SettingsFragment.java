@@ -103,69 +103,63 @@ public class SettingsFragment extends PreferenceFragment {
     private void setListenerShareLocation() {
         boolean isSharingLocation = LocalPrefs.getBooleanPref(LocalPrefs.Pref.should_share_location, context);
         shouldShareLocation.setChecked(isSharingLocation);
-        shouldShareLocation.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object newValue) {
-                shouldShareLocation.setChecked(!LocalPrefs.getBooleanPref(LocalPrefs.Pref.should_share_location, getActivity()));
-                LocalPrefs.setBooleanPref(LocalPrefs.Pref.should_share_location, (boolean) newValue, context);
+        shouldShareLocation.setOnPreferenceChangeListener((preference, newValue) -> {
+            shouldShareLocation.setChecked(!LocalPrefs.getBooleanPref(LocalPrefs.Pref.should_share_location, getActivity()));
+            LocalPrefs.setBooleanPref(LocalPrefs.Pref.should_share_location, (boolean) newValue, context);
 
-                RestClient.post(context, Endpoints.EDIT_USER, JSONUtils.getLocationChangePayload(context, (boolean) newValue), new BaseJsonHttpResponseHandler<JSONObject>() {
-                    @Override
-                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                        DisplayUtils.generateSnackbar(context, "Nuashonraíodh an socrú ceantair go rathúil");
-                    }
+            RestClient.post(context, Endpoints.EDIT_USER, JSONUtils.getLocationChangePayload(context, (boolean) newValue), new BaseJsonHttpResponseHandler<JSONObject>() {
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                    DisplayUtils.generateSnackbar(context, "Nuashonraíodh an socrú ceantair go rathúil");
+                }
 
-                    @Override
-                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-                        DisplayUtils.generateSnackbar(context, "Thit earáid amach leis an an socrú ceantair a athrú (" + errorResponse + ")");
-                    }
+                @Override
+                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+                    DisplayUtils.generateSnackbar(context, "Thit earáid amach leis an an socrú ceantair a athrú (" + errorResponse + ")");
+                }
 
-                    @Override
-                    protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                        return new JSONObject(rawJsonData);
-                    }
-                });
-                return false;
-            }
+                @Override
+                protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                    return new JSONObject(rawJsonData);
+                }
+            });
+            return false;
         });
     }
 
     private void setListenerBlockedUsers() {
         final BlockedUsersFragment fragment = new BlockedUsersFragment();
 
-        manageBlockedUsers.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                RestClient.post(context, Endpoints.GET_BLOCKED_USERS, JSONUtils.getIdPayload(context), new BaseJsonHttpResponseHandler<JSONArray>() {
-                    @Override
-                    public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, String rawJsonResponse, JSONArray response) {
-                        int count = response.length();
+        manageBlockedUsers.setOnPreferenceClickListener(preference -> {
+            RestClient.post(context, Endpoints.GET_BLOCKED_USERS, JSONUtils.getIdPayload(context), new BaseJsonHttpResponseHandler<JSONArray>() {
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
+                    int count = response.length();
 
-                        ArrayList<String> blockedUsers = new ArrayList<>();
-                        for (int i=0; i<count; i++) {
-                            try {
-                                blockedUsers.add(response.getString(i));
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
+                    ArrayList<String> blockedUsers = new ArrayList<>();
+                    for (int i=0; i<count; i++) {
+                        try {
+                            blockedUsers.add(response.getString(i));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
-
-                        SettingsActivity.setFragmentBackstack(getFragmentManager(),
-                                fragment.setCount(count).setBlockedUsers(blockedUsers));
                     }
 
-                    @Override
-                    public void onFailure(int statusCode, cz.msebera.android.httpclient.Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
+                    SettingsActivity.setFragmentBackstack(getFragmentManager(),
+                            fragment.setCount(count).setBlockedUsers(blockedUsers));
+                }
 
-                    }
+                @Override
+                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONArray errorResponse) {
 
-                    @Override
-                    protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                        return new JSONArray(rawJsonData);
-                    }
-                });
-                return false;
-            }
+                }
+
+                @Override
+                protected JSONArray parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                    return new JSONArray(rawJsonData);
+                }
+            });
+            return false;
         });
 
         RestClient.post(context, Endpoints.GET_BLOCKED_USERS, JSONUtils.getIdPayload(context), new BaseJsonHttpResponseHandler<JSONArray>() {
@@ -190,69 +184,51 @@ public class SettingsFragment extends PreferenceFragment {
     }
 
     private void setListenerShareApp() {
-        shareApp.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                shareIntent.setType("text/plain");
-                String shareSubText = "Loinnir - Ag Fionnadh Pobail";
-                String shareBodyText = shareSubText + " https://play.google.com/store/apps/details?id=com.syzible.loinnir&hl=en";
-                shareIntent.putExtra(Intent.EXTRA_SUBJECT, shareSubText);
-                shareIntent.putExtra(Intent.EXTRA_TEXT, shareBodyText);
-                startActivity(Intent.createChooser(shareIntent, "Roinn le"));
+        shareApp.setOnPreferenceClickListener(preference -> {
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("text/plain");
+            String shareSubText = "Loinnir - Ag Fionnadh Pobail";
+            String shareBodyText = shareSubText + " https://play.google.com/store/apps/details?id=com.syzible.loinnir&hl=en";
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, shareSubText);
+            shareIntent.putExtra(Intent.EXTRA_TEXT, shareBodyText);
+            startActivity(Intent.createChooser(shareIntent, "Roinn le"));
 
-                return false;
-            }
+            return false;
         });
     }
 
     private void setListenerAboutLoinnir() {
-        aboutLoinnir.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                SettingsActivity.setFragmentBackstack(getFragmentManager(), new AboutLoinnirFragment());
-                return false;
-            }
+        aboutLoinnir.setOnPreferenceClickListener(preference -> {
+            SettingsActivity.setFragmentBackstack(getFragmentManager(), new AboutLoinnirFragment());
+            return false;
         });
     }
 
     private void setListenerVisitWebsite() {
-        visitWebsite.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                Endpoints.openLink(context, Endpoints.getFrontendURL(""));
-                return false;
-            }
+        visitWebsite.setOnPreferenceClickListener(preference -> {
+            Endpoints.openLink(context, Endpoints.getFrontendURL(""));
+            return false;
         });
     }
 
     private void setListenerVisitFacebook() {
-        visitFacebook.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                Endpoints.openLink(context, Endpoints.FACEBOOK_PAGE);
-                return false;
-            }
+        visitFacebook.setOnPreferenceClickListener(preference -> {
+            Endpoints.openLink(context, Endpoints.FACEBOOK_PAGE);
+            return false;
         });
     }
 
     private void setListenerPrivacyPolicy() {
-        privacyPolicy.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                Endpoints.openLink(context, Endpoints.getFrontendURL(Endpoints.PRIVACY_POLICIES));
-                return false;
-            }
+        privacyPolicy.setOnPreferenceClickListener(preference -> {
+            Endpoints.openLink(context, Endpoints.getFrontendURL(Endpoints.PRIVACY_POLICIES));
+            return false;
         });
     }
 
     private void setListenerTOS() {
-        termsOfService.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                Endpoints.openLink(context, Endpoints.getFrontendURL(Endpoints.TERMS_OF_SERVICE));
-                return false;
-            }
+        termsOfService.setOnPreferenceClickListener(preference -> {
+            Endpoints.openLink(context, Endpoints.getFrontendURL(Endpoints.TERMS_OF_SERVICE));
+            return false;
         });
     }
 
@@ -260,34 +236,28 @@ public class SettingsFragment extends PreferenceFragment {
         final String accountName = LocalPrefs.getFullName(context);
         logOut.setSummary("Cúntas reatha: " + accountName);
 
-        logOut.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                new AlertDialog.Builder(context)
-                        .setTitle("Logáil Amach?")
-                        .setMessage("Éireoidh tú logáilte amach de do chuid chúntais (" + accountName + "). Beidh tú in ann logáil isteach leis an gcúntas seo arís, nó le h-aon chúntas Facebook eile.")
-                        .setPositiveButton("Logáil Amach", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                DisplayUtils.generateToast(context, "Logáil tú amach");
-                                FacebookUtils.deleteToken(context);
+        logOut.setOnPreferenceClickListener(preference -> {
+            new AlertDialog.Builder(context)
+                    .setTitle("Logáil Amach?")
+                    .setMessage("Éireoidh tú logáilte amach de do chuid chúntais (" + accountName + "). Beidh tú in ann logáil isteach leis an gcúntas seo arís, nó le h-aon chúntas Facebook eile.")
+                    .setPositiveButton("Logáil Amach", (dialog, which) -> {
+                        DisplayUtils.generateToast(context, "Logáil tú amach");
+                        FacebookUtils.deleteToken(context);
 
-                                try {
-                                    FirebaseInstanceId.getInstance().deleteInstanceId();
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
+                        try {
+                            FirebaseInstanceId.getInstance().deleteInstanceId();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
 
-                                getActivity().sendBroadcast(new Intent("finish_main_activity"));
-                                getActivity().finish();
-                                startActivity(new Intent(context, AuthenticationActivity.class));
-                            }
-                        })
-                        .setNegativeButton("Ná Logáil Amach", null)
-                        .create()
-                        .show();
-                return false;
-            }
+                        getActivity().sendBroadcast(new Intent("finish_main_activity"));
+                        getActivity().finish();
+                        startActivity(new Intent(context, AuthenticationActivity.class));
+                    })
+                    .setNegativeButton("Ná Logáil Amach", null)
+                    .create()
+                    .show();
+            return false;
         });
     }
 
@@ -317,46 +287,38 @@ public class SettingsFragment extends PreferenceFragment {
                     }
                 });
 
-        deleteAccount.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                new AlertDialog.Builder(new ContextThemeWrapper(context, R.style.DangerAppTheme))
-                        .setTitle("Do Chúntas Loinnir a Scriosadh?")
-                        .setMessage("Tá brón orainn go dteastaíonn uait imeacht! Má ghlacann tú le do chúntas a scriosadh, bainfear do shonraí ar fad ónar bhfreastalaithe, agus ní bheidh tú in ann do chuid chúntais a rochtain gan cúntas eile a chruthú arís.")
-                        .setPositiveButton("Deimhnigh an Scriosadh", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                RestClient.delete(getActivity(), Endpoints.DELETE_USER,
-                                        JSONUtils.getIdPayload(getActivity()),
-                                        new BaseJsonHttpResponseHandler<JSONObject>() {
-                                            @Override
-                                            public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                                                DisplayUtils.generateToast(context, "Scriosadh do chúntas!");
-                                                FacebookUtils.deleteToken(context);
-                                                CachingUtil.clearCache(context);
+        deleteAccount.setOnPreferenceClickListener(preference -> {
+            new AlertDialog.Builder(new ContextThemeWrapper(context, R.style.DangerAppTheme))
+                    .setTitle("Do Chúntas Loinnir a Scriosadh?")
+                    .setMessage("Tá brón orainn go dteastaíonn uait imeacht! Má ghlacann tú le do chúntas a scriosadh, bainfear do shonraí ar fad ónar bhfreastalaithe, agus ní bheidh tú in ann do chuid chúntais a rochtain gan cúntas eile a chruthú arís.")
+                    .setPositiveButton("Deimhnigh an Scriosadh", (dialog, which) -> RestClient.delete(getActivity(), Endpoints.DELETE_USER,
+                            JSONUtils.getIdPayload(getActivity()),
+                            new BaseJsonHttpResponseHandler<JSONObject>() {
+                                @Override
+                                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                                    DisplayUtils.generateToast(context, "Scriosadh do chúntas!");
+                                    FacebookUtils.deleteToken(context);
+                                    CachingUtil.clearCache(context);
 
-                                                getActivity().sendBroadcast(new Intent("finish_main_activity"));
-                                                getActivity().finish();
-                                                startActivity(new Intent(context, AuthenticationActivity.class));
-                                            }
+                                    getActivity().sendBroadcast(new Intent("finish_main_activity"));
+                                    getActivity().finish();
+                                    startActivity(new Intent(context, AuthenticationActivity.class));
+                                }
 
-                                            @Override
-                                            public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-                                                DisplayUtils.generateSnackbar(context, "Theip ar scriosadh do chúntais.");
-                                            }
+                                @Override
+                                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+                                    DisplayUtils.generateSnackbar(context, "Theip ar scriosadh do chúntais.");
+                                }
 
-                                            @Override
-                                            protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                                return new JSONObject(rawJsonData);
-                                            }
-                                        });
-                            }
-                        })
-                        .setNegativeButton("Ná Scrios!", null)
-                        .create()
-                        .show();
-                return false;
-            }
+                                @Override
+                                protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                    return new JSONObject(rawJsonData);
+                                }
+                            }))
+                    .setNegativeButton("Ná Scrios!", null)
+                    .create()
+                    .show();
+            return false;
         });
     }
 }

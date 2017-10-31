@@ -52,29 +52,24 @@ public class DisplayUtils {
                         "Bain úsáid as seo amháin go bhfuil tú cinnte nach dteastaíonn uait faic a chloisteáil a thuilleadh ón úsáideoir seo. " +
                         "Cur cosc ar dhuine má imrítear bulaíocht ort, nó mura dteastaíonn uait tuilleadh teagmhála. " +
                         "Má athraíonn tú do mheabhair ar ball, téigh chuig na socruithe agus bainistigh cé atá curtha ar cosc.")
-                .setPositiveButton("Cuir cosc i bhfeidhm", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, final int which) {
-                        RestClient.post(context, Endpoints.BLOCK_USER,
-                                JSONUtils.getPartnerInteractionPayload(blockee, context),
-                                new BaseJsonHttpResponseHandler<JSONObject>() {
-                                    @Override
-                                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                                        callback.onCallback();
-                                    }
+                .setPositiveButton("Cuir cosc i bhfeidhm", (dialog, which) -> RestClient.post(context, Endpoints.BLOCK_USER,
+                        JSONUtils.getPartnerInteractionPayload(blockee, context),
+                        new BaseJsonHttpResponseHandler<JSONObject>() {
+                            @Override
+                            public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                                callback.onCallback();
+                            }
 
-                                    @Override
-                                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+                            @Override
+                            public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
 
-                                    }
+                            }
 
-                                    @Override
-                                    protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                        return new JSONObject(rawJsonData);
-                                    }
-                                });
-                    }
-                })
+                            @Override
+                            protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                return new JSONObject(rawJsonData);
+                            }
+                        }))
                 .setNegativeButton("Ná cuir", null)
                 .show();
     }
@@ -86,12 +81,7 @@ public class DisplayUtils {
                         "Ionas go mbeidh an t-eispéireas is fearr agat mar úsáideoir, molaimid dul chuig nascanna do na téarmaí seirbhíse agus polasaí príobhádachais sna socruithe. " +
                         "Molaimid é seo chun a fheiceáil céard atá tar éis athrú, agus coimeád ar an eolas i dtaobh cén saghas sonraí a bhailraítear agus céard a tharlaíonn dóibh. " +
                         "Guímid an t-ádh dearg ort as ucht ár seirbhísí a úsáid! " + EmojiUtils.getEmoji(EmojiUtils.HAPPY))
-                .setPositiveButton("Tá go maith", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        LocalPrefs.setUserAgreementsVersion(activity, Constants.USER_AGREEMENT_VERSION);
-                    }
-                })
+                .setPositiveButton("Tá go maith", (dialog, which) -> LocalPrefs.setUserAgreementsVersion(activity, Constants.USER_AGREEMENT_VERSION))
                 .create()
                 .show();
     }

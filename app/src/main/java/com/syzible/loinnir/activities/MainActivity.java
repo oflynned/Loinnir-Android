@@ -1,24 +1,35 @@
 package com.syzible.loinnir.activities;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -46,11 +57,13 @@ import com.syzible.loinnir.persistence.LocalPrefs;
 import com.syzible.loinnir.services.CachingUtil;
 import com.syzible.loinnir.services.GPSAvailableService;
 import com.syzible.loinnir.services.LocationService;
+import com.syzible.loinnir.services.LocationUtils;
 import com.syzible.loinnir.services.NotificationUtils;
 import com.syzible.loinnir.utils.BitmapUtils;
 import com.syzible.loinnir.utils.BroadcastFilters;
 import com.syzible.loinnir.utils.DisplayUtils;
 import com.syzible.loinnir.utils.EmojiUtils;
+import com.syzible.loinnir.utils.FacebookUtils;
 import com.syzible.loinnir.utils.JSONUtils;
 import com.syzible.loinnir.utils.LanguageUtils;
 
@@ -58,9 +71,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.Locale;
+import java.util.Objects;
 
 import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.auth.AUTH;
 
 import static com.syzible.loinnir.persistence.Constants.getCountyFileName;
 
@@ -77,7 +93,7 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onReceive(Context context, Intent intent) {
             assert finishMainActivityReceiver != null;
-            if (intent.getAction().equals(BroadcastFilters.finish_main_activity.name())) {
+            if (Objects.equals(intent.getAction(), BroadcastFilters.finish_main_activity.name())) {
                 finish();
             }
         }
@@ -87,7 +103,7 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onReceive(Context context, Intent intent) {
             assert changeGPSEnabledReceiver != null;
-            if (intent.getAction().equals("android.location.PROVIDERS_CHANGED")) {
+            if (Objects.equals(intent.getAction(), "android.location.PROVIDERS_CHANGED")) {
                 if (!GPSAvailableService.isGPSAvailable(MainActivity.this)) {
                     isGPSEnabledDialog.show();
                 } else {
@@ -115,8 +131,13 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.M ) {
+            checkPermission();
+        }
+
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         String fcmToken = FirebaseInstanceId.getInstance().getToken();
@@ -149,7 +170,7 @@ public class MainActivity extends AppCompatActivity
             }
         }
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close) {
             @Override
@@ -164,7 +185,7 @@ public class MainActivity extends AppCompatActivity
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         navigationView.getMenu().getItem(0).setChecked(true);
         headerView = navigationView.getHeaderView(0);
@@ -181,6 +202,21 @@ public class MainActivity extends AppCompatActivity
 
         if (Constants.USER_AGREEMENT_VERSION != LocalPrefs.getUserAgreementsVersion(this)) {
             DisplayUtils.notifyChangeInTOS(this);
+        }
+
+        if (Constants.FACEBOOK_PERMISSIONS_VERSIONS != LocalPrefs.getFacebookPermissionsVersion(this)) {
+            DisplayUtils.generateToast(this, "Athraíodh na ceadúnais Facebook. Logáil isteach arís le do thoil.");
+            FacebookUtils.deleteToken(this);
+
+            try {
+                FirebaseInstanceId.getInstance().deleteInstanceId();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            Intent intent = new Intent(MainActivity.this, AuthenticationActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
         }
     }
 
@@ -199,7 +235,8 @@ public class MainActivity extends AppCompatActivity
 
         View currentView = MainActivity.this.getCurrentFocus();
         if (currentView != null)
-            inputMethodManager.hideSoftInputFromWindow(currentView.getWindowToken(), 0);
+            if (inputMethodManager != null)
+                inputMethodManager.hideSoftInputFromWindow(currentView.getWindowToken(), 0);
     }
 
     @Override
@@ -212,8 +249,20 @@ public class MainActivity extends AppCompatActivity
                 new IntentFilter(BroadcastFilters.finish_main_activity.toString()));
         registerReceiver(changeGPSEnabledReceiver,
                 new IntentFilter("android.location.PROVIDERS_CHANGED"));
+    }
 
-        startService(new Intent(getApplicationContext(), LocationService.class));
+    public void checkPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                    }, 123);
+        }
+        MainActivity.this.startService(new Intent(this, LocationService.class));
+
         MetaDataUpdate.updateLastActive(this);
 
         if (!GPSAvailableService.isGPSAvailable(MainActivity.this)) {
@@ -221,6 +270,7 @@ public class MainActivity extends AppCompatActivity
         } else {
             isGPSEnabledDialog.cancel();
         }
+
     }
 
     @Override
@@ -367,8 +417,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void setDrawerFlagData(String locality, String county) {
-        TextView localityName = (TextView) headerView.findViewById(R.id.nav_header_locality);
-        TextView countyName = (TextView) headerView.findViewById(R.id.nav_header_county);
+        TextView localityName = headerView.findViewById(R.id.nav_header_locality);
+        TextView countyName = headerView.findViewById(R.id.nav_header_county);
 
         if (locality.equals("abroad"))
             locality = "Thar Sáile";
@@ -381,7 +431,7 @@ public class MainActivity extends AppCompatActivity
 
         String countyFlagFile = getCountyFileName(county);
         int flagDrawable = getResources().getIdentifier(countyFlagFile, "drawable", getPackageName());
-        ImageView countyFlag = (ImageView) findViewById(R.id.nav_header_county_flag);
+        ImageView countyFlag = findViewById(R.id.nav_header_county_flag);
         if (flagDrawable != 0) {
             countyFlag.setImageResource(flagDrawable);
         } else {
@@ -390,12 +440,12 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void setUpDrawer() {
-        TextView userName = (TextView) headerView.findViewById(R.id.nav_header_name);
+        TextView userName = headerView.findViewById(R.id.nav_header_name);
         userName.setText(LocalPrefs.getFullName(this));
 
         setLocality();
 
-        final ImageView profilePic = (ImageView) headerView.findViewById(R.id.nav_header_pic);
+        final ImageView profilePic = headerView.findViewById(R.id.nav_header_pic);
         final String myId = LocalPrefs.getID(getApplicationContext());
 
         if (!CachingUtil.doesImageExist(getApplicationContext(), myId)) {
@@ -423,7 +473,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
 
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
@@ -480,9 +530,8 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
@@ -539,7 +588,7 @@ public class MainActivity extends AppCompatActivity
             startActivity(intent);
         }
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
 
         return true;

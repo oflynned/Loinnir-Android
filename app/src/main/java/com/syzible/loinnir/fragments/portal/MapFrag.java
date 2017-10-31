@@ -196,7 +196,7 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         oldLocation.setLatitude(lastKnownLocation.latitude);
         oldLocation.setLongitude(lastKnownLocation.longitude);
 
-        return userLocation.distanceTo(oldLocation) > 200;
+        return userLocation.distanceTo(oldLocation) > 0;
     }
 
     private static LatLng getAdjustedCoord(LatLng coord, float dx, float dy) {
