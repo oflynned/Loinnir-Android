@@ -132,11 +132,12 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         checkPermission();
+        isGPSEnabledDialog = GPSAvailableService.getGPSEnabledDialog(MainActivity.this);
 
         String fcmToken = FirebaseInstanceId.getInstance().getToken();
         if (fcmToken != null) {
@@ -189,8 +190,6 @@ public class MainActivity extends AppCompatActivity
         headerView = navigationView.getHeaderView(0);
 
         shouldDisplayGreeting = true;
-
-        isGPSEnabledDialog = GPSAvailableService.getGPSEnabledDialog(MainActivity.this);
 
         setUpDrawer();
         checkNotificationInvocation();
@@ -249,27 +248,31 @@ public class MainActivity extends AppCompatActivity
                 new IntentFilter("android.location.PROVIDERS_CHANGED"));
     }
 
+    private boolean werePermissionsRequested() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+    }
+
     public void checkPermission() {
-        System.out.println("checking permissions");
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            System.out.println("no permissions");
+        if (!werePermissionsRequested()) {
             ActivityCompat.requestPermissions(this,
                     new String[]{
                             Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
+                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE
                     }, 123);
         } else {
-            System.out.println("Granted permissions");
             MainActivity.this.startService(new Intent(this, LocationService.class));
         }
 
         MetaDataUpdate.updateLastActive(this);
 
-        if (!GPSAvailableService.isGPSAvailable(MainActivity.this)) {
+        if (!GPSAvailableService.isGPSAvailable(this)) {
             isGPSEnabledDialog.show();
         }
-
     }
 
     @Override

@@ -33,9 +33,7 @@ public class LocationService extends Service {
     public static final int USER_LOCATION_RADIUS = 500;
 
     private static final int LOCATION_FOREGROUND_INTERVAL = Endpoints.isDebugMode() ? Constants.ONE_SECOND : Constants.FIVE_MINUTES;
-
-    // update every time 500m of a distance change is observed
-    private static final float LOCATION_DISTANCE = 500f;
+    private static final float LOCATION_DISTANCE = 250f;
 
     private LocationManager locationManager = null;
 

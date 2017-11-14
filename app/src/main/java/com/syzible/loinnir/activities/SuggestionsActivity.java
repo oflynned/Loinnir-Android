@@ -7,6 +7,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.syzible.loinnir.R;
@@ -56,27 +57,25 @@ public class SuggestionsActivity extends AppCompatActivity {
                 }
 
                 System.out.println(o);
-                DisplayUtils.generateToast(SuggestionsActivity.this, "Go raibh maith agat! " + EmojiUtils.getEmoji(EmojiUtils.HAPPY));
-                suggestionBox.setText("");
+                Toast.makeText(getApplicationContext(), "Á seoladh...", Toast.LENGTH_SHORT).show();
 
-            /*
-            RestClient.post(this, Endpoints.SEND_SUGGESTION, o, new BaseJsonHttpResponseHandler<JSONObject>() {
-                @Override
-                public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                    DisplayUtils.generateToast(SuggestionsActivity.this, "Go raibh maith agat! " + EmojiUtils.getEmoji(EmojiUtils.HAPPY));
-                    suggestionBox.setText("");
-                }
+                RestClient.post(this, Endpoints.SEND_SUGGESTION, o, new BaseJsonHttpResponseHandler<JSONObject>() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                        DisplayUtils.generateToast(SuggestionsActivity.this, "Go raibh maith agat! " + EmojiUtils.getEmoji(EmojiUtils.HAPPY));
+                        suggestionBox.setText("");
+                    }
 
-                @Override
-                public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-                    DisplayUtils.generateToast(SuggestionsActivity.this, "Thit earráid amach!");
-                }
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+                        DisplayUtils.generateToast(SuggestionsActivity.this, "Thit earráid amach!");
+                    }
 
-                @Override
-                protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                    return new JSONObject(rawJsonData);
-                }
-            });*/
+                    @Override
+                    protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                        return new JSONObject(rawJsonData);
+                    }
+                });
             }
         });
     }

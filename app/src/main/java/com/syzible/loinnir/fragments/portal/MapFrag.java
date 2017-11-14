@@ -229,8 +229,6 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
                                 }
                             }
 
-
-                            //getCirclesWithinTolerance();
                             drawVisibleCircles();
                         };
 
