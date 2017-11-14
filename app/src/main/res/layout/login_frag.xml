@@ -1,49 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:fancy="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorPrimary"
     android:orientation="vertical">
 
-    <ImageView
-        android:id="@+id/iv_login_app_logo"
-        android:layout_width="160dp"
-        android:layout_height="160dp"
-        android:layout_centerHorizontal="true"
-        android:layout_margin="16dp"
-        android:src="@drawable/logo_small" />
-
-    <TextView
-        android:id="@+id/login_tip_1"
+    <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/iv_login_app_logo"
-        android:layout_centerHorizontal="true"
-        android:layout_marginEnd="32dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="16dp"
-        android:gravity="center_horizontal"
-        android:text="Logáil isteach le do chúntas Facebook chun Loinnir a fhionnadh."
-        android:textColor="@color/white"
-        android:textSize="18sp" />
+        android:layout_centerInParent="true">
 
-    <com.facebook.login.widget.LoginButton
-        android:id="@+id/login_fb_login_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/login_tip_1"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
-        android:layout_gravity="center_horizontal"
-        android:layout_margin="32dp"
-        android:gravity="center_horizontal" />
+        <ImageView
+            android:id="@+id/iv_login_app_logo"
+            android:layout_width="160dp"
+            android:layout_height="160dp"
+            android:layout_centerHorizontal="true"
+            android:layout_margin="16dp"
+            android:src="@drawable/logo_small" />
 
-    <ImageView
-        android:id="@+id/iv_login_flag_generation"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:layout_below="@+id/login_fb_login_button"
-        android:layout_centerHorizontal="true"
-        app:srcCompat="@drawable/corcaigh" />
+        <TextView
+            android:id="@+id/login_tip_1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/iv_login_app_logo"
+            android:layout_centerHorizontal="true"
+            android:layout_marginEnd="32dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="16dp"
+            android:gravity="center_horizontal"
+            android:text="Logáil isteach le do chúntas Facebook chun Loinnir a fhionnadh."
+            android:textColor="@color/white"
+            android:textSize="18sp" />
+
+
+        <mehdi.sakout.fancybuttons.FancyButton
+            android:id="@+id/login_fb_login_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/login_tip_1"
+            android:layout_centerHorizontal="true"
+            android:layout_margin="32dp"
+            android:paddingBottom="8dp"
+            android:paddingEnd="16dp"
+            android:paddingStart="16dp"
+            android:paddingTop="8dp"
+            android:text="Logáil Isteach le Facebook"
+            fancy:fb_borderColor="@color/blue500"
+            fancy:fb_borderWidth="1dp"
+            fancy:fb_defaultColor="@color/blue500"
+            fancy:fb_focusColor="@color/blue700"
+            fancy:fb_ghost="true"
+            fancy:fb_radius="32dp"
+            fancy:fb_textColor="@color/blue500" />
+
+        <ImageView
+            android:id="@+id/iv_login_flag_generation"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_below="@+id/login_fb_login_button"
+            android:layout_centerHorizontal="true"
+            app:srcCompat="@drawable/corcaigh" />
+    </RelativeLayout>
+
 </RelativeLayout>

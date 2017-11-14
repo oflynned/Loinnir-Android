@@ -14,6 +14,7 @@ import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
+import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
@@ -41,6 +42,7 @@ import java.util.Locale;
 import java.util.Random;
 
 import cz.msebera.android.httpclient.Header;
+import mehdi.sakout.fancybuttons.FancyButton;
 
 /**
  * Created by ed on 08/05/2017.
@@ -49,7 +51,7 @@ import cz.msebera.android.httpclient.Header;
 public class AuthenticationActivity extends AppCompatActivity {
 
     private CallbackManager callbackManager;
-    private LoginButton facebookLoginButton;
+    private FancyButton facebookLoginButton;
     private ImageView logo;
 
     final int[] flags = {
@@ -101,7 +103,10 @@ public class AuthenticationActivity extends AppCompatActivity {
         callbackManager = CallbackManager.Factory.create();
 
         facebookLoginButton = findViewById(R.id.login_fb_login_button);
-        facebookLoginButton.setReadPermissions(Collections.singletonList("public_profile"));
+        facebookLoginButton.setOnClickListener(view -> LoginManager.getInstance().logInWithReadPermissions(
+                AuthenticationActivity.this,
+                Arrays.asList("user_birthday", "public_profile")
+        ));
 
         registerFacebookCallback();
         animateFlag();
@@ -157,7 +162,7 @@ public class AuthenticationActivity extends AppCompatActivity {
     }
 
     private void registerFacebookCallback() {
-        facebookLoginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+        LoginManager.getInstance().registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
                 String accessToken = loginResult.getAccessToken().getToken();

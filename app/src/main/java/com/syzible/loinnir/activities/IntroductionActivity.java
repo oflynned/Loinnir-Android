@@ -42,19 +42,11 @@ public class IntroductionActivity extends MaterialIntroActivity {
                 new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.DarkerDialogAppTheme))
                         .setTitle("Téarmaí Seirbhíse")
                         .setMessage("De bheith ag glacadh leis na téarmaí seirbhíse, glacann tú go bhfuil na siad léite agat ar an suíomh idirlín, agus go ndéanfar iarracht iad a choimeád san intinn nuair a bhíonn an aip in úsáid.")
-                        .setPositiveButton("Aontaím", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                LocalPrefs.setUserAgreementsVersion(getApplicationContext(), Constants.USER_AGREEMENT_VERSION);
-                                DisplayUtils.generateToast(IntroductionActivity.this, "Go raibh maith agat! " + EmojiUtils.getEmoji(EmojiUtils.HEART_EYES));
-                            }
+                        .setPositiveButton("Aontaím", (dialog, which) -> {
+                            LocalPrefs.setUserAgreementsVersion(getApplicationContext(), Constants.USER_AGREEMENT_VERSION);
+                            DisplayUtils.generateToast(IntroductionActivity.this, "Go raibh maith agat! " + EmojiUtils.getEmoji(EmojiUtils.HEART_EYES));
                         })
-                        .setNegativeButton("Ní Aontaím", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                IntroductionActivity.this.finish();
-                            }
-                        })
+                        .setNegativeButton("Ní Aontaím", (dialog, which) -> IntroductionActivity.this.finish())
                         .show();
 
                 addSlide(introductionSlide());

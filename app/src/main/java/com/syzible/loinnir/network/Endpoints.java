@@ -67,7 +67,7 @@ public class Endpoints {
     public static final String PRIVACY_POLICIES = "/priobhaideacht";
     public static final String TERMS_OF_SERVICE = "/tos";
 
-    public static final String SEND_SUGGESTION = "/services/send-app-suggestion";
+    public static final String SEND_SUGGESTION = "/services/send-suggestion";
 
     public static String getApiURL(String endpoint) {
         return API_URL + endpoint;

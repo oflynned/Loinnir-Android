@@ -34,15 +34,15 @@ public class SuggestionsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_send_suggestions);
 
-        TextView emojiTextView = (TextView) findViewById(R.id.suggestion_text_4_emojis);
+        TextView emojiTextView = findViewById(R.id.suggestion_text_4_emojis);
         String emojiString = EmojiUtils.getEmoji(EmojiUtils.HEART_EYES) +
                 " " + EmojiUtils.getEmoji(EmojiUtils.HAPPY) +
                 " " + EmojiUtils.getEmoji(EmojiUtils.TONGUE);
         emojiTextView.setText(emojiString);
 
-        EditText suggestionBox = (EditText) findViewById(R.id.suggestion_box_content);
+        EditText suggestionBox = findViewById(R.id.suggestion_box_content);
 
-        FancyButton sendSuggestion = (FancyButton) findViewById(R.id.send_suggestion_button);
+        FancyButton sendSuggestion = findViewById(R.id.send_suggestion_button);
         sendSuggestion.setOnClickListener(v -> {
             String suggestion = suggestionBox.getText().toString().trim();
 
@@ -56,7 +56,6 @@ public class SuggestionsActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
 
-                System.out.println(o);
                 Toast.makeText(getApplicationContext(), "Á seoladh...", Toast.LENGTH_SHORT).show();
 
                 RestClient.post(this, Endpoints.SEND_SUGGESTION, o, new BaseJsonHttpResponseHandler<JSONObject>() {
@@ -68,7 +67,7 @@ public class SuggestionsActivity extends AppCompatActivity {
 
                     @Override
                     public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-                        DisplayUtils.generateToast(SuggestionsActivity.this, "Thit earráid amach!");
+                        DisplayUtils.generateToast(SuggestionsActivity.this, "Thit earráid amach! " + EmojiUtils.getEmoji(EmojiUtils.SAD));
                     }
 
                     @Override
