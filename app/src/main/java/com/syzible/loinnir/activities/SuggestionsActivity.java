@@ -51,7 +51,6 @@ public class SuggestionsActivity extends AppCompatActivity {
                 try {
                     o.put("suggestion", suggestion);
                     o.put("version", this.getResources().getString(R.string.app_version));
-                    o.put("time", System.currentTimeMillis());
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
