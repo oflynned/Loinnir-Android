@@ -117,7 +117,7 @@
             </intent-filter>
         </service>
 
-        <service android:name=".services.LocationService"/>
+        <service android:name=".location.LocationService"/>
     </application>
 
 </manifest>

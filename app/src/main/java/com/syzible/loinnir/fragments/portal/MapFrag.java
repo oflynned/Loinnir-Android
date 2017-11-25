@@ -23,24 +23,18 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.PolygonOptions;
-import com.google.android.gms.maps.model.TileOverlay;
-import com.google.android.gms.maps.model.TileOverlayOptions;
-import com.google.android.gms.maps.model.TileProvider;
 import com.google.android.gms.maps.model.VisibleRegion;
-import com.google.maps.android.heatmaps.Gradient;
-import com.google.maps.android.heatmaps.HeatmapTileProvider;
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.syzible.loinnir.R;
+import com.syzible.loinnir.location.LocationUtils;
 import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.objects.MapCircle;
 import com.syzible.loinnir.objects.User;
-import com.syzible.loinnir.services.LocationService;
+import com.syzible.loinnir.location.LocationUtils;
 import com.syzible.loinnir.utils.BroadcastFilters;
 import com.syzible.loinnir.utils.JSONUtils;
 import com.syzible.loinnir.persistence.LocalPrefs;
@@ -48,13 +42,8 @@ import com.syzible.loinnir.persistence.LocalPrefs;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.function.Predicate;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -68,8 +57,9 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
     private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (Objects.equals(intent.getAction(), BroadcastFilters.updated_location.toString()))
+            if (Objects.equals(intent.getAction(), BroadcastFilters.updated_location.toString())) {
                 getWebServerLocation();
+            }
         }
     };
 
@@ -132,7 +122,7 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
             } else {
                 googleMap.clear();
                 googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                        LocationService.ATHLONE, LocationService.INITIAL_LOCATION_ZOOM));
+                        LocationUtils.ATHLONE, LocationUtils.INITIAL_LOCATION_ZOOM));
             }
         }
     }
@@ -144,18 +134,18 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         MapFragment mapFragment = (MapFragment) getChildFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        FloatingActionButton focusLocation = (FloatingActionButton) view.findViewById(R.id.focus_gps_fab);
+        FloatingActionButton focusLocation = view.findViewById(R.id.focus_gps_fab);
         focusLocation.setOnClickListener(v -> {
             if (googleMap != null) {
                 if (LocalPrefs.getBooleanPref(LocalPrefs.Pref.should_share_location, getActivity())) {
                     for (MapCircle circle : userCircles) {
                         if (circle.isMe()) {
-                            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(circle.getUser().getLocation(), LocationService.MY_LOCATION_ZOOM));
+                            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(circle.getUser().getLocation(), LocationUtils.MY_LOCATION_ZOOM));
                             break;
                         }
                     }
                 } else {
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(LocationService.ATHLONE, LocationService.INITIAL_LOCATION_ZOOM));
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(LocationUtils.ATHLONE, LocationUtils.INITIAL_LOCATION_ZOOM));
                 }
             }
         });
@@ -182,7 +172,7 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
             this.googleMap.getUiSettings().setZoomControlsEnabled(true);
 
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                LocationService.ATHLONE, LocationService.INITIAL_LOCATION_ZOOM));
+                LocationUtils.ATHLONE, LocationUtils.INITIAL_LOCATION_ZOOM));
 
         setMapPosition();
     }
@@ -277,13 +267,13 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
 
     private void zoomToLocation(final LatLng location) {
         new Handler(Looper.getMainLooper()).postDelayed(() -> googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location,
-                LocationService.MY_LOCATION_ZOOM)), 1000);
+                LocationUtils.MY_LOCATION_ZOOM)), 1000);
     }
 
     private CircleOptions getUserCircle(LatLng position) {
         return new CircleOptions()
                 .center(position)
-                .radius(LocationService.USER_LOCATION_RADIUS)
+                .radius(LocationUtils.USER_LOCATION_RADIUS)
                 .strokeColor(getFillColour(true))
                 .fillColor(getFillColour(false));
     }

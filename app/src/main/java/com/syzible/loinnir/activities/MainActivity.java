@@ -5,23 +5,17 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -29,7 +23,6 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -46,6 +39,7 @@ import com.syzible.loinnir.fragments.portal.MapFrag;
 import com.syzible.loinnir.fragments.portal.PartnerConversationFrag;
 import com.syzible.loinnir.fragments.portal.RouletteFrag;
 import com.syzible.loinnir.fragments.portal.RouletteOutcomeFrag;
+import com.syzible.loinnir.location.LocationUtils;
 import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.GetImage;
 import com.syzible.loinnir.network.MetaDataUpdate;
@@ -56,8 +50,6 @@ import com.syzible.loinnir.persistence.Constants;
 import com.syzible.loinnir.persistence.LocalPrefs;
 import com.syzible.loinnir.services.CachingUtil;
 import com.syzible.loinnir.services.GPSAvailableService;
-import com.syzible.loinnir.services.LocationService;
-import com.syzible.loinnir.services.LocationUtils;
 import com.syzible.loinnir.services.NotificationUtils;
 import com.syzible.loinnir.utils.BitmapUtils;
 import com.syzible.loinnir.utils.BroadcastFilters;
@@ -66,6 +58,7 @@ import com.syzible.loinnir.utils.EmojiUtils;
 import com.syzible.loinnir.utils.FacebookUtils;
 import com.syzible.loinnir.utils.JSONUtils;
 import com.syzible.loinnir.utils.LanguageUtils;
+import com.yayandroid.locationmanager.LocationManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -76,7 +69,6 @@ import java.util.Locale;
 import java.util.Objects;
 
 import cz.msebera.android.httpclient.Header;
-import cz.msebera.android.httpclient.auth.AUTH;
 
 import static com.syzible.loinnir.persistence.Constants.getCountyFileName;
 
@@ -113,17 +105,13 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
-    // check lifecycle for notifications
     private static boolean isAppVisible;
-
     public static boolean isActivityVisible() {
         return isAppVisible;
     }
-
     public static void setAppResumed() {
         isAppVisible = true;
     }
-
     public static void setAppPausedOrDead() {
         isAppVisible = false;
     }
@@ -132,14 +120,76 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        checkPermission();
-        isGPSEnabledDialog = GPSAvailableService.getGPSEnabledDialog(MainActivity.this);
+        isGPSEnabledDialog = GPSAvailableService.getGPSEnabledDialog(this);
+
+        LocationUtils locationUtils = new LocationUtils();
+        LocationManager locationManager = locationUtils.initialiseLocationManager(getApplicationContext(), this);
+        locationManager.get();
 
         String fcmToken = FirebaseInstanceId.getInstance().getToken();
+        updateFcmToken(fcmToken);
+
+        MetaDataUpdate.updateLastActive(this);
+        if (!GPSAvailableService.isGPSAvailable(this)) {
+            isGPSEnabledDialog.show();
+        }
+
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close) {
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                setLocality();
+                hideKeyboard();
+            }
+        };
+
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
+
+        navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+        navigationView.getMenu().getItem(0).setChecked(true);
+        headerView = navigationView.getHeaderView(0);
+
+        shouldDisplayGreeting = true;
+
+        setUpDrawer();
+        checkNotificationInvocation();
+
+        if (shouldDisplayGreeting)
+            greetUser();
+
+        if (Constants.USER_AGREEMENT_VERSION != LocalPrefs.getUserAgreementsVersion(this)) {
+            DisplayUtils.notifyChangeInTOS(this);
+        }
+
+        // checkFacebookPermissionsChanged();
+    }
+
+    private void checkFacebookPermissionsChanged() {
+        if (Constants.FACEBOOK_PERMISSIONS_VERSIONS != LocalPrefs.getFacebookPermissionsVersion(this)) {
+            DisplayUtils.generateToast(this, "Athraíodh na ceadúnais Facebook. Logáil isteach arís le do thoil.");
+            FacebookUtils.deleteToken(this);
+
+            try {
+                FirebaseInstanceId.getInstance().deleteInstanceId();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            Intent intent = new Intent(MainActivity.this, AuthenticationActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+        }
+    }
+
+    private void updateFcmToken(String fcmToken) {
         if (fcmToken != null) {
             if (!fcmToken.equals("")) {
                 JSONObject o = new JSONObject();
@@ -168,53 +218,6 @@ public class MainActivity extends AppCompatActivity
                 });
             }
         }
-
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close) {
-            @Override
-            public void onDrawerOpened(View drawerView) {
-                setLocality();
-                hideKeyboard();
-
-                super.onDrawerOpened(drawerView);
-            }
-        };
-
-        drawer.addDrawerListener(toggle);
-        toggle.syncState();
-
-        navigationView = findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
-        navigationView.getMenu().getItem(0).setChecked(true);
-        headerView = navigationView.getHeaderView(0);
-
-        shouldDisplayGreeting = true;
-
-        setUpDrawer();
-        checkNotificationInvocation();
-
-        if (shouldDisplayGreeting)
-            greetUser();
-
-        if (Constants.USER_AGREEMENT_VERSION != LocalPrefs.getUserAgreementsVersion(this)) {
-            DisplayUtils.notifyChangeInTOS(this);
-        }
-
-        if (Constants.FACEBOOK_PERMISSIONS_VERSIONS != LocalPrefs.getFacebookPermissionsVersion(this)) {
-            DisplayUtils.generateToast(this, "Athraíodh na ceadúnais Facebook. Logáil isteach arís le do thoil.");
-            FacebookUtils.deleteToken(this);
-
-            try {
-                FirebaseInstanceId.getInstance().deleteInstanceId();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            Intent intent = new Intent(MainActivity.this, AuthenticationActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(intent);
-        }
     }
 
     private void setGaLocale() {
@@ -239,56 +242,20 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        setGaLocale();
-        MainActivity.setAppResumed();
 
         registerReceiver(finishMainActivityReceiver,
                 new IntentFilter(BroadcastFilters.finish_main_activity.toString()));
         registerReceiver(changeGPSEnabledReceiver,
                 new IntentFilter("android.location.PROVIDERS_CHANGED"));
-    }
 
-    private boolean werePermissionsRequested() {
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
-    }
-
-    public void checkPermission() {
-        if (!werePermissionsRequested()) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION,
-                            Manifest.permission.READ_EXTERNAL_STORAGE,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    }, 123);
-        } else {
-            MainActivity.this.startService(new Intent(this, LocationService.class));
-        }
-
-        MetaDataUpdate.updateLastActive(this);
-
-        if (!GPSAvailableService.isGPSAvailable(this)) {
-            isGPSEnabledDialog.show();
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            MainActivity.this.startService(new Intent(this, LocationService.class));
-        } else {
-            this.finish();
-        }
+        setGaLocale();
+        MainActivity.setAppResumed();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         MainActivity.setAppPausedOrDead();
-        stopService(new Intent(this, LocationService.class));
         unregisterReceiver(finishMainActivityReceiver);
         unregisterReceiver(changeGPSEnabledReceiver);
         MetaDataUpdate.updateLastActive(this);

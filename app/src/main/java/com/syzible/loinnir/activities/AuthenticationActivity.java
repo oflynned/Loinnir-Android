@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
-import android.view.View;
 import android.widget.ImageView;
 
 import com.daimajia.androidanimations.library.Techniques;
@@ -13,17 +12,15 @@ import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.GraphRequest;
-import com.facebook.GraphResponse;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
-import com.facebook.login.widget.LoginButton;
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.syzible.loinnir.R;
+import com.syzible.loinnir.location.LocationUtils;
 import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.persistence.Constants;
 import com.syzible.loinnir.persistence.LocalPrefs;
-import com.syzible.loinnir.services.LocationService;
 import com.syzible.loinnir.services.TokenService;
 import com.syzible.loinnir.utils.DisplayUtils;
 import com.syzible.loinnir.utils.EmojiUtils;
@@ -36,7 +33,6 @@ import org.json.JSONObject;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Random;
@@ -187,8 +183,8 @@ public class AuthenticationActivity extends AppCompatActivity {
                                 postData.put("show_location", true);
 
                                 // temp location until the phone updates
-                                postData.put("lat", LocationService.ATHLONE.latitude);
-                                postData.put("lng", LocationService.ATHLONE.longitude);
+                                postData.put("lat", LocationUtils.ATHLONE.latitude);
+                                postData.put("lng", LocationUtils.ATHLONE.longitude);
 
                                 LocalPrefs.setStringPref(LocalPrefs.Pref.id, id, AuthenticationActivity.this);
                                 LocalPrefs.setStringPref(LocalPrefs.Pref.forename, forename, AuthenticationActivity.this);
