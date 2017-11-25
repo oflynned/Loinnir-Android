@@ -44,31 +44,25 @@ public class RouletteOutcomeFrag extends Fragment {
             actionBar.setSubtitle(null);
         }
 
-        ImageView profilePictureImageView = (ImageView) view.findViewById(R.id.roulette_partner_profile_pic);
-        ImageView profilePictureBadgeView = (ImageView) view.findViewById(R.id.roulette_partner_profile_badge);
-        TextView usernameTextView = (TextView) view.findViewById(R.id.name_text_roulette);
-        TextView localityTextView = (TextView) view.findViewById(R.id.locality_text_roulette);
-        TextView countyTextView = (TextView) view.findViewById(R.id.county_text_roulette);
-        TextView matchWarningTextView = (TextView) view.findViewById(R.id.match_loss_warning_if_no_chat);
+        ImageView profilePictureImageView = view.findViewById(R.id.roulette_partner_profile_pic);
+        ImageView profilePictureBadgeView = view.findViewById(R.id.roulette_partner_profile_badge);
+        TextView usernameTextView = view.findViewById(R.id.name_text_roulette);
+        TextView localityTextView = view.findViewById(R.id.locality_text_roulette);
+        TextView countyTextView = view.findViewById(R.id.county_text_roulette);
+        TextView matchWarningTextView = view.findViewById(R.id.match_loss_warning_if_no_chat);
 
-        FancyButton backToRouletteButton = (FancyButton) view.findViewById(R.id.back_to_roulette_btn);
-        backToRouletteButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                MainActivity.removeFragment(getFragmentManager());
-                MainActivity.setFragment(getFragmentManager(), new RouletteFrag());
-            }
+        FancyButton backToRouletteButton = view.findViewById(R.id.back_to_roulette_btn);
+        backToRouletteButton.setOnClickListener(v -> {
+            MainActivity.removeFragment(getFragmentManager());
+            MainActivity.setFragment(getFragmentManager(), new RouletteFrag());
         });
 
-        FancyButton startConversationButton = (FancyButton) view.findViewById(R.id.start_conversation_btn);
-        startConversationButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                PartnerConversationFrag frag = new PartnerConversationFrag().setPartner(partner);
-                MainActivity.clearBackstack(getFragmentManager());
-                MainActivity.setFragmentBackstack(getFragmentManager(), new RouletteFrag());
-                MainActivity.setFragmentBackstack(getFragmentManager(), frag);
-            }
+        FancyButton startConversationButton = view.findViewById(R.id.start_conversation_btn);
+        startConversationButton.setOnClickListener(v -> {
+            PartnerConversationFrag frag = new PartnerConversationFrag().setPartner(partner);
+            MainActivity.clearBackstack(getFragmentManager());
+            MainActivity.setFragmentBackstack(getFragmentManager(), new RouletteFrag());
+            MainActivity.setFragmentBackstack(getFragmentManager(), frag);
         });
 
         profilePictureImageView.setImageBitmap(BitmapUtils.getCroppedCircle(profilePic));
@@ -89,13 +83,8 @@ public class RouletteOutcomeFrag extends Fragment {
 
         // Dónal, me
         if (partner.getId().equals("10207354314614509") || partner.getId().equals("1433224973407916")) {
-            profilePictureBadgeView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    DisplayUtils.generateToast(getActivity(),
-                            "Ball den fhoireann Loinnir " + EmojiUtils.getEmoji(EmojiUtils.COOL));
-                }
-            });
+            profilePictureBadgeView.setOnClickListener(v -> DisplayUtils.generateToast(getActivity(),
+                    "Ball den fhoireann Loinnir " + EmojiUtils.getEmoji(EmojiUtils.COOL)));
         } else {
             profilePictureBadgeView.setVisibility(View.GONE);
         }

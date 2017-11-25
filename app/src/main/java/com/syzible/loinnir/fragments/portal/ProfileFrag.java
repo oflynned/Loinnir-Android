@@ -38,10 +38,10 @@ public class ProfileFrag extends Fragment {
             actionBar.setSubtitle(null);
         }
 
-        ImageView profilePictureImageView = (ImageView) view.findViewById(R.id.roulette_partner_profile_pic);
-        TextView usernameTextView = (TextView) view.findViewById(R.id.name_text_roulette);
-        TextView localityTextView = (TextView) view.findViewById(R.id.locality_text_roulette);
-        TextView countyTextView = (TextView) view.findViewById(R.id.county_text_roulette);
+        ImageView profilePictureImageView = view.findViewById(R.id.roulette_partner_profile_pic);
+        TextView usernameTextView = view.findViewById(R.id.name_text_roulette);
+        TextView localityTextView = view.findViewById(R.id.locality_text_roulette);
+        TextView countyTextView = view.findViewById(R.id.county_text_roulette);
 
         profilePictureImageView.setImageBitmap(BitmapUtils.getCroppedCircle(profilePic));
         usernameTextView.setText(partner.getName());
@@ -50,7 +50,7 @@ public class ProfileFrag extends Fragment {
 
         String countyFlagFile = getCountyFileName(partner.getCounty());
         int flagDrawable = getResources().getIdentifier(countyFlagFile, "drawable", getActivity().getPackageName());
-        ImageView countyFlag = (ImageView) view.findViewById(R.id.county_flag_roulette);
+        ImageView countyFlag = view.findViewById(R.id.county_flag_roulette);
         countyFlag.setImageResource(flagDrawable);
 
         return view;

@@ -39,7 +39,7 @@ public class RouletteLoadingFrag extends Fragment {
             actionBar.setSubtitle(null);
         }
 
-        ImageView rouletteButton = (ImageView) view.findViewById(R.id.roulette_spinner_button);
+        ImageView rouletteButton = view.findViewById(R.id.roulette_spinner_button);
 
         AnimationUtils.rotateView(rouletteButton, true);
 

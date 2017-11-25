@@ -48,7 +48,7 @@ public class RouletteFrag extends Fragment {
             actionBar.setSubtitle(null);
         }
 
-        unmatchedUserCountTextView = (TextView) view.findViewById(R.id.unmatched_count_roulette);
+        unmatchedUserCountTextView = view.findViewById(R.id.unmatched_count_roulette);
 
         RestClient.post(getActivity(), Endpoints.GET_UNMATCHED_COUNT,
                 JSONUtils.getIdPayload(getActivity()),
@@ -69,7 +69,7 @@ public class RouletteFrag extends Fragment {
                             unmatchedUserCountTextView.setText(usersLeftMessage);
 
                             if (getView() != null) {
-                                ProgressBar progressBar = (ProgressBar) getView().findViewById(R.id.roulette_progress_bar);
+                                ProgressBar progressBar = getView().findViewById(R.id.roulette_progress_bar);
                                 progressBar.setVisibility(View.GONE);
                             }
                         } catch (JSONException e) {
@@ -89,44 +89,41 @@ public class RouletteFrag extends Fragment {
                     }
                 });
 
-        rouletteButton = (ImageView) view.findViewById(R.id.roulette_spinner_button);
-        rouletteButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                AnimationUtils.rotateView(rouletteButton, false);
+        rouletteButton = view.findViewById(R.id.roulette_spinner_button);
+        rouletteButton.setOnClickListener(v -> {
+            AnimationUtils.rotateView(rouletteButton, false);
 
-                RestClient.post(getActivity(), Endpoints.GET_RANDOM_USER,
-                        JSONUtils.getIdPayload(getActivity()),
-                        new BaseJsonHttpResponseHandler<JSONObject>() {
-                            @Override
-                            public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                                try {
-                                    if (response.has("success")) {
-                                        DisplayUtils.generateSnackbar(getActivity(),
-                                                "Níl aon úsáideoirí nua ann le nasc a dhéanamh " +
-                                                        EmojiUtils.getEmoji(EmojiUtils.SAD));
-                                    } else {
-                                        User partner = new User(response);
-                                        RouletteLoadingFrag loadingFrag = new RouletteLoadingFrag()
-                                                .setPartner(partner);
-                                        MainActivity.setFragmentBackstack(getFragmentManager(), loadingFrag);
-                                    }
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
+            RestClient.post(getActivity(), Endpoints.GET_RANDOM_USER,
+                    JSONUtils.getIdPayload(getActivity()),
+                    new BaseJsonHttpResponseHandler<JSONObject>() {
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                            try {
+                                if (response.has("success")) {
+                                    DisplayUtils.generateSnackbar(getActivity(),
+                                            "Níl aon úsáideoirí nua ann le nasc a dhéanamh " +
+                                                    EmojiUtils.getEmoji(EmojiUtils.SAD));
+                                } else {
+                                    User partner = new User(response);
+                                    RouletteLoadingFrag loadingFrag = new RouletteLoadingFrag()
+                                            .setPartner(partner);
+                                    MainActivity.setFragmentBackstack(getFragmentManager(), loadingFrag);
                                 }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
                             }
+                        }
 
-                            @Override
-                            public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
 
-                            }
+                        }
 
-                            @Override
-                            protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                return new JSONObject(rawJsonData);
-                            }
-                        });
-            }
+                        @Override
+                        protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                            return new JSONObject(rawJsonData);
+                        }
+                    });
         });
 
         return view;

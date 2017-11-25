@@ -94,7 +94,8 @@ public class LocalityConversationFrag extends Fragment {
 
                                     ActionBar actionBar = ((AppCompatActivity) context).getSupportActionBar();
                                     if (actionBar != null) {
-                                        actionBar.setTitle(localityName);
+                                        actionBar.setTitle("Domhanda");
+                                        //actionBar.setTitle(localityName);
                                         actionBar.setSubtitle(localUsers);
                                     }
 
@@ -156,7 +157,7 @@ public class LocalityConversationFrag extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.conversation_frag, container, false);
-        progressBar = (ProgressBar) view.findViewById(R.id.conversations_progress_bar);
+        progressBar = view.findViewById(R.id.conversations_progress_bar);
         return view;
     }
 
@@ -193,7 +194,7 @@ public class LocalityConversationFrag extends Fragment {
     private void setSendMessageListener(final MessagesListAdapter<Message> adapter) {
         final boolean[] outcome = {true};
 
-        MessageInput messageInput = (MessageInput) view.findViewById(R.id.message_input);
+        MessageInput messageInput = view.findViewById(R.id.message_input);
         messageInput.setInputListener(input -> {
             final String messageContent = input.toString().trim();
             outcome[0] = Patterns.WEB_URL.matcher(messageContent.toLowerCase()).matches();
@@ -322,7 +323,7 @@ public class LocalityConversationFrag extends Fragment {
     }
 
     private void setupAdapter(View view) {
-        MessagesList messagesList = (MessagesList) view.findViewById(R.id.messages_list);
+        MessagesList messagesList = view.findViewById(R.id.messages_list);
         adapter = new MessagesListAdapter<>(LocalPrefs.getID(getActivity()), getIncomingHolder(), loadImage());
 
         setMessageOnLongClick(adapter);
@@ -344,7 +345,8 @@ public class LocalityConversationFrag extends Fragment {
                             ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
 
                             if (actionBar != null) {
-                                actionBar.setTitle(localityName);
+                                actionBar.setTitle("Domhanda");
+                                //actionBar.setTitle(localityName);
                                 actionBar.setSubtitle(localUsers);
                             }
                         } catch (JSONException e) {

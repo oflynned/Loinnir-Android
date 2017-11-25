@@ -47,6 +47,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Objects;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -58,7 +59,6 @@ public class ConversationsListFrag extends Fragment implements
         DialogsListAdapter.OnDialogClickListener<Conversation>,
         DialogsListAdapter.OnDialogLongClickListener<Conversation> {
 
-    private View view;
     private ProgressBar progressBar;
 
     private ArrayList<Conversation> conversations = new ArrayList<>();
@@ -70,7 +70,7 @@ public class ConversationsListFrag extends Fragment implements
     private BroadcastReceiver newPartnerMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(BroadcastFilters.new_partner_message.toString()))
+            if (Objects.equals(intent.getAction(), BroadcastFilters.new_partner_message.toString()))
                 loadConversationPreviews();
         }
     };
@@ -78,7 +78,7 @@ public class ConversationsListFrag extends Fragment implements
     private BroadcastReceiver onBlockEnactedReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(BroadcastFilters.block_enacted.toString()))
+            if (Objects.equals(intent.getAction(), BroadcastFilters.block_enacted.toString()))
                 loadConversationPreviews();
         }
     };
@@ -118,12 +118,12 @@ public class ConversationsListFrag extends Fragment implements
             actionBar.setSubtitle(null);
         }
 
+        View view;
         if (response.length() > 0) {
             hasResponseContent = true;
             view = inflater.inflate(R.layout.conversations_list_frag, container, false);
-            progressBar = (ProgressBar) view.findViewById(R.id.conversations_list_progress_bar);
-
-            dialogsList = (DialogsList) view.findViewById(R.id.conversations_list);
+            progressBar = view.findViewById(R.id.conversations_list_progress_bar);
+            dialogsList = view.findViewById(R.id.conversations_list);
             dialogsListAdapter = new DialogsListAdapter<>(loadImage());
 
             loadMessages(response);
@@ -218,30 +218,25 @@ public class ConversationsListFrag extends Fragment implements
                         "Bain úsáid as seo amháin go bhfuil tú cinnte nach dteastaíonn uait faic a chloisteáil a thuilleadh ón úsáideoir seo. " +
                         "Cuir cosc ar dhuine má imrítear bulaíocht ort, nó mura dteastaíonn uait tuilleadh teagmhála. " +
                         "Má athraíonn tú do mheabhair ar ball, téigh chuig na socruithe agus bainistigh cé atá curtha ar cosc.")
-                .setPositiveButton("Cuir cosc i bhfeidhm", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, final int which) {
-                        RestClient.post(getActivity(), Endpoints.BLOCK_USER,
-                                JSONUtils.getPartnerInteractionPayload(finalBlockee, getActivity()),
-                                new BaseJsonHttpResponseHandler<JSONObject>() {
-                                    @Override
-                                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-                                        DisplayUtils.generateSnackbar(getActivity(), "Cuireadh cosc ar " + LanguageUtils.lenite(finalBlockee.getForename()) + ".");
-                                        loadConversationPreviews();
-                                    }
+                .setPositiveButton("Cuir cosc i bhfeidhm", (dialog, which) -> RestClient.post(getActivity(), Endpoints.BLOCK_USER,
+                        JSONUtils.getPartnerInteractionPayload(finalBlockee, getActivity()),
+                        new BaseJsonHttpResponseHandler<JSONObject>() {
+                            @Override
+                            public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                                DisplayUtils.generateSnackbar(getActivity(), "Cuireadh cosc ar " + LanguageUtils.lenite(finalBlockee.getForename()) + ".");
+                                loadConversationPreviews();
+                            }
 
-                                    @Override
-                                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+                            @Override
+                            public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
 
-                                    }
+                            }
 
-                                    @Override
-                                    protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                                        return new JSONObject(rawJsonData);
-                                    }
-                                });
-                    }
-                })
+                            @Override
+                            protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                return new JSONObject(rawJsonData);
+                            }
+                        }))
                 .setNegativeButton("Ná cuir", null)
                 .show();
     }

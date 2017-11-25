@@ -238,7 +238,7 @@ public class PartnerConversationFrag extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.conversation_frag, container, false);
         context = PartnerConversationFrag.this.getActivity();
-        progressBar = (ProgressBar) view.findViewById(R.id.conversations_progress_bar);
+        progressBar = view.findViewById(R.id.conversations_progress_bar);
         setupAdapter(view);
 
         return view;
@@ -290,8 +290,8 @@ public class PartnerConversationFrag extends Fragment {
             LayoutInflater inflater = LayoutInflater.from(getActivity());
             View toolbarView = inflater.inflate(R.layout.toolbar_partner, null);
 
-            TextView partnerTitleTV = (TextView) toolbarView.findViewById(R.id.partner_convo_toolbar_title);
-            TextView partnerSubtitleTV = (TextView) toolbarView.findViewById(R.id.partner_convo_toolbar_subtitle);
+            TextView partnerTitleTV = toolbarView.findViewById(R.id.partner_convo_toolbar_title);
+            TextView partnerSubtitleTV = toolbarView.findViewById(R.id.partner_convo_toolbar_subtitle);
             partnerTitleTV.setText(partner.getName());
             partnerSubtitleTV.setText(formatSubtitle());
 
@@ -340,7 +340,7 @@ public class PartnerConversationFrag extends Fragment {
     }
 
     private void setMessageInputListener(final MessagesListAdapter<Message> adapter) {
-        MessageInput messageInput = (MessageInput) view.findViewById(R.id.message_input);
+        MessageInput messageInput = view.findViewById(R.id.message_input);
         messageInput.setInputListener(input -> {
             final String messageContent = input.toString().trim();
             if (NetworkAvailableService.isInternetAvailable(context)) {
@@ -500,7 +500,7 @@ public class PartnerConversationFrag extends Fragment {
         setLoadMoreListener(adapter);
         setMessageInputListener(adapter);
 
-        MessagesList messagesList = (MessagesList) view.findViewById(R.id.messages_list);
+        MessagesList messagesList = view.findViewById(R.id.messages_list);
         messagesList.setAdapter(adapter);
     }
 

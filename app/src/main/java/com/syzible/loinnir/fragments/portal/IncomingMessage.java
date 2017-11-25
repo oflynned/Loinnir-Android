@@ -16,7 +16,7 @@ public class IncomingMessage extends MessageHolders.IncomingTextMessageViewHolde
 
     public IncomingMessage(View itemView) {
         super(itemView);
-        senderName = (TextView) itemView.findViewById(R.id.message_sender);
+        senderName = itemView.findViewById(R.id.message_sender);
     }
 
     @Override

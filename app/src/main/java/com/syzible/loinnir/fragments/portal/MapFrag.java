@@ -138,12 +138,7 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         focusLocation.setOnClickListener(v -> {
             if (googleMap != null) {
                 if (LocalPrefs.getBooleanPref(LocalPrefs.Pref.should_share_location, getActivity())) {
-                    for (MapCircle circle : userCircles) {
-                        if (circle.isMe()) {
-                            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(circle.getUser().getLocation(), LocationUtils.MY_LOCATION_ZOOM));
-                            break;
-                        }
-                    }
+                    refocusMap();
                 } else {
                     googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(LocationUtils.ATHLONE, LocationUtils.INITIAL_LOCATION_ZOOM));
                 }
@@ -151,6 +146,15 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         });
 
         return view;
+    }
+
+    private void refocusMap() {
+        for (MapCircle circle : userCircles) {
+            if (circle.isMe()) {
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(circle.getUser().getLocation(), LocationUtils.MY_LOCATION_ZOOM));
+                break;
+            }
+        }
     }
 
     @Override

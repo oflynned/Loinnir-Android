@@ -11,7 +11,7 @@ public class MapCircle implements ClusterItem {
 
     private User user;
     private boolean isMe;
-    private LatLng groupLocation;
+    private LatLng location;
 
     public MapCircle(User user, boolean isMe) {
         this.user = user;
@@ -19,11 +19,11 @@ public class MapCircle implements ClusterItem {
     }
 
     public MapCircle(LatLng location) {
-        this.groupLocation = location;
+        this.location = location;
     }
 
-    public LatLng getGroupLocation() {
-        return groupLocation;
+    public LatLng getLocation() {
+        return location;
     }
 
     public User getUser() {
@@ -47,6 +47,10 @@ public class MapCircle implements ClusterItem {
     @Override
     public String getSnippet() {
         return null;
+    }
+
+    public void setLocation(LatLng location) {
+        this.location = location;
     }
 
     public float distanceTo(LatLng point) {
