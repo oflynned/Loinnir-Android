@@ -28,7 +28,7 @@ import cz.msebera.android.httpclient.Header;
 public class ServerBroadcastService extends FirebaseMessagingService {
 
     private enum NotificationTypes {
-        new_partner_message, new_locality_update, block_enacted, push_notification, message_seen
+        new_partner_message, new_locality_update, block_enacted, push_notification
     }
 
     @Override
@@ -49,50 +49,52 @@ public class ServerBroadcastService extends FirebaseMessagingService {
                 } else if (message_type.equals(NotificationTypes.block_enacted.name())) {
                     onBlockEnacted(remoteMessage.getData().get("block_enacter_id"));
                 } else if (message_type.equals(NotificationTypes.push_notification.name())) {
-                    onPushNotification(remoteMessage.getData());
-                } else if (message_type.equals(NotificationTypes.message_seen.name())) {
-                    // TODO disabled for 1.0.2
-                    // TODO add as a feature for 1.1.0
-                    // onPartnerMessageSeen(remoteMessage.getData().get("partner_id"));
+                    boolean isTopicNotificationEvent = remoteMessage.getData()
+                            .get("push_notification_link").equals("weekly_topic");
+                    onPushNotification(remoteMessage.getData(), isTopicNotificationEvent);
                 }
             }
         }
     }
 
-    private void onPushNotification(Map<String, String> data) {
+    private void onPushNotification(Map<String, String> data, boolean isTopicNotificationEvent) {
         String title = EncodingUtils.decodeText(data.get("push_notification_title"));
         String content = EncodingUtils.decodeText(data.get("push_notification_content"));
         String url = EncodingUtils.decodeText(data.get("push_notification_link"));
         String notificationId = data.get("push_notification_id");
-
-        JSONObject payload = new JSONObject();
-        try {
-            payload.put("push_notification_id", notificationId);
-            payload.put("event", "delivery");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        RestClient.post(getApplicationContext(),
-                Endpoints.PUSH_NOTIFICATION_INTERACTION,
-                payload,
-                new BaseJsonHttpResponseHandler<JSONObject>() {
-                    @Override
-                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
-
-                    }
-
-                    @Override
-                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
-
-                    }
-
-                    @Override
-                    protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
-                        return new JSONObject(rawJsonData);
-                    }
-                });
-
         NotificationUtils.generatePushNotification(getApplicationContext(), title, content, url, notificationId);
+
+        // don't care how many people received notifications about weekly topic
+        // should only send response to the server if a real notification is dispatched
+        if (!isTopicNotificationEvent) {
+            JSONObject payload = new JSONObject();
+            try {
+                payload.put("push_notification_id", notificationId);
+                payload.put("event", "delivery");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            RestClient.post(getApplicationContext(),
+                    Endpoints.PUSH_NOTIFICATION_INTERACTION,
+                    payload,
+                    new BaseJsonHttpResponseHandler<JSONObject>() {
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+
+                        }
+
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+
+                        }
+
+                        @Override
+                        protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                            return new JSONObject(rawJsonData);
+                        }
+                    });
+        }
     }
 
     /**
@@ -112,13 +114,6 @@ public class ServerBroadcastService extends FirebaseMessagingService {
         // emit a broadcast to force an update if the locality fragment is active
         String newLocalityIntent = BroadcastFilters.new_locality_info_update.toString();
         Intent intent = new Intent(newLocalityIntent);
-        getApplicationContext().sendBroadcast(intent);
-    }
-
-    private void onPartnerMessageSeen(String partnerId) {
-        String seenZonedIntent = BroadcastFilters.message_seen.toString();
-        Intent intent = new Intent(seenZonedIntent);
-        intent.putExtra("partner_id", partnerId);
         getApplicationContext().sendBroadcast(intent);
     }
 

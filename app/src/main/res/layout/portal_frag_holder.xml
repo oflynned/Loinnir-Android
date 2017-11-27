@@ -19,6 +19,23 @@
             android:background="?attr/colorPrimary"
             app:popupTheme="@style/AppTheme.PopupOverlay" />
 
+        <RelativeLayout
+            android:id="@+id/topic_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/green300"
+            android:padding="8dp">
+
+            <TextView
+                android:id="@+id/topic_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:text="Topaic na Seachtaine"
+                android:textColor="@color/white" />
+        </RelativeLayout>
+
     </android.support.design.widget.AppBarLayout>
 
     <FrameLayout

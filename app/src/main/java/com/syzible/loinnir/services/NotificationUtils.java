@@ -47,7 +47,8 @@ public class NotificationUtils {
 
     private static void vibrate(Context context) {
         Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-        vibrator.vibrate(VIBRATION_INTENSITY);
+        if (vibrator != null)
+            vibrator.vibrate(VIBRATION_INTENSITY);
     }
 
     private static int generateUniqueId() {
@@ -66,12 +67,9 @@ public class NotificationUtils {
                         .setAutoCancel(true);
 
         final Intent[] resultingIntent = new Intent[1];
-        final OnIntentCallback onIntentCallback = new OnIntentCallback() {
-            @Override
-            public void onCallback(Intent intent) {
-                generatePushNotification(intent, context, notificationBuilder, notificationId);
-            }
-        };
+        final OnIntentCallback onIntentCallback = intent -> generatePushNotification(intent, context, notificationBuilder);
+
+        System.out.println(url);
 
         if (isFacebookLink(url)) {
             RestClient.getExternal("https://graph.facebook.com/v2.7/" + getPageName(url) + "?fields=id,name,fan_count,picture,is_verified&access_token=" + FacebookUtils.getToken(context), new BaseJsonHttpResponseHandler<JSONObject>() {
@@ -98,13 +96,18 @@ public class NotificationUtils {
                     return new JSONObject(rawJsonData);
                 }
             });
+        } else if (url.equals("weekly_topic")) {
+            resultingIntent[0] = new Intent(context, MainActivity.class);
+            resultingIntent[0].putExtra("invoker", "weekly_topic");
+            resultingIntent[0].putExtra("id", notificationId);
+            onIntentCallback.onCallback(resultingIntent[0]);
         } else {
             resultingIntent[0] = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
             onIntentCallback.onCallback(resultingIntent[0]);
         }
     }
 
-    private static void generatePushNotification(Intent resultingIntent, Context context, NotificationCompat.Builder notificationBuilder, String notificationId) {
+    private static void generatePushNotification(Intent resultingIntent, Context context, NotificationCompat.Builder notificationBuilder) {
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
         stackBuilder.addParentStack(MainActivity.class);
         stackBuilder.addNextIntent(resultingIntent);
@@ -116,7 +119,8 @@ public class NotificationUtils {
         NotificationManager manager = (NotificationManager)
                 context.getSystemService(Context.NOTIFICATION_SERVICE);
 
-        manager.notify(generateUniqueId(), notificationBuilder.build());
+        if (manager != null)
+            manager.notify(generateUniqueId(), notificationBuilder.build());
     }
 
     private static String getPageName(String url) {
@@ -179,7 +183,8 @@ public class NotificationUtils {
         NotificationManager manager = (NotificationManager)
                 context.getSystemService(Context.NOTIFICATION_SERVICE);
 
-        manager.notify(getNotificationId(user), notificationBuilder.build());
+        if (manager != null)
+            manager.notify(getNotificationId(user), notificationBuilder.build());
     }
 
     public static void dismissNotifications(Context context, ArrayList<Conversation> conversations) {
@@ -188,11 +193,21 @@ public class NotificationUtils {
         }
     }
 
+    public static void dismissNotification(Context context, int id) {
+        if (context != null) {
+            NotificationManager manager = (NotificationManager)
+                    context.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (manager != null)
+                manager.cancel(id);
+        }
+    }
+
     public static void dismissNotification(Context context, User user) {
         if (context != null) {
             NotificationManager manager = (NotificationManager)
                     context.getSystemService(Context.NOTIFICATION_SERVICE);
-            manager.cancel(getNotificationId(user));
+            if (manager != null)
+                manager.cancel(getNotificationId(user));
         }
     }
 

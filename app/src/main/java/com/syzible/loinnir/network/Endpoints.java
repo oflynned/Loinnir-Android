@@ -69,6 +69,8 @@ public class Endpoints {
 
     public static final String SEND_SUGGESTION = "/services/send-suggestion";
 
+    public static final String GET_WEEKLY_TOPIC = "/topic/get";
+
     public static String getApiURL(String endpoint) {
         return API_URL + endpoint;
     }

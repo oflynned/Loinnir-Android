@@ -45,7 +45,7 @@ public class LocationUtils {
     public static final int USER_LOCATION_RADIUS = 500;
 
     public LocationManager initialiseLocationManager(Context context, Activity activity) {
-        return new com.yayandroid.locationmanager.LocationManager.Builder(context)
+        return new LocationManager.Builder(context)
                 .activity(activity)
                 .configuration(LocationConfig.silentConfiguration())
                 .notify(new LocationListener() {

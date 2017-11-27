@@ -1,6 +1,6 @@
 package com.syzible.loinnir.activities;
 
-import android.Manifest;
+import android.animation.Animator;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
@@ -9,14 +9,12 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -26,6 +24,8 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewAnimationUtils;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -50,12 +50,13 @@ import com.syzible.loinnir.persistence.Constants;
 import com.syzible.loinnir.persistence.LocalPrefs;
 import com.syzible.loinnir.services.CachingUtil;
 import com.syzible.loinnir.services.GPSAvailableService;
+import com.syzible.loinnir.services.NetworkAvailableService;
 import com.syzible.loinnir.services.NotificationUtils;
 import com.syzible.loinnir.utils.BitmapUtils;
 import com.syzible.loinnir.utils.BroadcastFilters;
 import com.syzible.loinnir.utils.DisplayUtils;
 import com.syzible.loinnir.utils.EmojiUtils;
-import com.syzible.loinnir.utils.FacebookUtils;
+import com.syzible.loinnir.utils.EncodingUtils;
 import com.syzible.loinnir.utils.JSONUtils;
 import com.syzible.loinnir.utils.LanguageUtils;
 import com.yayandroid.locationmanager.LocationManager;
@@ -64,7 +65,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -80,6 +80,9 @@ public class MainActivity extends AppCompatActivity
     private boolean shouldDisplayGreeting;
     private View headerView;
     private AlertDialog isGPSEnabledDialog;
+
+    private boolean isTopicBarShowing = true;
+    private View topicBarView;
 
     private BroadcastReceiver finishMainActivityReceiver = new BroadcastReceiver() {
         @Override
@@ -106,12 +109,15 @@ public class MainActivity extends AppCompatActivity
     };
 
     private static boolean isAppVisible;
+
     public static boolean isActivityVisible() {
         return isAppVisible;
     }
+
     public static void setAppResumed() {
         isAppVisible = true;
     }
+
     public static void setAppPausedOrDead() {
         isAppVisible = false;
     }
@@ -132,6 +138,16 @@ public class MainActivity extends AppCompatActivity
 
         String fcmToken = FirebaseInstanceId.getInstance().getToken();
         updateFcmToken(fcmToken);
+
+        topicBarView = findViewById(R.id.topic_bar);
+        topicBarView.setOnClickListener(v -> {
+            setFragment(getFragmentManager(), new LocalityConversationFrag());
+        });
+
+        if (!NetworkAvailableService.isInternetAvailable(this)) {
+            topicBarView.setVisibility(View.GONE);
+        }
+        loadWeeklyTopic();
 
         MetaDataUpdate.updateLastActive(this);
         if (!GPSAvailableService.isGPSAvailable(this)) {
@@ -168,25 +184,6 @@ public class MainActivity extends AppCompatActivity
         if (Constants.USER_AGREEMENT_VERSION != LocalPrefs.getUserAgreementsVersion(this)) {
             DisplayUtils.notifyChangeInTOS(this);
         }
-
-        // checkFacebookPermissionsChanged();
-    }
-
-    private void checkFacebookPermissionsChanged() {
-        if (Constants.FACEBOOK_PERMISSIONS_VERSIONS != LocalPrefs.getFacebookPermissionsVersion(this)) {
-            DisplayUtils.generateToast(this, "Athraíodh na ceadúnais Facebook. Logáil isteach arís le do thoil.");
-            FacebookUtils.deleteToken(this);
-
-            try {
-                FirebaseInstanceId.getInstance().deleteInstanceId();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            Intent intent = new Intent(MainActivity.this, AuthenticationActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(intent);
-        }
     }
 
     private void updateFcmToken(String fcmToken) {
@@ -218,6 +215,31 @@ public class MainActivity extends AppCompatActivity
                 });
             }
         }
+    }
+
+    private void loadWeeklyTopic() {
+        RestClient.get(Endpoints.GET_WEEKLY_TOPIC, new BaseJsonHttpResponseHandler<JSONObject>() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                try {
+                    String topic = "TnS: " + EncodingUtils.decodeText(response.getString("topic"));
+                    TextView topicView = findViewById(R.id.topic_text_view);
+                    topicView.setText(topic);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+
+            }
+
+            @Override
+            protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                return new JSONObject(rawJsonData);
+            }
+        });
     }
 
     private void setGaLocale() {
@@ -326,6 +348,7 @@ public class MainActivity extends AppCompatActivity
                             return new JSONObject(rawJsonData);
                         }
                     });
+                    break;
                 case "push_notification":
                     shouldDisplayGreeting = false;
 
@@ -356,6 +379,15 @@ public class MainActivity extends AppCompatActivity
                                     return new JSONObject(rawJsonData);
                                 }
                             });
+                    break;
+                case "weekly_topic":
+                    int id = Integer.valueOf(getIntent().getStringExtra("id"));
+                    NotificationUtils.dismissNotification(getApplicationContext(), id);
+
+                    shouldDisplayGreeting = false;
+                    navigationView.getMenu().getItem(3).setChecked(true);
+                    setFragment(getFragmentManager(), new LocalityConversationFrag());
+                    break;
             }
         } else {
             setFragment(getFragmentManager(), new MapFrag());
@@ -468,18 +500,8 @@ public class MainActivity extends AppCompatActivity
                     new AlertDialog.Builder(MainActivity.this)
                             .setTitle("An Aip a Dhúnadh?")
                             .setMessage("Má bhrúitear an chnaipe \"Dún\", dúnfar an aip. An bhfuil tú cinnte go bhfuil sé seo ag teastáil uait?")
-                            .setPositiveButton("Dún", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    MainActivity.this.finish();
-                                }
-                            })
-                            .setNegativeButton("Ná dún", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-
-                                }
-                            })
+                            .setPositiveButton("Dún", (dialog, which) -> MainActivity.this.finish())
+                            .setNegativeButton("Ná dún", null)
                             .show();
                 } else {
                     super.onBackPressed();
@@ -503,6 +525,29 @@ public class MainActivity extends AppCompatActivity
             startActivity(new Intent(this, SettingsActivity.class));
         } else if (id == R.id.action_suggestion_box) {
             startActivity(new Intent(this, SuggestionsActivity.class));
+        } else if (id == R.id.action_topic) {
+            if (NetworkAvailableService.isInternetAvailable(this)) {
+                if (!isTopicBarShowing) {
+                    Animator animator = ViewAnimationUtils.createCircularReveal(
+                            topicBarView,
+                            topicBarView.getWidth() - 130,
+                            topicBarView.getHeight() - 130,
+                            0,
+                            (float) Math.hypot(topicBarView.getWidth(), topicBarView.getHeight()));
+                    topicBarView.setVisibility(View.VISIBLE);
+                    animator.setInterpolator(new AccelerateDecelerateInterpolator());
+                    if (topicBarView.getVisibility() == View.VISIBLE) {
+                        animator.setDuration(400);
+                        animator.start();
+                        topicBarView.setEnabled(true);
+                    }
+                } else {
+                    topicBarView.setVisibility(View.GONE);
+                    topicBarView.setEnabled(false);
+                }
+
+                isTopicBarShowing = !isTopicBarShowing;
+            }
         }
 
         return super.onOptionsItemSelected(item);

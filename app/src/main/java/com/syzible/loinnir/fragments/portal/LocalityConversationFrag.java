@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -15,9 +14,7 @@ import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.stfalcon.chatkit.commons.ImageLoader;
@@ -34,6 +31,7 @@ import com.syzible.loinnir.objects.Message;
 import com.syzible.loinnir.objects.User;
 import com.syzible.loinnir.persistence.LocalCacheDatabase;
 import com.syzible.loinnir.persistence.LocalCacheDatabaseHelper;
+import com.syzible.loinnir.persistence.LocalPrefs;
 import com.syzible.loinnir.services.CachingUtil;
 import com.syzible.loinnir.services.NetworkAvailableService;
 import com.syzible.loinnir.utils.BitmapUtils;
@@ -43,7 +41,6 @@ import com.syzible.loinnir.utils.EmojiUtils;
 import com.syzible.loinnir.utils.EncodingUtils;
 import com.syzible.loinnir.utils.JSONUtils;
 import com.syzible.loinnir.utils.LanguageUtils;
-import com.syzible.loinnir.persistence.LocalPrefs;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -53,8 +50,6 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 import cz.msebera.android.httpclient.Header;
-
-import static android.R.id.message;
 
 /**
  * Created by ed on 07/05/2017.
@@ -90,15 +85,13 @@ public class LocalityConversationFrag extends Fragment {
                                 try {
                                     String localityName = response.getString("locality");
                                     int nearbyUsers = response.getInt("count");
-                                    String localUsers = nearbyUsers + " eile anseo";
+                                    String count = nearbyUsers + " eile anseo";
 
                                     ActionBar actionBar = ((AppCompatActivity) context).getSupportActionBar();
                                     if (actionBar != null) {
-                                        actionBar.setTitle("Domhanda");
-                                        //actionBar.setTitle(localityName);
-                                        actionBar.setSubtitle(localUsers);
+                                        actionBar.setTitle(localityName);
+                                        actionBar.setSubtitle(count);
                                     }
-
                                 } catch (JSONException e) {
                                     e.printStackTrace();
                                 }
@@ -339,15 +332,14 @@ public class LocalityConversationFrag extends Fragment {
                         try {
                             String localityName = response.getString("locality");
                             int nearbyUsers = response.getInt("count");
-                            String localUsers = nearbyUsers + " eile anseo";
+                            String count = nearbyUsers + " eile anseo";
 
                             // set title and subtitle
                             ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
 
                             if (actionBar != null) {
-                                actionBar.setTitle("Domhanda");
-                                //actionBar.setTitle(localityName);
-                                actionBar.setSubtitle(localUsers);
+                                actionBar.setTitle(localityName);
+                                actionBar.setSubtitle(count);
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
