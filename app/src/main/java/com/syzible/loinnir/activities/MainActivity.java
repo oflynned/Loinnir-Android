@@ -6,7 +6,6 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
@@ -39,7 +38,7 @@ import com.syzible.loinnir.fragments.portal.MapFrag;
 import com.syzible.loinnir.fragments.portal.PartnerConversationFrag;
 import com.syzible.loinnir.fragments.portal.RouletteFrag;
 import com.syzible.loinnir.fragments.portal.RouletteOutcomeFrag;
-import com.syzible.loinnir.location.LocationUtils;
+import com.syzible.loinnir.location.LocationService;
 import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.GetImage;
 import com.syzible.loinnir.network.MetaDataUpdate;
@@ -59,7 +58,6 @@ import com.syzible.loinnir.utils.EmojiUtils;
 import com.syzible.loinnir.utils.EncodingUtils;
 import com.syzible.loinnir.utils.JSONUtils;
 import com.syzible.loinnir.utils.LanguageUtils;
-import com.yayandroid.locationmanager.LocationManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -80,6 +78,8 @@ public class MainActivity extends AppCompatActivity
     private boolean shouldDisplayGreeting;
     private View headerView;
     private AlertDialog isGPSEnabledDialog;
+
+    private Fragment currentFragment;
 
     private boolean isTopicBarShowing = true;
     private View topicBarView;
@@ -132,16 +132,18 @@ public class MainActivity extends AppCompatActivity
 
         isGPSEnabledDialog = GPSAvailableService.getGPSEnabledDialog(this);
 
-        LocationUtils locationUtils = new LocationUtils();
-        LocationManager locationManager = locationUtils.initialiseLocationManager(getApplicationContext(), this);
-        locationManager.get();
+        startService(new Intent(this, LocationService.class));
 
         String fcmToken = FirebaseInstanceId.getInstance().getToken();
         updateFcmToken(fcmToken);
 
         topicBarView = findViewById(R.id.topic_bar);
         topicBarView.setOnClickListener(v -> {
-            setFragment(getFragmentManager(), new LocalityConversationFrag());
+            if (!(currentFragment instanceof LocalityConversationFrag)) {
+                Fragment fragment = new LocalityConversationFrag();
+                currentFragment = fragment;
+                setFragment(getFragmentManager(), fragment);
+            }
         });
 
         if (!NetworkAvailableService.isInternetAvailable(this)) {
@@ -313,6 +315,7 @@ public class MainActivity extends AppCompatActivity
                                 final User partner = new User(response);
                                 final PartnerConversationFrag frag = new PartnerConversationFrag()
                                         .setPartner(partner);
+                                currentFragment = frag;
 
                                 RestClient.post(getApplicationContext(), Endpoints.GET_PAST_CONVERSATION_PREVIEWS, JSONUtils.getIdPayload(getApplicationContext()), new BaseJsonHttpResponseHandler<JSONArray>() {
                                     @Override
@@ -560,7 +563,9 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_around_me) {
             clearBackstack(getFragmentManager());
-            setFragment(getFragmentManager(), new MapFrag());
+            Fragment fragment = new MapFrag();
+            currentFragment = fragment;
+            setFragment(getFragmentManager(), fragment);
         } else if (id == R.id.nav_conversations) {
             clearBackstack(getFragmentManager());
             RestClient.post(this, Endpoints.GET_PAST_CONVERSATION_PREVIEWS,
@@ -568,7 +573,9 @@ public class MainActivity extends AppCompatActivity
                     new BaseJsonHttpResponseHandler<JSONArray>() {
                         @Override
                         public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONArray response) {
-                            setFragment(getFragmentManager(), new ConversationsListFrag().setResponse(response));
+                            Fragment fragment = new ConversationsListFrag().setResponse(response);
+                            currentFragment = fragment;
+                            setFragment(getFragmentManager(), fragment);
                         }
 
                         @Override
@@ -585,10 +592,14 @@ public class MainActivity extends AppCompatActivity
 
         } else if (id == R.id.nav_roulette) {
             clearBackstack(getFragmentManager());
-            setFragment(getFragmentManager(), new RouletteFrag());
+            Fragment fragment = new RouletteFrag();
+            currentFragment = fragment;
+            setFragment(getFragmentManager(), fragment);
         } else if (id == R.id.nav_nearby) {
             clearBackstack(getFragmentManager());
-            setFragment(getFragmentManager(), new LocalityConversationFrag());
+            Fragment fragment = new LocalityConversationFrag();
+            currentFragment = fragment;
+            setFragment(getFragmentManager(), fragment);
         } else if (id == R.id.nav_rate) {
             Intent intent;
 
@@ -618,10 +629,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     public static void setFragment(FragmentManager fragmentManager, Fragment fragment) {
-        if (fragmentManager != null)
+        if (fragmentManager != null) {
             fragmentManager.beginTransaction()
                     .replace(R.id.portal_frame, fragment)
                     .commit();
+        }
     }
 
     public static void setFragmentBackstack(FragmentManager fragmentManager, Fragment fragment) {

@@ -58,6 +58,32 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (Objects.equals(intent.getAction(), BroadcastFilters.updated_location.toString())) {
+
+                String latValue = intent.getStringExtra("lat");
+                String lngValue = intent.getStringExtra("lng");
+
+                if (latValue != null && lngValue != null) {
+                    double lat = intent.getDoubleExtra("lat", LocationUtils.ATHLONE.latitude);
+                    double lng = intent.getDoubleExtra("lng", LocationUtils.ATHLONE.longitude);
+
+                    LatLng myNewLocation = new LatLng(lat, lng);
+                    MapCircle me = null;
+
+                    for (MapCircle user : userCircles) {
+                        if (user.isMe()) {
+                            me = user;
+                            userCircles.remove(user);
+                            break;
+                        }
+                    }
+
+                    if (me != null) {
+                        me.setLocation(myNewLocation);
+                        userCircles.add(me);
+                        drawVisibleCircles();
+                    }
+                }
+
                 getWebServerLocation();
             }
         }

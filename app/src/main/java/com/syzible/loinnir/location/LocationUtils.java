@@ -17,12 +17,9 @@
 package com.syzible.loinnir.location;
 
 
-import android.app.Activity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
-import android.os.Bundle;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
@@ -30,8 +27,6 @@ import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.persistence.LocalPrefs;
 import com.syzible.loinnir.utils.BroadcastFilters;
-import com.yayandroid.locationmanager.LocationManager;
-import com.yayandroid.locationmanager.listener.LocationListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -44,55 +39,7 @@ public class LocationUtils {
     public static final float MY_LOCATION_ZOOM = 14.0f;
     public static final int USER_LOCATION_RADIUS = 500;
 
-    public LocationManager initialiseLocationManager(Context context, Activity activity) {
-        return new LocationManager.Builder(context)
-                .activity(activity)
-                .configuration(LocationConfig.silentConfiguration())
-                .notify(new LocationListener() {
-                    @Override
-                    public void onProcessTypeChanged(int processType) {
-
-                    }
-
-                    @Override
-                    public void onLocationChanged(Location location) {
-                        Intent intent = new Intent(BroadcastFilters.updated_location.toString());
-                        intent.putExtra("lat", String.valueOf(location.getLatitude()));
-                        intent.putExtra("lng", String.valueOf(location.getLongitude()));
-                        activity.sendBroadcast(intent);
-
-                        syncWithServer(location, activity);
-                    }
-
-                    @Override
-                    public void onLocationFailed(int type) {
-
-                    }
-
-                    @Override
-                    public void onPermissionGranted(boolean alreadyHadPermission) {
-
-                    }
-
-                    @Override
-                    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-                    }
-
-                    @Override
-                    public void onProviderEnabled(String provider) {
-
-                    }
-
-                    @Override
-                    public void onProviderDisabled(String provider) {
-
-                    }
-                })
-                .build();
-    }
-
-    private void syncWithServer(Location location, Context context) {
+    public static void syncWithServer(Location location, Context context) {
         if (!LocalPrefs.getID(context).equals("")) {
             JSONObject payload = new JSONObject();
 
