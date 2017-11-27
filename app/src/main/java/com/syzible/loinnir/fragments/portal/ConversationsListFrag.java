@@ -172,6 +172,8 @@ public class ConversationsListFrag extends Fragment implements
                 Message message = new Message(sender, o.getJSONObject("message"));
                 Conversation conversation = new Conversation(sender, message, unreadCount);
 
+                System.out.println(sender.getName() + " " + message.getText());
+
                 conversations.add(conversation);
             } catch (JSONException e) {
                 e.printStackTrace();

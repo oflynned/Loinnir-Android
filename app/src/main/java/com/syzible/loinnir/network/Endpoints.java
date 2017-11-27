@@ -17,7 +17,7 @@ public class Endpoints {
     public static final String DOMAIN_ENDPOINT = "http://www.loinnir.ie";
     public static final String FACEBOOK_PAGE = "https://www.facebook.com/LoinnirApp";
 
-    private static final String STEM_URL = isDebugMode() ? LOCAL_ENDPOINT : APP_ENDPOINT;
+    private static final String STEM_URL = isDebugMode() ? LOCAL_ENDPOINT : DOMAIN_ENDPOINT;
     private static final String API_URL = STEM_URL + "/api/v" + API_VERSION;
 
     public static boolean isDebugMode() {
