@@ -64,8 +64,8 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
                 String lngValue = intent.getStringExtra("lng");
 
                 if (latValue != null && lngValue != null) {
-                    double lat = intent.getDoubleExtra("lat", LocationUtils.ATHLONE.latitude);
-                    double lng = intent.getDoubleExtra("lng", LocationUtils.ATHLONE.longitude);
+                    double lat = Double.parseDouble(intent.getStringExtra("lat"));
+                    double lng = Double.parseDouble(intent.getStringExtra("lng"));
 
                     LatLng myNewLocation = new LatLng(lat, lng);
                     MapCircle me = null;
@@ -111,6 +111,7 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
 
         if (actionBar != null) {
+            actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_HOME | ActionBar.DISPLAY_SHOW_TITLE);
             actionBar.setTitle(R.string.app_name);
             actionBar.setSubtitle(null);
         }

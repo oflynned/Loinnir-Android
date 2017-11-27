@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -15,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
 import com.stfalcon.chatkit.commons.ImageLoader;
@@ -23,6 +25,7 @@ import com.stfalcon.chatkit.messages.MessageInput;
 import com.stfalcon.chatkit.messages.MessagesList;
 import com.stfalcon.chatkit.messages.MessagesListAdapter;
 import com.syzible.loinnir.R;
+import com.syzible.loinnir.activities.MainActivity;
 import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.GetImage;
 import com.syzible.loinnir.network.NetworkCallback;
@@ -85,13 +88,7 @@ public class LocalityConversationFrag extends Fragment {
                                 try {
                                     String localityName = response.getString("locality");
                                     int nearbyUsers = response.getInt("count");
-                                    String count = nearbyUsers + " eile anseo";
-
-                                    ActionBar actionBar = ((AppCompatActivity) context).getSupportActionBar();
-                                    if (actionBar != null) {
-                                        actionBar.setTitle(localityName);
-                                        actionBar.setSubtitle(count);
-                                    }
+                                    setupToolbar(localityName, nearbyUsers);
                                 } catch (JSONException e) {
                                     e.printStackTrace();
                                 }
@@ -152,6 +149,31 @@ public class LocalityConversationFrag extends Fragment {
         view = inflater.inflate(R.layout.conversation_frag, container, false);
         progressBar = view.findViewById(R.id.conversations_progress_bar);
         return view;
+    }
+
+    private void setupToolbar(String title, int count) {
+        String subtitle = count + " eile anseo";
+
+        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_HOME | ActionBar.DISPLAY_SHOW_TITLE);
+
+            actionBar.setTitle(null);
+            actionBar.setDisplayShowHomeEnabled(false);
+            actionBar.setDisplayShowTitleEnabled(false);
+
+            LayoutInflater inflater = LayoutInflater.from(getActivity());
+            View toolbarView = inflater.inflate(R.layout.toolbar_locality, null);
+
+            TextView localityTitleTV = toolbarView.findViewById(R.id.locality_convo_toolbar_title);
+            TextView localitySubtitleTV = toolbarView.findViewById(R.id.locality_convo_toolbar_count);
+
+            localityTitleTV.setText(title);
+            localitySubtitleTV.setText(subtitle);
+
+            actionBar.setCustomView(toolbarView);
+            actionBar.setDisplayShowCustomEnabled(true);
+        }
     }
 
     @Override
@@ -332,15 +354,7 @@ public class LocalityConversationFrag extends Fragment {
                         try {
                             String localityName = response.getString("locality");
                             int nearbyUsers = response.getInt("count");
-                            String count = nearbyUsers + " eile anseo";
-
-                            // set title and subtitle
-                            ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
-
-                            if (actionBar != null) {
-                                actionBar.setTitle(localityName);
-                                actionBar.setSubtitle(count);
-                            }
+                            setupToolbar(localityName, nearbyUsers);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }

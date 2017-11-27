@@ -75,6 +75,8 @@ public class CachingUtil {
 
         String pathToFile = getDirectoryPath(context) + "/" + fileName;
         Bitmap bitmap = BitmapFactory.decodeFile(pathToFile);
+        if (bitmap == null)
+            return null;
 
         int[] pixels = new int[bitmap.getWidth() * bitmap.getHeight()];
         bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());

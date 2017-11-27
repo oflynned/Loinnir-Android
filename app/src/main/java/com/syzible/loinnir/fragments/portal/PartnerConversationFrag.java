@@ -125,7 +125,6 @@ public class PartnerConversationFrag extends Fragment {
                                 }
                             });
                 } else {
-                    System.out.println("User not visible, in another chat");
                     JSONObject o = JSONUtils.getMessageByIdPayload(getActivity(), messageId);
                     RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getIdPayload(getActivity()), new BaseJsonHttpResponseHandler<JSONObject>() {
                         @Override
@@ -329,6 +328,8 @@ public class PartnerConversationFrag extends Fragment {
 
         ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
         if (actionBar != null) {
+            actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_HOME | ActionBar.DISPLAY_SHOW_TITLE);
+
             actionBar.setTitle(null);
             actionBar.setDisplayShowHomeEnabled(false);
             actionBar.setDisplayShowTitleEnabled(false);
@@ -346,14 +347,48 @@ public class PartnerConversationFrag extends Fragment {
 
             partnerTitleTV.setOnClickListener(v -> {
                 final Bitmap cachedImage = CachingUtil.getCachedImage(context, partner.getId());
-                ProfileFrag profileFrag = new ProfileFrag().setPartner(partner).setBitmap(cachedImage);
-                MainActivity.setFragmentBackstack(getFragmentManager(), profileFrag);
+                if (cachedImage == null) {
+                    new GetImage(new NetworkCallback<Bitmap>() {
+                        @Override
+                        public void onResponse(Bitmap response) {
+                            Bitmap bitmap = BitmapUtils.getCroppedCircle(response);
+                            ProfileFrag profileFrag = new ProfileFrag().setPartner(partner).setBitmap(bitmap);
+                            CachingUtil.cacheImage(getActivity(), partner.getId(), response);
+                            MainActivity.setFragmentBackstack(getFragmentManager(), profileFrag);
+                        }
+
+                        @Override
+                        public void onFailure() {
+
+                        }
+                    }, partner.getAvatar(), true).execute();
+                } else {
+                    ProfileFrag profileFrag = new ProfileFrag().setPartner(partner).setBitmap(cachedImage);
+                    MainActivity.setFragmentBackstack(getFragmentManager(), profileFrag);
+                }
             });
 
             partnerSubtitleTV.setOnClickListener(v -> {
                 final Bitmap cachedImage = CachingUtil.getCachedImage(context, partner.getId());
-                ProfileFrag profileFrag = new ProfileFrag().setPartner(partner).setBitmap(cachedImage);
-                MainActivity.setFragmentBackstack(getFragmentManager(), profileFrag);
+                if (cachedImage == null) {
+                    new GetImage(new NetworkCallback<Bitmap>() {
+                        @Override
+                        public void onResponse(Bitmap response) {
+                            Bitmap bitmap = BitmapUtils.getCroppedCircle(response);
+                            ProfileFrag profileFrag = new ProfileFrag().setPartner(partner).setBitmap(bitmap);
+                            CachingUtil.cacheImage(getActivity(), partner.getId(), response);
+                            MainActivity.setFragmentBackstack(getFragmentManager(), profileFrag);
+                        }
+
+                        @Override
+                        public void onFailure() {
+
+                        }
+                    }, partner.getAvatar(), true).execute();
+                } else {
+                    ProfileFrag profileFrag = new ProfileFrag().setPartner(partner).setBitmap(cachedImage);
+                    MainActivity.setFragmentBackstack(getFragmentManager(), profileFrag);
+                }
             });
 
             handler = new Handler();

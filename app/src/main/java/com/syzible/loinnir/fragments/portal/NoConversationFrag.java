@@ -31,6 +31,7 @@ public class NoConversationFrag extends Fragment {
 
         ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
         if (actionBar != null) {
+            actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_HOME | ActionBar.DISPLAY_SHOW_TITLE);
             actionBar.setTitle(R.string.app_name);
             actionBar.setSubtitle(null);
         }
