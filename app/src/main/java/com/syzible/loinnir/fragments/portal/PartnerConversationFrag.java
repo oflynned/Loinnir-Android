@@ -92,6 +92,7 @@ public class PartnerConversationFrag extends Fragment {
         public void onReceive(Context context, Intent intent) {
             if (Objects.equals(intent.getAction(), BroadcastFilters.new_partner_message.toString())) {
                 String partnerId = intent.getStringExtra("partner_id");
+                String messageId = intent.getStringExtra("partner_message_id");
 
                 // new messages should only be added if you're currently in the correct conversation
                 if (partnerId.equals(partner.getId())) {
@@ -123,6 +124,52 @@ public class PartnerConversationFrag extends Fragment {
                                     return new JSONArray(rawJsonData);
                                 }
                             });
+                } else {
+                    System.out.println("User not visible, in another chat");
+                    JSONObject o = JSONUtils.getMessageByIdPayload(getActivity(), messageId);
+                    RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getIdPayload(getActivity()), new BaseJsonHttpResponseHandler<JSONObject>() {
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                            try {
+                                User user = new User(response);
+                                RestClient.post(getActivity(), Endpoints.GET_MESSAGE_BY_ID, o, new BaseJsonHttpResponseHandler<JSONObject>() {
+                                    @Override
+                                    public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
+                                        Message message = new Message(user, response);
+                                        System.out.println(message.getText());
+                                        try {
+                                            NotificationUtils.generateMessageNotification(getActivity(), user, message);
+                                        } catch (JSONException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+
+                                    }
+
+                                    @Override
+                                    protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                                        System.out.println(rawJsonData);
+                                        return new JSONObject(rawJsonData);
+                                    }
+                                });
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, Throwable throwable, String rawJsonData, JSONObject errorResponse) {
+
+                        }
+
+                        @Override
+                        protected JSONObject parseResponse(String rawJsonData, boolean isFailure) throws Throwable {
+                            return new JSONObject(rawJsonData);
+                        }
+                    });
                 }
             }
         }
@@ -239,7 +286,6 @@ public class PartnerConversationFrag extends Fragment {
         view = inflater.inflate(R.layout.conversation_frag, container, false);
         context = PartnerConversationFrag.this.getActivity();
         progressBar = view.findViewById(R.id.conversations_progress_bar);
-        setupAdapter(view);
 
         return view;
     }
@@ -595,7 +641,7 @@ public class PartnerConversationFrag extends Fragment {
 
             imageView.setOnClickListener(v -> {
                 if (!id.equals(LocalPrefs.getID(getActivity()))) {
-                    RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getUserIdPayload(getActivity(), id), new BaseJsonHttpResponseHandler<JSONObject>() {
+                    RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getUserIdPayload(id), new BaseJsonHttpResponseHandler<JSONObject>() {
                         @Override
                         public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
                             try {

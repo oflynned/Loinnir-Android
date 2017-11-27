@@ -15,10 +15,21 @@ import org.json.JSONObject;
 public class JSONUtils {
 
     public static JSONObject getIdPayload(Context context) {
-        return getUserIdPayload(context, LocalPrefs.getID(context));
+        return getUserIdPayload(LocalPrefs.getID(context));
     }
 
-    public static JSONObject getUserIdPayload(Context context, String id) {
+    public static JSONObject getMessageByIdPayload(Context context, String messageId) {
+        JSONObject o = getIdPayload(context);
+        try {
+            o.put("message_id", messageId);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return o;
+    }
+
+    public static JSONObject getUserIdPayload(String id) {
         JSONObject o = new JSONObject();
         try {
             o.put("fb_id", id);

@@ -133,6 +133,7 @@ public class MainActivity extends AppCompatActivity
         isGPSEnabledDialog = GPSAvailableService.getGPSEnabledDialog(this);
 
         startService(new Intent(this, LocationService.class));
+        NotificationUtils.initialiseNotificationChannel(this);
 
         String fcmToken = FirebaseInstanceId.getInstance().getToken();
         updateFcmToken(fcmToken);

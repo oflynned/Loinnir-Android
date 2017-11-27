@@ -422,7 +422,7 @@ public class LocalityConversationFrag extends Fragment {
 
             imageView.setOnLongClickListener(v -> {
                 if (!id.equals(LocalPrefs.getID(getActivity()))) {
-                    RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getUserIdPayload(getActivity(), id), new BaseJsonHttpResponseHandler<JSONObject>() {
+                    RestClient.post(getActivity(), Endpoints.GET_USER, JSONUtils.getUserIdPayload(id), new BaseJsonHttpResponseHandler<JSONObject>() {
                         @Override
                         public void onSuccess(int statusCode, Header[] headers, String rawJsonResponse, JSONObject response) {
                             try {

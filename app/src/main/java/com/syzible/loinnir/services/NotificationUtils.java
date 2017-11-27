@@ -1,6 +1,9 @@
 package com.syzible.loinnir.services;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -44,6 +47,7 @@ import cz.msebera.android.httpclient.Header;
 public class NotificationUtils {
 
     private static final int VIBRATION_INTENSITY = 150;
+    private static final String CHANNEL_NAME = "com.syzible.loinnir.notification_channel";
 
     private static void vibrate(Context context) {
         Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
@@ -58,7 +62,7 @@ public class NotificationUtils {
 
     public static void generatePushNotification(final Context context, String title, String content, final String url, final String notificationId) {
         final NotificationCompat.Builder notificationBuilder =
-                new NotificationCompat.Builder(context)
+                new NotificationCompat.Builder(context, CHANNEL_NAME)
                         .setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher))
                         .setSmallIcon(R.drawable.logo_small)
                         .setContentTitle(title)
@@ -68,8 +72,6 @@ public class NotificationUtils {
 
         final Intent[] resultingIntent = new Intent[1];
         final OnIntentCallback onIntentCallback = intent -> generatePushNotification(intent, context, notificationBuilder);
-
-        System.out.println(url);
 
         if (isFacebookLink(url)) {
             RestClient.getExternal("https://graph.facebook.com/v2.7/" + getPageName(url) + "?fields=id,name,fan_count,picture,is_verified&access_token=" + FacebookUtils.getToken(context), new BaseJsonHttpResponseHandler<JSONObject>() {
@@ -131,6 +133,22 @@ public class NotificationUtils {
         return url.split("https://www.facebook.com/").length > 1;
     }
 
+    public static void initialiseNotificationChannel(Context context) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_NAME,
+                    "Fógraí Loinnir",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+
+            channel.setDescription("Description");
+
+            NotificationManager notificationManager =
+                    (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (notificationManager != null)
+                notificationManager.createNotificationChannel(channel);
+        }
+    }
+
     public static void generateMessageNotification(final Context context, final User user,
                                                    final Message message) throws JSONException {
         if (CachingUtil.doesImageExist(context, user.getId())) {
@@ -155,7 +173,7 @@ public class NotificationUtils {
 
     private static void notifyUser(Context context, Bitmap avatar, User user, Message message) {
         NotificationCompat.Builder notificationBuilder =
-                new NotificationCompat.Builder(context)
+                new NotificationCompat.Builder(context, CHANNEL_NAME)
                         .setLargeIcon(avatar)
                         .setSmallIcon(R.drawable.logo_small)
                         .setContentTitle(user.getName())

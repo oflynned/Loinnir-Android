@@ -58,6 +58,7 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (Objects.equals(intent.getAction(), BroadcastFilters.updated_location.toString())) {
+                getWebServerLocation();
 
                 String latValue = intent.getStringExtra("lat");
                 String lngValue = intent.getStringExtra("lng");
@@ -83,8 +84,6 @@ public class MapFrag extends Fragment implements OnMapReadyCallback {
                         drawVisibleCircles();
                     }
                 }
-
-                getWebServerLocation();
             }
         }
     };

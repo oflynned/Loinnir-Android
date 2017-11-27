@@ -5,6 +5,7 @@ import android.content.Intent;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.loopj.android.http.BaseJsonHttpResponseHandler;
+import com.syzible.loinnir.activities.MainActivity;
 import com.syzible.loinnir.network.Endpoints;
 import com.syzible.loinnir.network.RestClient;
 import com.syzible.loinnir.objects.Message;
@@ -37,6 +38,7 @@ public class ServerBroadcastService extends FirebaseMessagingService {
         if (remoteMessage.getData().size() > 0) {
             if (FacebookUtils.hasExistingToken(getApplicationContext())) {
                 String message_type = remoteMessage.getData().get("notification_type");
+                System.out.println(message_type);
 
                 if (message_type.equals(NotificationTypes.new_locality_update.name())) {
                     onLocalityInfoUpdate();
@@ -140,8 +142,11 @@ public class ServerBroadcastService extends FirebaseMessagingService {
         String newMessageIntent = BroadcastFilters.new_partner_message.toString();
         Intent newDataIntent = new Intent(newMessageIntent);
         newDataIntent.putExtra("partner_id", sender.getId());
+        newDataIntent.putExtra("partner_message_id", message.getId());
+
         getApplicationContext().sendBroadcast(newDataIntent);
 
-        NotificationUtils.generateMessageNotification(getApplicationContext(), sender, message);
+        if (!MainActivity.isActivityVisible())
+            NotificationUtils.generateMessageNotification(getApplicationContext(), sender, message);
     }
 }

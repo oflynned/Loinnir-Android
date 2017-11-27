@@ -42,6 +42,12 @@ public class LocationService extends LocationBaseService {
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+        stopSelf();
+    }
+
+    @Override
     public void onLocationChanged(Location location) {
         System.out.println(location.getLatitude() + ", " + location.getLongitude());
         LocationUtils.syncWithServer(location, getApplicationContext());

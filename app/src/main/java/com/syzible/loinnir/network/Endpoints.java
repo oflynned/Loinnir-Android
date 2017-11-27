@@ -55,6 +55,7 @@ public class Endpoints {
     public static final String SEND_LOCALITY_MESSAGE = "/messages/send-locality-message";
     public static final String GET_PAST_CONVERSATION_PREVIEWS = "/messages/get-past-conversation-previews";
     public static final String GET_PARTNER_MESSAGES_COUNT = "/messages/get-partner-messages-count";
+    public static final String GET_MESSAGE_BY_ID = "/messages/get-message-by-id";
 
     public static final String GET_PARTNER_MESSAGES = "/messages/get-partner-messages";
     public static final String GET_PARTNER_MESSAGES_PAGINATION = "/messages/get-paginated-partner-messages";
