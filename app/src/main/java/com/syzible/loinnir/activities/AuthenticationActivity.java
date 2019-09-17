@@ -169,10 +169,13 @@ public class AuthenticationActivity extends AppCompatActivity {
                             try {
                                 System.out.println("Received o: " + o.toString());
                                 String id = o.getString("id");
+                                String pic = "https://graph.facebook.com/" + id + "/picture?type=large";
                                 String forename = o.getString("first_name");
                                 String surname = o.getString("last_name");
-                                String gender = o.getString("gender");
-                                String pic = "https://graph.facebook.com/" + id + "/picture?type=large";
+
+                                // TODO this now requires a special permission to access
+                                // String gender = o.getString("gender");
+                                String gender = "male";
 
                                 JSONObject postData = new JSONObject();
                                 postData.put("fb_id", id);
